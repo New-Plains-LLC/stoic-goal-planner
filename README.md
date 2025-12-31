@@ -27,16 +27,21 @@ The app includes daily affirmations, gratitude tracking, task management, daily 
 
 ### 📅 Daily Planner
 - **Daily Entry System**: One entry per day with automatic date selection
-- **Stoic Quote of the Day**: Inspirational stoic philosophy quote with meaning (auto-fetched from API)
+- **Stoic Quote of the Day**: Inspirational stoic philosophy quote with author and meaning (auto-fetched from API)
 - **3 Daily Affirmations**: Space to write personal affirmations to start the day positively
 - **3 Gratitude Entries**: Track what you're grateful for each day
 - **Task Selection**: Choose tasks from your goal list to focus on today
-- **Task Completion Tracking**: Check off tasks as you complete them
-- **Daily Schedule**: View and manage your calendar events (supports manual entry)
+- **Task Completion Tracking**: Check off tasks as you complete them with category badges
+- **Daily Schedule with Google Calendar**: 
+  - View and manage your calendar events
+  - **Google Calendar Sync**: Import events from Google Calendar
+  - **Add Events**: Create calendar events directly in the app
+  - Schedule integration with real-time updates
 - **Daily Wins Reflection**: 
   - Record 3 wins from today at end of day
   - Plan 3 wins for tomorrow
 - **Quick Access to Goals**: Navigate to goals page from daily view
+- **Mobile Responsive**: Fully responsive design for mobile devices
 
 ### 📊 Weekly Review System
 - **Week Selection**: Choose any week for review or planning
@@ -99,17 +104,21 @@ The app includes daily affirmations, gratitude tracking, task management, daily 
 ### Schedule API
 - `GET /api/schedule` - Get schedule events (filter by start_date, end_date)
 - `POST /api/schedule` - Create schedule event
+- `POST /api/calendar/sync` - Sync events from Google Calendar (requires access token)
+- `GET /api/calendar/auth-url` - Get instructions for Google Calendar OAuth setup
 
 ### Stoic Quote API
-- `GET /api/quote/daily` - Get daily stoic quote with meaning
+- `GET /api/quote/daily` - Get daily stoic quote with author and meaning (fixed and working)
 
 ## 🚧 Features Not Yet Implemented
 
-### Calendar Integration
-- **Google Calendar Integration**: Connect to Google Calendar API
-- **Outlook Calendar Integration**: Connect to Outlook/Microsoft Calendar
-- **iCal Import**: Import calendar events from iCal files
-- **Auto-sync**: Automatically pull schedule every day
+### Enhanced Calendar Features
+- **Full OAuth Flow**: Automatic Google Calendar OAuth authentication
+- **Two-way Sync**: Push events from app to Google Calendar
+- **Multiple Calendar Support**: Connect multiple Google calendars
+- **Outlook Calendar**: Microsoft Outlook/Office 365 integration
+- **iCal Import/Export**: Import/export calendar files
+- **Recurring Events**: Support for repeating calendar events
 
 ### Advanced Task Features
 - **Task Reminders**: Push notifications for upcoming tasks
@@ -142,14 +151,16 @@ The app includes daily affirmations, gratitude tracking, task management, daily 
 ## 🎯 Recommended Next Steps
 
 ### Priority 1 (Essential)
-1. **Improve Task Selector UI**: Create a better modal interface for selecting daily tasks instead of prompt-based selection
-2. **Add Task Creation from Daily Page**: Allow creating new tasks directly from the daily planner without navigating to goals
-3. **Improve Goal Creation Form**: Create proper forms instead of prompt-based input for better UX
+1. **Improve Task Selector UI**: Create a proper modal interface with checkboxes for selecting daily tasks
+2. **Add Task Creation from Daily Page**: Allow creating new tasks directly from the daily planner
+3. **Improve Goal/Task Forms**: Create proper forms with dropdowns for category selection instead of prompts
+4. **Persistent Google Calendar Token**: Store access token securely (currently requires re-entry)
 
 ### Priority 2 (Important)
-4. **Calendar Integration**: Implement Google Calendar API integration for automatic schedule sync
-5. **Progress Calculation**: Auto-calculate goal progress based on child goal completion
+4. **Full Google Calendar OAuth**: Implement complete OAuth flow for seamless authentication
+5. **Progress Auto-calculation**: Auto-calculate goal progress based on child goal completion
 6. **Task Templates**: Create pre-defined task templates for common goals
+7. **Calendar Event Editing**: Edit and delete calendar events from the UI
 
 ### Priority 3 (Enhancement)
 7. **Add Analytics Dashboard**: Visual charts showing progress trends
@@ -244,6 +255,22 @@ The app includes daily affirmations, gratitude tracking, task management, daily 
 2. **Reflect**: What worked? What didn't?
 3. **Plan**: Set up next week's goals and tasks
 
+### Google Calendar Integration
+1. **Get Access Token**:
+   - Go to [Google OAuth Playground](https://developers.google.com/oauthplayground/)
+   - Select "Google Calendar API v3"
+   - Select scope: `https://www.googleapis.com/auth/calendar.readonly`
+   - Click "Authorize APIs" and sign in
+   - Click "Exchange authorization code for tokens"
+   - Copy the "Access token" value
+
+2. **Sync Calendar**:
+   - Click "Sync Google" button on Daily page
+   - Paste your access token
+   - Events from the next 7 days will be imported
+
+3. **Note**: Token expires after 1 hour. For production use, implement full OAuth flow.
+
 ## 🚀 Deployment
 
 ### Current Status
@@ -317,11 +344,12 @@ webapp/
 
 ## 🐛 Known Issues
 
-1. Task selector uses browser prompt (should be modal)
-2. Goal creation uses browser prompts (should be forms)
-3. Stoic quote API occasionally returns undefined author
+1. Task selector uses browser prompt (should be modal with checkboxes)
+2. Goal creation uses browser prompts (should be proper forms)
+3. Google Calendar requires manual access token entry (should use OAuth)
 4. No offline support yet
-5. No mobile-optimized views yet
+5. Mobile navigation could be improved with hamburger menu
+6. ~~Stoic quote API showing undefined author~~ (FIXED ✅)
 
 ## 📄 License
 
