@@ -1,7 +1,7 @@
 # Goal Planner - Your Path to Success
 
 ## Project Overview
-A comprehensive goal planning and tracking application that helps you manage your long-term vision through structured daily, weekly, quarterly, and annual goals. **Every goal is organized by life categories** (Spiritual/Faith, Financial/Career, Health/Fitness, Family/Friends, Learning, Other) to ensure balanced progress across all important areas of your life.
+A comprehensive goal planning and tracking application that helps you manage your long-term vision through structured daily, weekly, quarterly, and annual goals. **Every goal is organized by life categories** (Spiritual/Faith, Financial/Career, Health/Fitness, Family/Friends, Learning, Fun/Travel, Other) to ensure balanced progress across all important areas of your life.
 
 The app includes daily affirmations, gratitude tracking, task management, daily wins reflection, and weekly reviews.
 
@@ -22,13 +22,14 @@ The app includes daily affirmations, gratitude tracking, task management, daily 
 - **All Components**: Full dark mode support for modals, inputs, buttons, and cards
 
 ### 🎯 Goal Management System with Life Categories
-- **6 Life Categories**: Every goal belongs to one category:
+- **7 Life Categories**: Every goal belongs to one category:
   - 🙏 **Spiritual/Faith**: Prayer, meditation, spiritual growth
   - 💰 **Financial/Career**: Business, income, career advancement
   - ❤️ **Health/Fitness**: Exercise, nutrition, mental health
   - 👨‍👩‍👧 **Family/Friends**: Relationships, quality time, connections
   - 📚 **Learning**: Education, skills, personal development
-  - ⭐ **Other**: Travel, hobbies, personal projects
+  - ✈️ **Fun/Travel**: Adventures, travel, hobbies, entertainment
+  - ⭐ **Other**: Miscellaneous goals and personal projects
   
 - **Hierarchical Goal Structure**: Long-term → Annual → Quarterly → Weekly → Daily goals (all categorized)
 - **Category-Based Organization**: Goals displayed grouped by category with color-coding and icons
