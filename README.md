@@ -1,21 +1,309 @@
-```txt
+# Goal Planner - Your Path to Success
+
+## Project Overview
+A comprehensive goal planning and tracking application that helps you manage your long-term vision through structured daily, weekly, quarterly, and annual goals. The app includes daily affirmations, gratitude tracking, task management, daily wins reflection, and weekly reviews.
+
+**Live Application**: https://3000-it4k2jghikjq8k7pi5xo6-0e616f0a.sandbox.novita.ai
+
+## ✅ Currently Completed Features
+
+### 🎯 Goal Management System
+- **Hierarchical Goal Structure**: Long-term → Annual → Quarterly → Weekly → Daily goals
+- **Goal Creation & Editing**: Create goals at any level with descriptions and progress tracking
+- **Goal Relationships**: Link child goals to parent goals for clear progression tracking
+- **Progress Tracking**: Visual progress bars showing completion percentage for each goal
+- **Goal Status Management**: Track goals as active, completed, or archived
+
+### 📅 Daily Planner
+- **Daily Entry System**: One entry per day with automatic date selection
+- **Stoic Quote of the Day**: Inspirational stoic philosophy quote with meaning (auto-fetched from API)
+- **3 Daily Affirmations**: Space to write personal affirmations to start the day positively
+- **3 Gratitude Entries**: Track what you're grateful for each day
+- **Task Selection**: Choose tasks from your goal list to focus on today
+- **Task Completion Tracking**: Check off tasks as you complete them
+- **Daily Schedule**: View and manage your calendar events (supports manual entry)
+- **Daily Wins Reflection**: 
+  - Record 3 wins from today at end of day
+  - Plan 3 wins for tomorrow
+- **Quick Access to Goals**: Navigate to goals page from daily view
+
+### 📊 Weekly Review System
+- **Week Selection**: Choose any week for review or planning
+- **Evaluation Form**:
+  - Overall weekly evaluation
+  - Achievement documentation
+  - Challenges faced
+  - Next week planning
+- **Historical Reviews**: Access past weekly evaluations
+
+### 🔄 Task Management
+- **Task Creation**: Create tasks linked to specific goals
+- **Priority Levels**: High, medium, low priority tasks
+- **Due Date Tracking**: Set and track task deadlines
+- **Task Status**: Pending, in progress, completed, cancelled
+- **Daily Task Selection**: Choose which tasks to tackle each day
+- **Task Completion**: Mark tasks complete with timestamp
+
+### 💾 Data Persistence
+- **Cloudflare D1 Database**: SQLite-based persistent storage
+- **Automatic Daily Entries**: Entries created automatically when accessing a new date
+- **Data Relationships**: Properly linked goals, tasks, and daily entries
+
+### 🎨 User Interface
+- **Modern Design**: Clean, responsive design with Tailwind CSS
+- **Intuitive Navigation**: Three main sections (Daily, Goals, Weekly Review)
+- **Color-Coded Elements**: Visual indicators for priority, status, and progress
+- **Icon Integration**: FontAwesome icons for better visual communication
+- **Hover Effects**: Interactive elements with smooth transitions
+
+## 📋 API Endpoints Summary
+
+### Goals API
+- `GET /api/goals` - Get all goals (filter by type, parent_id)
+- `GET /api/goals/:id` - Get single goal
+- `POST /api/goals` - Create new goal
+- `PUT /api/goals/:id` - Update goal
+- `DELETE /api/goals/:id` - Delete goal
+- `GET /api/goals/:id/hierarchy` - Get child goals
+
+### Tasks API
+- `GET /api/tasks` - Get all tasks (filter by goal_id, due_date, status)
+- `POST /api/tasks` - Create new task
+- `PUT /api/tasks/:id` - Update task
+- `DELETE /api/tasks/:id` - Delete task
+
+### Daily Entries API
+- `GET /api/daily/:date` - Get complete daily entry (affirmations, gratitude, wins, tasks, schedule)
+- `PUT /api/daily/:date` - Update daily entry (quote, affirmations, gratitude, wins)
+- `POST /api/daily/:date/tasks/:taskId` - Add task to daily selection
+- `DELETE /api/daily/:date/tasks/:taskId` - Remove task from daily selection
+- `PUT /api/daily/:date/tasks/:taskId/complete` - Mark daily task as completed
+
+### Weekly Evaluations API
+- `GET /api/weekly/:year/:week` - Get weekly evaluation
+- `PUT /api/weekly/:year/:week` - Create or update weekly evaluation
+
+### Schedule API
+- `GET /api/schedule` - Get schedule events (filter by start_date, end_date)
+- `POST /api/schedule` - Create schedule event
+
+### Stoic Quote API
+- `GET /api/quote/daily` - Get daily stoic quote with meaning
+
+## 🚧 Features Not Yet Implemented
+
+### Calendar Integration
+- **Google Calendar Integration**: Connect to Google Calendar API
+- **Outlook Calendar Integration**: Connect to Outlook/Microsoft Calendar
+- **iCal Import**: Import calendar events from iCal files
+- **Auto-sync**: Automatically pull schedule every day
+
+### Advanced Task Features
+- **Task Reminders**: Push notifications for upcoming tasks
+- **Task Dependencies**: Link tasks that must be completed in order
+- **Recurring Tasks**: Daily, weekly, monthly recurring tasks
+- **Task Templates**: Pre-defined task lists for common goals
+
+### Analytics & Insights
+- **Progress Charts**: Visual charts showing goal progress over time
+- **Completion Statistics**: Track completion rates for tasks and goals
+- **Streak Tracking**: Track daily entry streaks
+- **Goal Achievement History**: Timeline of completed goals
+
+### Enhanced Daily Features
+- **Time Blocking**: Allocate time blocks for each task
+- **Pomodoro Timer**: Built-in productivity timer
+- **Focus Mode**: Distraction-free daily view
+- **Daily Journaling**: Free-form journal entry
+
+### Collaboration Features
+- **Goal Sharing**: Share goals with accountability partners
+- **Team Goals**: Collaborative goals for teams
+- **Comments**: Add notes and comments on goals/tasks
+
+### Mobile Features
+- **Mobile App**: Native iOS/Android apps
+- **Push Notifications**: Mobile notifications for tasks and reviews
+- **Offline Mode**: Work offline and sync later
+
+## 🎯 Recommended Next Steps
+
+### Priority 1 (Essential)
+1. **Improve Task Selector UI**: Create a better modal interface for selecting daily tasks instead of prompt-based selection
+2. **Add Task Creation from Daily Page**: Allow creating new tasks directly from the daily planner without navigating to goals
+3. **Improve Goal Creation Form**: Create proper forms instead of prompt-based input for better UX
+
+### Priority 2 (Important)
+4. **Calendar Integration**: Implement Google Calendar API integration for automatic schedule sync
+5. **Progress Calculation**: Auto-calculate goal progress based on child goal completion
+6. **Task Templates**: Create pre-defined task templates for common goals
+
+### Priority 3 (Enhancement)
+7. **Add Analytics Dashboard**: Visual charts showing progress trends
+8. **Implement Search**: Search across goals, tasks, and daily entries
+9. **Export Functionality**: Export goals and progress reports to PDF/CSV
+10. **Dark Mode**: Add dark theme option
+
+## 📊 Data Models
+
+### Goals Table
+- Hierarchical structure supporting 5 levels (long-term, annual, quarterly, weekly, daily)
+- Parent-child relationships via `parent_id`
+- Progress tracking (0-100%)
+- Status: active, completed, archived
+- Time-based attributes: year, quarter, week_number
+
+### Tasks Table
+- Linked to goals via `goal_id`
+- Priority: low, medium, high
+- Status: pending, in_progress, completed, cancelled
+- Due date tracking
+
+### Daily Entries Table
+- One entry per unique date
+- Stores stoic quote and meaning
+- Related tables: affirmations (3), gratitude (3), wins (6 - today/tomorrow)
+
+### Daily Task Selections
+- Links tasks to specific dates
+- Tracks completion status per day
+
+### Schedule Events
+- Calendar events with start/end times
+- Support for external calendar sources
+
+### Weekly Evaluations
+- One evaluation per year/week combination
+- Structured review format
+
+## 🛠️ Technology Stack
+
+- **Backend**: Hono (lightweight web framework)
+- **Database**: Cloudflare D1 (SQLite)
+- **Frontend**: Vanilla JavaScript + Tailwind CSS
+- **Icons**: FontAwesome
+- **HTTP Client**: Axios
+- **Deployment**: Cloudflare Pages
+
+## 📝 User Guide
+
+### Getting Started
+1. **Access the App**: Open the application URL in your browser
+2. **Navigate Pages**: Use the top navigation to switch between Daily, Goals, and Weekly Review
+
+### Daily Planning Workflow
+1. **Morning Routine**:
+   - Read the Stoic quote for inspiration
+   - Write 3 personal affirmations
+   - List 3 things you're grateful for
+   - Review your goals (click to Goals page)
+   - Select tasks to tackle today
+   - Review your schedule
+
+2. **During the Day**:
+   - Check off tasks as you complete them
+   - Review goals multiple times to stay focused
+
+3. **Evening Routine**:
+   - Record 3 wins from today
+   - Plan 3 wins for tomorrow
+   - Review what worked and what didn't
+
+### Goal Management
+1. **Create Long-term Goals**: Start with your big picture vision
+2. **Break Down to Annual**: What can you achieve this year?
+3. **Define Quarterly Milestones**: 3-month chunks
+4. **Plan Weekly Objectives**: Weekly focus areas
+5. **Track Progress**: Update progress percentages regularly
+
+### Weekly Review
+1. **End of Week**: Fill out the weekly evaluation form
+2. **Reflect**: What worked? What didn't?
+3. **Plan**: Set up next week's goals and tasks
+
+## 🚀 Deployment
+
+### Current Status
+- **Platform**: Cloudflare Pages (Local Development)
+- **Status**: ✅ Active and Running
+- **Database**: D1 Local SQLite (for development)
+- **Last Updated**: December 31, 2025
+
+### Local Development
+```bash
+# Install dependencies
 npm install
-npm run dev
+
+# Apply database migrations
+npm run db:migrate:local
+
+# Seed sample data
+npm run db:seed
+
+# Build the application
+npm run build
+
+# Start development server
+npm run dev:sandbox
+# OR use PM2
+pm2 start ecosystem.config.cjs
+
+# Access at http://localhost:3000
 ```
 
-```txt
-npm run deploy
+### Production Deployment
+```bash
+# Set up Cloudflare API token
+# (Guide user to Deploy tab to configure API key)
+
+# Create production D1 database
+npx wrangler d1 create webapp-production
+# Update wrangler.jsonc with database_id
+
+# Apply migrations to production
+npm run db:migrate:prod
+
+# Deploy to Cloudflare Pages
+npm run deploy:prod
 ```
 
-[For generating/synchronizing types based on your Worker configuration run](https://developers.cloudflare.com/workers/wrangler/commands/#types):
+## 📂 Project Structure
 
-```txt
-npm run cf-typegen
+```
+webapp/
+├── src/
+│   └── index.tsx              # Main Hono backend with all API routes
+├── public/
+│   └── static/
+│       └── app.js             # Frontend JavaScript application
+├── migrations/
+│   └── 0001_initial_schema.sql # Database schema
+├── seed.sql                   # Sample data for testing
+├── ecosystem.config.cjs       # PM2 configuration
+├── wrangler.jsonc            # Cloudflare configuration
+├── package.json              # Dependencies and scripts
+└── README.md                 # This file
 ```
 
-Pass the `CloudflareBindings` as generics when instantiation `Hono`:
+## 🔐 Data Privacy
 
-```ts
-// src/index.ts
-const app = new Hono<{ Bindings: CloudflareBindings }>()
-```
+- All data stored locally in D1 database
+- No third-party analytics or tracking
+- Calendar integration requires user authorization
+- All data remains under user control
+
+## 🐛 Known Issues
+
+1. Task selector uses browser prompt (should be modal)
+2. Goal creation uses browser prompts (should be forms)
+3. Stoic quote API occasionally returns undefined author
+4. No offline support yet
+5. No mobile-optimized views yet
+
+## 📄 License
+
+This project is for personal use. Modify and extend as needed for your goal tracking needs.
+
+---
+
+**Start your journey to success today! Set your goals, track your progress, and celebrate your wins!** 🎯✨
