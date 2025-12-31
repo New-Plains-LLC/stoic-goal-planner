@@ -622,3 +622,91 @@ function getWeekNumber(date) {
     const yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
     return Math.ceil((((d - yearStart) / 86400000) + 1)/7);
 }
+
+// ========== CALENDAR FUNCTIONS ==========
+
+async function showAddEventModal() {
+    const title = prompt('Event Title:');
+    if (!title) return;
+    
+    const description = prompt('Description (optional):');
+    const location = prompt('Location (optional):');
+    
+    const startTimeStr = prompt('Start Time (YYYY-MM-DD HH:MM):', `${currentDate} 09:00`);
+    if (!startTimeStr) return;
+    
+    const endTimeStr = prompt('End Time (YYYY-MM-DD HH:MM):', `${currentDate} 10:00`);
+    if (!endTimeStr) return;
+    
+    try {
+        const startTime = new Date(startTimeStr).toISOString();
+        const endTime = new Date(endTimeStr).toISOString();
+        
+        await axios.post('/api/schedule', {
+            title,
+            description,
+            location,
+            start_time: startTime,
+            end_time: endTime
+        });
+        
+        loadDailyData(currentDate);
+        alert('Event added successfully!');
+    } catch (error) {
+        console.error('Error adding event:', error);
+        alert('Failed to add event. Please check the date/time format.');
+    }
+}
+
+async function showGoogleCalendarSync() {
+    const accessToken = prompt(
+        'Enter your Google Calendar Access Token:\n\n' +
+        'To get your access token:\n' +
+        '1. Go to https://developers.google.com/oauthplayground/\n' +
+        '2. Select "Google Calendar API v3"\n' +
+        '3. Select "https://www.googleapis.com/auth/calendar.readonly"\n' +
+        '4. Click "Authorize APIs"\n' +
+        '5. Click "Exchange authorization code for tokens"\n' +
+        '6. Copy the "Access token" value\n\n' +
+        'Paste your access token here:'
+    );
+    
+    if (!accessToken) {
+        alert('Access token is required to sync Google Calendar');
+        return;
+    }
+    
+    try {
+        // Sync events for next 7 days
+        const startDate = new Date().toISOString();
+        const endDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+        
+        const response = await axios.post('/api/calendar/sync', {
+            accessToken,
+            startDate,
+            endDate
+        });
+        
+        if (response.data.success) {
+            alert(response.data.message);
+            loadDailyData(currentDate);
+        }
+    } catch (error) {
+        console.error('Error syncing calendar:', error);
+        if (error.response && error.response.data) {
+            alert(`Failed to sync calendar: ${error.response.data.error || error.response.data.details || 'Unknown error'}`);
+        } else {
+            alert('Failed to sync calendar. Please check your access token.');
+        }
+    }
+}
+
+// Store access token in localStorage for convenience (optional)
+function saveGoogleAccessToken(token) {
+    localStorage.setItem('google_calendar_token', token);
+}
+
+function getGoogleAccessToken() {
+    return localStorage.getItem('google_calendar_token');
+}
+

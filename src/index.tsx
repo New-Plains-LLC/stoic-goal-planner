@@ -530,7 +530,10 @@ app.get('/api/quote/daily', async (c) => {
   try {
     // Using Stoic Quotes API (free, no auth required)
     const response = await fetch('https://stoic.tekloon.net/stoic-quote');
-    const data = await response.json();
+    const result = await response.json();
+    
+    // The API returns data nested in a 'data' object
+    const data = result.data || result;
     
     return c.json({
       quote: data.quote,
@@ -560,6 +563,118 @@ app.get('/api/quote/daily', async (c) => {
     const randomQuote = fallbackQuotes[Math.floor(Math.random() * fallbackQuotes.length)];
     return c.json(randomQuote);
   }
+});
+
+// ============= GOOGLE CALENDAR SYNC API =============
+
+// Sync events from Google Calendar
+app.post('/api/calendar/sync', async (c) => {
+  const { env } = c;
+  const body = await c.req.json();
+  
+  const { accessToken, startDate, endDate } = body;
+  
+  if (!accessToken) {
+    return c.json({ error: 'Access token required' }, 400);
+  }
+  
+  try {
+    // Fetch events from Google Calendar API
+    const timeMin = startDate ? new Date(startDate).toISOString() : new Date().toISOString();
+    const timeMax = endDate ? new Date(endDate).toISOString() : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+    
+    const calendarResponse = await fetch(
+      `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true&orderBy=startTime`,
+      {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Accept': 'application/json'
+        }
+      }
+    );
+    
+    if (!calendarResponse.ok) {
+      throw new Error('Failed to fetch calendar events');
+    }
+    
+    const calendarData = await calendarResponse.json();
+    const events = calendarData.items || [];
+    
+    // Insert events into database
+    let syncedCount = 0;
+    for (const event of events) {
+      const startTime = event.start.dateTime || event.start.date;
+      const endTime = event.end.dateTime || event.end.date;
+      
+      // Check if event already exists
+      const { results } = await env.DB.prepare(
+        'SELECT * FROM schedule_events WHERE external_event_id = ?'
+      ).bind(event.id).all();
+      
+      if (results && results.length > 0) {
+        // Update existing event
+        await env.DB.prepare(`
+          UPDATE schedule_events
+          SET title = ?, description = ?, start_time = ?, end_time = ?, location = ?, updated_at = CURRENT_TIMESTAMP
+          WHERE external_event_id = ?
+        `).bind(
+          event.summary || 'Untitled Event',
+          event.description || '',
+          startTime,
+          endTime,
+          event.location || '',
+          event.id
+        ).run();
+      } else {
+        // Insert new event
+        await env.DB.prepare(`
+          INSERT INTO schedule_events (title, description, start_time, end_time, location, calendar_source, external_event_id)
+          VALUES (?, ?, ?, ?, ?, 'google_calendar', ?)
+        `).bind(
+          event.summary || 'Untitled Event',
+          event.description || '',
+          startTime,
+          endTime,
+          event.location || '',
+          event.id
+        ).run();
+      }
+      
+      syncedCount++;
+    }
+    
+    return c.json({ 
+      success: true, 
+      synced: syncedCount,
+      message: `Successfully synced ${syncedCount} events from Google Calendar`
+    });
+    
+  } catch (error) {
+    console.error('Calendar sync error:', error);
+    return c.json({ 
+      error: 'Failed to sync calendar', 
+      details: error.message 
+    }, 500);
+  }
+});
+
+// Get Google Calendar OAuth URL
+app.get('/api/calendar/auth-url', async (c) => {
+  // This would normally use environment variables for client ID
+  // For now, return instructions for the user
+  return c.json({
+    message: 'To enable Google Calendar integration, you need to:',
+    steps: [
+      '1. Go to Google Cloud Console (console.cloud.google.com)',
+      '2. Create a new project or select existing one',
+      '3. Enable Google Calendar API',
+      '4. Create OAuth 2.0 credentials (Web application)',
+      '5. Add authorized redirect URI: https://your-app.pages.dev/calendar/callback',
+      '6. Copy the Client ID and Client Secret',
+      '7. Use the access token to sync your calendar'
+    ],
+    authUrl: 'https://console.cloud.google.com/apis/credentials'
+  });
 });
 
 // ============= FRONTEND =============
@@ -695,10 +810,22 @@ app.get('/', (c) => {
 
                     <!-- Schedule -->
                     <div class="bg-white rounded-lg shadow-xl p-8 mb-6">
-                        <h2 class="text-2xl font-bold text-gray-800 mb-6">
-                            <i class="fas fa-clock text-orange-500 mr-2"></i>
-                            Today's Schedule
-                        </h2>
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-2xl font-bold text-gray-800">
+                                <i class="fas fa-clock text-orange-500 mr-2"></i>
+                                Today's Schedule
+                            </h2>
+                            <div class="space-x-2">
+                                <button onclick="showAddEventModal()" class="bg-orange-600 text-white px-4 py-2 rounded hover:bg-orange-700 text-sm">
+                                    <i class="fas fa-plus mr-1"></i>
+                                    Add Event
+                                </button>
+                                <button onclick="showGoogleCalendarSync()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm">
+                                    <i class="fab fa-google mr-1"></i>
+                                    Sync Google
+                                </button>
+                            </div>
+                        </div>
                         <div id="schedule-list" class="space-y-3">
                             <!-- Schedule will be loaded here -->
                         </div>
@@ -747,18 +874,18 @@ app.get('/', (c) => {
 
                     <!-- Goal Type Tabs -->
                     <div class="bg-white rounded-lg shadow-xl p-6 mb-6">
-                        <div class="flex space-x-4 mb-6 border-b">
-                            <button onclick="showGoalType('long_term')" class="goal-tab px-4 py-2 font-semibold border-b-2 border-indigo-600 text-indigo-600">
-                                Long-term Goals
+                        <div class="flex flex-wrap gap-2 mb-6 border-b pb-2">
+                            <button onclick="showGoalType('long_term')" class="goal-tab px-3 py-2 text-sm font-semibold border-b-2 border-indigo-600 text-indigo-600 whitespace-nowrap">
+                                Long-term
                             </button>
-                            <button onclick="showGoalType('annual')" class="goal-tab px-4 py-2 font-semibold text-gray-600 hover:text-indigo-600">
-                                Annual Goals
+                            <button onclick="showGoalType('annual')" class="goal-tab px-3 py-2 text-sm font-semibold text-gray-600 hover:text-indigo-600 whitespace-nowrap">
+                                Annual
                             </button>
-                            <button onclick="showGoalType('quarterly')" class="goal-tab px-4 py-2 font-semibold text-gray-600 hover:text-indigo-600">
-                                Quarterly Goals
+                            <button onclick="showGoalType('quarterly')" class="goal-tab px-3 py-2 text-sm font-semibold text-gray-600 hover:text-indigo-600 whitespace-nowrap">
+                                Quarterly
                             </button>
-                            <button onclick="showGoalType('weekly')" class="goal-tab px-4 py-2 font-semibold text-gray-600 hover:text-indigo-600">
-                                Weekly Goals
+                            <button onclick="showGoalType('weekly')" class="goal-tab px-3 py-2 text-sm font-semibold text-gray-600 hover:text-indigo-600 whitespace-nowrap">
+                                Weekly
                             </button>
                         </div>
 
