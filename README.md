@@ -27,7 +27,10 @@ The app includes daily affirmations, gratitude tracking, task management, daily 
 
 ### 📅 Daily Planner
 - **Daily Entry System**: One entry per day with automatic date selection
-- **Stoic Quote of the Day**: Inspirational stoic philosophy quote with author and meaning (auto-fetched from API)
+- **Stoic Quote of the Day**: Curated collection of 14 authentic Stoic quotes from Marcus Aurelius, Seneca, and Epictetus
+  - **Daily Rotation**: Quote changes every day based on date (consistent throughout the day)
+  - **Proper Attribution**: Each quote includes correct author and detailed historical context
+  - **Meaningful Descriptions**: In-depth explanations of Stoic philosophy and practical wisdom
 - **3 Daily Affirmations**: Space to write personal affirmations to start the day positively
 - **3 Gratitude Entries**: Track what you're grateful for each day
 - **Enhanced Task Management**:
@@ -82,15 +85,18 @@ The app includes daily affirmations, gratitude tracking, task management, daily 
 - **Data Relationships**: Properly linked goals, tasks, and daily entries
 
 ### 🎨 User Interface
-- **Modern Design**: Clean, responsive design with Tailwind CSS
-- **Intuitive Navigation**: Three main sections (Daily, Goals, Weekly Review)
-- **Modal-Based Forms**: Professional modals for creating tasks and goals (no more prompts!)
+- **Elegant Design**: Subdued, sophisticated color palette with refined aesthetics
+- **Dark Mode**: Full dark mode support with automatic persistence (toggle in nav bar)
+- **Clean Interface**: Removed decorative icons for a more professional, minimalist look
+- **Border-Based Cards**: Subtle borders instead of heavy shadows for elegance
+- **Refined Typography**: Balanced font sizes and weights for readability
+- **Modal-Based Forms**: Professional modals for creating tasks and goals
 - **Task Selector Modal**: Checkbox-based selection with category grouping
-- **Color-Coded Elements**: Visual indicators for priority, status, category, and progress
-- **Icon Integration**: FontAwesome icons for better visual communication
-- **Hover Effects**: Interactive elements with smooth transitions
-- **Priority Sections**: Visual separation of high vs other priority tasks
+- **Color-Coded Elements**: Subtle visual indicators for priority, status, and category
+- **Smooth Transitions**: Seamless dark/light mode switching
+- **Priority Sections**: Clean separation of high vs other priority tasks
 - **Category Grouping**: Goals and tasks organized by life category
+- **Responsive Design**: Fully optimized for mobile and desktop
 
 ## 📋 API Endpoints Summary
 
