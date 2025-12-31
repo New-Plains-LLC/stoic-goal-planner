@@ -925,13 +925,13 @@ app.get('/', (c) => {
                     <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 mb-6">
                         <div class="flex justify-between items-center">
                             <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">Daily Planner</h1>
-                            <input type="date" id="daily-date" class="border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400" />
+                            <input type="date" id="daily-date" class="border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500" />
                         </div>
                     </div>
 
                     <!-- Stoic Quote -->
                     <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 mb-6">
-                        <div class="border-l-4 border-indigo-500 dark:border-indigo-400 pl-4">
+                        <div class="border-l-4 border-gray-400 dark:border-gray-500 pl-4">
                             <p id="stoic-quote" class="text-lg italic text-gray-700 dark:text-gray-300 mb-2 leading-relaxed"></p>
                             <p id="stoic-author" class="text-sm font-medium text-gray-600 dark:text-gray-400 mb-3"></p>
                             <p id="stoic-meaning" class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed"></p>
@@ -944,9 +944,9 @@ app.get('/', (c) => {
                         <div class="mb-6">
                             <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-3 pb-2 border-b border-gray-200 dark:border-gray-700">Affirmations</h3>
                             <div class="space-y-3">
-                                <input type="text" id="affirmation-1" placeholder="I am..." class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent" />
-                                <input type="text" id="affirmation-2" placeholder="I will..." class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent" />
-                                <input type="text" id="affirmation-3" placeholder="I believe..." class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent" />
+                                <input type="text" id="affirmation-1" placeholder="I am..." class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 focus:border-transparent" />
+                                <input type="text" id="affirmation-2" placeholder="I will..." class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 focus:border-transparent" />
+                                <input type="text" id="affirmation-3" placeholder="I believe..." class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 focus:border-transparent" />
                             </div>
                         </div>
 
@@ -954,15 +954,15 @@ app.get('/', (c) => {
                         <div>
                             <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-3 pb-2 border-b border-gray-200 dark:border-gray-700">Gratitude</h3>
                             <div class="space-y-3">
-                                <input type="text" id="gratitude-1" placeholder="Today I'm grateful for..." class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent" />
-                                <input type="text" id="gratitude-2" placeholder="I appreciate..." class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent" />
-                                <input type="text" id="gratitude-3" placeholder="I'm thankful for..." class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent" />
+                                <input type="text" id="gratitude-1" placeholder="Today I'm grateful for..." class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 focus:border-transparent" />
+                                <input type="text" id="gratitude-2" placeholder="I appreciate..." class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 focus:border-transparent" />
+                                <input type="text" id="gratitude-3" placeholder="I'm thankful for..." class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 focus:border-transparent" />
                             </div>
                         </div>
 
                         <!-- Save Button -->
                         <div class="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
-                            <button onclick="saveDailyEntry()" class="bg-indigo-600 dark:bg-indigo-500 text-white px-6 py-2.5 rounded-lg hover:bg-indigo-700 dark:hover:bg-indigo-600 transition font-medium">
+                            <button onclick="saveDailyEntry()" class="bg-gray-800 dark:bg-gray-700 text-white px-6 py-2.5 rounded-lg hover:bg-gray-700 dark:hover:bg-gray-600 transition font-medium">
                                 Save Entry
                             </button>
                         </div>
@@ -973,7 +973,7 @@ app.get('/', (c) => {
                         <div class="flex justify-between items-center mb-6">
                             <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Today's Tasks</h2>
                             <div class="flex gap-2">
-                                <button onclick="showCreateTaskModal()" class="bg-indigo-600 dark:bg-indigo-500 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 dark:hover:bg-indigo-600 transition text-sm font-medium">
+                                <button onclick="showCreateTaskModal()" class="bg-gray-800 dark:bg-gray-700 text-white px-4 py-2 rounded-lg hover:bg-gray-700 dark:hover:bg-gray-600 transition text-sm font-medium">
                                     New Task
                                 </button>
                                 <button onclick="showTaskSelector()" class="border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition text-sm font-medium">
@@ -1004,7 +1004,7 @@ app.get('/', (c) => {
                         <div class="flex justify-between items-center mb-6">
                             <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Today's Schedule</h2>
                             <div class="flex gap-2">
-                                <button onclick="showAddEventModal()" class="bg-indigo-600 dark:bg-indigo-500 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 dark:hover:bg-indigo-600 transition text-sm font-medium">
+                                <button onclick="showAddEventModal()" class="bg-gray-800 dark:bg-gray-700 text-white px-4 py-2 rounded-lg hover:bg-gray-700 dark:hover:bg-gray-600 transition text-sm font-medium">
                                     Add Event
                                 </button>
                                 <button onclick="showGoogleCalendarSync()" class="border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition text-sm font-medium">
@@ -1024,23 +1024,23 @@ app.get('/', (c) => {
                         <div class="mb-6">
                             <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">Today's Wins</h3>
                             <div class="space-y-2">
-                                <input type="text" id="win-today-1" placeholder="Win #1" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent" />
-                                <input type="text" id="win-today-2" placeholder="Win #2" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent" />
-                                <input type="text" id="win-today-3" placeholder="Win #3" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent" />
+                                <input type="text" id="win-today-1" placeholder="Win #1" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 focus:border-transparent" />
+                                <input type="text" id="win-today-2" placeholder="Win #2" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 focus:border-transparent" />
+                                <input type="text" id="win-today-3" placeholder="Win #3" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 focus:border-transparent" />
                             </div>
                         </div>
 
                         <div class="mb-6">
                             <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">Tomorrow's Planned Wins</h3>
                             <div class="space-y-2">
-                                <input type="text" id="win-tomorrow-1" placeholder="Planned win #1" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent" />
-                                <input type="text" id="win-tomorrow-2" placeholder="Planned win #2" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent" />
-                                <input type="text" id="win-tomorrow-3" placeholder="Planned win #3" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent" />
+                                <input type="text" id="win-tomorrow-1" placeholder="Planned win #1" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 focus:border-transparent" />
+                                <input type="text" id="win-tomorrow-2" placeholder="Planned win #2" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 focus:border-transparent" />
+                                <input type="text" id="win-tomorrow-3" placeholder="Planned win #3" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 focus:border-transparent" />
                             </div>
                         </div>
 
                         <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
-                            <button onclick="saveWins()" class="bg-indigo-600 dark:bg-indigo-500 text-white px-6 py-2.5 rounded-lg hover:bg-indigo-700 dark:hover:bg-indigo-600 transition font-medium">
+                            <button onclick="saveWins()" class="bg-gray-800 dark:bg-gray-700 text-white px-6 py-2.5 rounded-lg hover:bg-gray-700 dark:hover:bg-gray-600 transition font-medium">
                                 Save Wins
                             </button>
                         </div>
@@ -1056,7 +1056,7 @@ app.get('/', (c) => {
                     <!-- Goal Type Tabs -->
                     <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 mb-6">
                         <div class="flex flex-wrap gap-2 mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">
-                            <button onclick="showGoalType('long_term')" class="goal-tab px-4 py-2 text-sm font-medium rounded-lg border-2 border-indigo-600 dark:border-indigo-400 text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/20 whitespace-nowrap">
+                            <button onclick="showGoalType('long_term')" class="goal-tab px-4 py-2 text-sm font-medium rounded-lg border-2 border-gray-700 dark:border-gray-400 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 whitespace-nowrap">
                                 Long-term
                             </button>
                             <button onclick="showGoalType('annual')" class="goal-tab px-4 py-2 text-sm font-medium rounded-lg border-2 border-transparent text-gray-600 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-600 whitespace-nowrap">
@@ -1071,7 +1071,7 @@ app.get('/', (c) => {
                         </div>
 
                         <!-- Add Goal Button -->
-                        <button onclick="showAddGoalModal()" class="bg-indigo-600 dark:bg-indigo-500 text-white px-6 py-2.5 rounded-lg hover:bg-indigo-700 dark:hover:bg-indigo-600 transition font-medium mb-6">
+                        <button onclick="showAddGoalModal()" class="bg-gray-800 dark:bg-gray-700 text-white px-6 py-2.5 rounded-lg hover:bg-gray-700 dark:hover:bg-gray-600 transition font-medium mb-6">
                             Add New Goal
                         </button>
 
@@ -1091,31 +1091,31 @@ app.get('/', (c) => {
 
                         <div class="mb-6">
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Select Week</label>
-                            <input type="week" id="weekly-week" class="border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent" />
+                            <input type="week" id="weekly-week" class="border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 focus:border-transparent" />
                         </div>
 
                         <div class="mb-6">
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Overall Evaluation</label>
-                            <textarea id="weekly-evaluation" rows="4" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent" placeholder="How did this week go?"></textarea>
+                            <textarea id="weekly-evaluation" rows="4" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 focus:border-transparent" placeholder="How did this week go?"></textarea>
                         </div>
 
                         <div class="mb-6">
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Achievements</label>
-                            <textarea id="weekly-achievements" rows="4" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent" placeholder="What did you accomplish?"></textarea>
+                            <textarea id="weekly-achievements" rows="4" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 focus:border-transparent" placeholder="What did you accomplish?"></textarea>
                         </div>
 
                         <div class="mb-6">
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Challenges</label>
-                            <textarea id="weekly-challenges" rows="4" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent" placeholder="What challenges did you face?"></textarea>
+                            <textarea id="weekly-challenges" rows="4" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 focus:border-transparent" placeholder="What challenges did you face?"></textarea>
                         </div>
 
                         <div class="mb-6">
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Next Week Plan</label>
-                            <textarea id="weekly-next-plan" rows="4" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent" placeholder="What are your plans for next week?"></textarea>
+                            <textarea id="weekly-next-plan" rows="4" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 focus:border-transparent" placeholder="What are your plans for next week?"></textarea>
                         </div>
 
                         <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
-                            <button onclick="saveWeeklyReview()" class="bg-indigo-600 dark:bg-indigo-500 text-white px-6 py-2.5 rounded-lg hover:bg-indigo-700 dark:hover:bg-indigo-600 transition font-medium">
+                            <button onclick="saveWeeklyReview()" class="bg-gray-800 dark:bg-gray-700 text-white px-6 py-2.5 rounded-lg hover:bg-gray-700 dark:hover:bg-gray-600 transition font-medium">
                                 Save Review
                             </button>
                         </div>
@@ -1143,7 +1143,7 @@ app.get('/', (c) => {
                     </div>
                 </div>
                 <div class="p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
-                    <button onclick="addSelectedTasks()" class="bg-indigo-600 dark:bg-indigo-500 text-white px-6 py-2.5 rounded-lg hover:bg-indigo-700 dark:hover:bg-indigo-600 transition w-full font-medium">
+                    <button onclick="addSelectedTasks()" class="bg-gray-800 dark:bg-gray-700 text-white px-6 py-2.5 rounded-lg hover:bg-gray-700 dark:hover:bg-gray-600 transition w-full font-medium">
                         Add Selected Tasks
                     </button>
                 </div>
@@ -1165,15 +1165,15 @@ app.get('/', (c) => {
                     <div class="space-y-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Task Title *</label>
-                            <input type="text" id="new-task-title" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent" placeholder="Enter task title" />
+                            <input type="text" id="new-task-title" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 focus:border-transparent" placeholder="Enter task title" />
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Description</label>
-                            <textarea id="new-task-description" rows="3" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent" placeholder="Task description (optional)"></textarea>
+                            <textarea id="new-task-description" rows="3" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 focus:border-transparent" placeholder="Task description (optional)"></textarea>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Category *</label>
-                            <select id="new-task-category" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent">
+                            <select id="new-task-category" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 focus:border-transparent">
                                 <option value="spiritual">Spiritual/Faith</option>
                                 <option value="financial">Financial/Career</option>
                                 <option value="health">Health/Fitness</option>
@@ -1184,7 +1184,7 @@ app.get('/', (c) => {
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Priority *</label>
-                            <select id="new-task-priority" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent">
+                            <select id="new-task-priority" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 focus:border-transparent">
                                 <option value="high">High Priority</option>
                                 <option value="medium" selected>Medium Priority</option>
                                 <option value="low">Low Priority</option>
@@ -1192,11 +1192,11 @@ app.get('/', (c) => {
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Due Date</label>
-                            <input type="date" id="new-task-due-date" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent" />
+                            <input type="date" id="new-task-due-date" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 focus:border-transparent" />
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Link to Goal (Optional)</label>
-                            <select id="new-task-goal" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent">
+                            <select id="new-task-goal" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 focus:border-transparent">
                                 <option value="">No goal (standalone task)</option>
                                 <!-- Goals will be loaded here -->
                             </select>
@@ -1207,7 +1207,7 @@ app.get('/', (c) => {
                     <button onclick="closeCreateTaskModal()" class="flex-1 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-6 py-2.5 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition font-medium">
                         Cancel
                     </button>
-                    <button onclick="createNewTask()" class="flex-1 bg-indigo-600 dark:bg-indigo-500 text-white px-6 py-2.5 rounded-lg hover:bg-indigo-700 dark:hover:bg-indigo-600 transition font-medium">
+                    <button onclick="createNewTask()" class="flex-1 bg-gray-800 dark:bg-gray-700 text-white px-6 py-2.5 rounded-lg hover:bg-gray-700 dark:hover:bg-gray-600 transition font-medium">
                         Create Task
                     </button>
                 </div>
@@ -1229,15 +1229,15 @@ app.get('/', (c) => {
                     <div class="space-y-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Goal Title *</label>
-                            <input type="text" id="new-goal-title" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent" placeholder="Enter goal title" />
+                            <input type="text" id="new-goal-title" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 focus:border-transparent" placeholder="Enter goal title" />
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Description</label>
-                            <textarea id="new-goal-description" rows="3" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent" placeholder="Goal description (optional)"></textarea>
+                            <textarea id="new-goal-description" rows="3" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 focus:border-transparent" placeholder="Goal description (optional)"></textarea>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Category *</label>
-                            <select id="new-goal-category" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent">
+                            <select id="new-goal-category" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 focus:border-transparent">
                                 <option value="spiritual">Spiritual/Faith</option>
                                 <option value="financial">Financial/Career</option>
                                 <option value="health">Health/Fitness</option>
@@ -1252,7 +1252,7 @@ app.get('/', (c) => {
                     <button onclick="closeCreateGoalModal()" class="flex-1 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-6 py-2.5 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition font-medium">
                         Cancel
                     </button>
-                    <button onclick="createNewGoal()" class="flex-1 bg-indigo-600 dark:bg-indigo-500 text-white px-6 py-2.5 rounded-lg hover:bg-indigo-700 dark:hover:bg-indigo-600 transition font-medium">
+                    <button onclick="createNewGoal()" class="flex-1 bg-gray-800 dark:bg-gray-700 text-white px-6 py-2.5 rounded-lg hover:bg-gray-700 dark:hover:bg-gray-600 transition font-medium">
                         Create Goal
                     </button>
                 </div>
