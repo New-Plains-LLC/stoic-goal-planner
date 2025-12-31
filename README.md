@@ -30,12 +30,18 @@ The app includes daily affirmations, gratitude tracking, task management, daily 
 - **Stoic Quote of the Day**: Inspirational stoic philosophy quote with author and meaning (auto-fetched from API)
 - **3 Daily Affirmations**: Space to write personal affirmations to start the day positively
 - **3 Gratitude Entries**: Track what you're grateful for each day
-- **Task Selection**: Choose tasks from your goal list to focus on today
+- **Enhanced Task Management**:
+  - **Two buttons**: "New Task" (create fresh) + "Add from List" (select existing)
+  - **Split by Priority**: High priority tasks shown separately from others
+  - **Task Creation Modal**: Professional form with all fields (category, priority, description, due date, goal link)
+  - **Task Selector Modal**: Checkbox-based selection grouped by category
+  - **Automatic Addition**: Newly created tasks automatically added to today
 - **Task Completion Tracking**: Check off tasks as you complete them with category badges
 - **Daily Schedule with Google Calendar**: 
   - View and manage your calendar events
-  - **Google Calendar Sync**: Import events from Google Calendar
+  - **Google Calendar Sync**: Import events from Google Calendar with persistent token storage
   - **Add Events**: Create calendar events directly in the app
+  - **Auto Token Storage**: Access token saved in localStorage for convenience
   - Schedule integration with real-time updates
 - **Daily Wins Reflection**: 
   - Record 3 wins from today at end of day
@@ -53,14 +59,22 @@ The app includes daily affirmations, gratitude tracking, task management, daily 
 - **Historical Reviews**: Access past weekly evaluations
 
 ### 🔄 Task Management
-- **Task Creation**: Create tasks linked to specific goals with category assignment
+- **Create New Tasks**: Create tasks directly from daily page (not just from goal list)
+- **Two Creation Methods**:
+  - **"New Task" button**: Create standalone task with full form (title, description, category, priority, due date)
+  - **"Add from List" button**: Select existing tasks with checkbox modal
+- **Task Creation Modal**: Professional form with dropdowns for category and priority
 - **Category Badges**: Visual category indicators on every task (color-coded)
+- **Priority-Based Sections**: 
+  - **High Priority Tasks**: Dedicated section with fire icon
+  - **Other Tasks**: Medium and low priority tasks in separate section
 - **Priority Levels**: High, medium, low priority tasks
 - **Due Date Tracking**: Set and track task deadlines
 - **Task Status**: Pending, in progress, completed, cancelled
-- **Daily Task Selection**: Choose which tasks to tackle each day (shows category badges)
+- **Daily Task Selection**: Choose which tasks to tackle each day with checkbox modal
 - **Task Completion**: Mark tasks complete with timestamp
 - **Category Filtering**: Filter tasks by life category
+- **Link to Goals**: Optionally link tasks to specific goals
 
 ### 💾 Data Persistence
 - **Cloudflare D1 Database**: SQLite-based persistent storage
@@ -70,9 +84,13 @@ The app includes daily affirmations, gratitude tracking, task management, daily 
 ### 🎨 User Interface
 - **Modern Design**: Clean, responsive design with Tailwind CSS
 - **Intuitive Navigation**: Three main sections (Daily, Goals, Weekly Review)
-- **Color-Coded Elements**: Visual indicators for priority, status, and progress
+- **Modal-Based Forms**: Professional modals for creating tasks and goals (no more prompts!)
+- **Task Selector Modal**: Checkbox-based selection with category grouping
+- **Color-Coded Elements**: Visual indicators for priority, status, category, and progress
 - **Icon Integration**: FontAwesome icons for better visual communication
 - **Hover Effects**: Interactive elements with smooth transitions
+- **Priority Sections**: Visual separation of high vs other priority tasks
+- **Category Grouping**: Goals and tasks organized by life category
 
 ## 📋 API Endpoints Summary
 
@@ -113,12 +131,13 @@ The app includes daily affirmations, gratitude tracking, task management, daily 
 ## 🚧 Features Not Yet Implemented
 
 ### Enhanced Calendar Features
-- **Full OAuth Flow**: Automatic Google Calendar OAuth authentication
+- **Full OAuth Flow**: Automatic Google Calendar OAuth authentication (foundation built, needs client ID setup)
 - **Two-way Sync**: Push events from app to Google Calendar
 - **Multiple Calendar Support**: Connect multiple Google calendars
 - **Outlook Calendar**: Microsoft Outlook/Office 365 integration
 - **iCal Import/Export**: Import/export calendar files
 - **Recurring Events**: Support for repeating calendar events
+- **Calendar Event Editing**: Edit and delete events from the UI
 
 ### Advanced Task Features
 - **Task Reminders**: Push notifications for upcoming tasks
@@ -150,17 +169,18 @@ The app includes daily affirmations, gratitude tracking, task management, daily 
 
 ## 🎯 Recommended Next Steps
 
-### Priority 1 (Essential)
-1. **Improve Task Selector UI**: Create a proper modal interface with checkboxes for selecting daily tasks
-2. **Add Task Creation from Daily Page**: Allow creating new tasks directly from the daily planner
-3. **Improve Goal/Task Forms**: Create proper forms with dropdowns for category selection instead of prompts
-4. **Persistent Google Calendar Token**: Store access token securely (currently requires re-entry)
+### Priority 1 (Essential) - ✅ ALL COMPLETED!
+1. ~~Improve Task Selector UI~~ ✅ Checkbox modal with category grouping
+2. ~~Add Task Creation from Daily Page~~ ✅ "New Task" button with full form
+3. ~~Improve Goal/Task Forms~~ ✅ Proper modals with dropdowns
+4. ~~Persistent Google Calendar Token~~ ✅ localStorage storage with auto-reuse
 
 ### Priority 2 (Important)
-4. **Full Google Calendar OAuth**: Implement complete OAuth flow for seamless authentication
-5. **Progress Auto-calculation**: Auto-calculate goal progress based on child goal completion
-6. **Task Templates**: Create pre-defined task templates for common goals
-7. **Calendar Event Editing**: Edit and delete calendar events from the UI
+1. **Complete Google Calendar OAuth**: Set up client ID/secret in Google Cloud Console
+2. **Progress Auto-calculation**: Auto-calculate goal progress based on child goal completion
+3. **Task Templates**: Create pre-defined task templates for common goals
+4. **Calendar Event Editing**: Edit and delete calendar events from the UI
+5. **Task Dependencies**: Link tasks that must be completed in order
 
 ### Priority 3 (Enhancement)
 7. **Add Analytics Dashboard**: Visual charts showing progress trends
@@ -344,12 +364,14 @@ webapp/
 
 ## 🐛 Known Issues
 
-1. Task selector uses browser prompt (should be modal with checkboxes)
-2. Goal creation uses browser prompts (should be proper forms)
-3. Google Calendar requires manual access token entry (should use OAuth)
+1. ~~Task selector uses browser prompt~~ (FIXED ✅ - Now uses checkbox modal)
+2. ~~Goal creation uses browser prompts~~ (FIXED ✅ - Now uses proper form modal)
+3. Google Calendar OAuth needs client ID/secret setup in Google Cloud Console (instructions provided)
 4. No offline support yet
 5. Mobile navigation could be improved with hamburger menu
 6. ~~Stoic quote API showing undefined author~~ (FIXED ✅)
+7. ~~Tasks not split by priority~~ (FIXED ✅ - High priority separate section)
+8. ~~Can't create tasks from daily page~~ (FIXED ✅ - "New Task" button added)
 
 ## 📄 License
 
