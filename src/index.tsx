@@ -525,62 +525,101 @@ app.post('/api/schedule', async (c) => {
 
 // ============= STOIC QUOTE API =============
 
-// Get daily stoic quote (using free API with daily caching)
+// Get daily stoic quote (curated collection with daily rotation)
 app.get('/api/quote/daily', async (c) => {
   try {
-    // Using Stoic Quotes API (free, no auth required)
-    const response = await fetch('https://stoic.tekloon.net/stoic-quote');
-    const result = await response.json();
+    const today = new Date().toISOString().split('T')[0];
     
-    // The API returns data nested in a 'data' object
-    const data = result.data || result;
+    // Generate a consistent seed from the date for daily rotation
+    const dateSeed = today.split('-').reduce((acc, val) => acc + parseInt(val), 0);
     
-    if (!data.quote || !data.author) {
-      throw new Error('Invalid API response');
-    }
-    
-    return c.json({
-      quote: data.quote,
-      author: data.author,
-      meaning: `This Stoic wisdom from ${data.author} teaches us about resilience, virtue, and living in accordance with nature. ${data.author === 'Marcus Aurelius' ? 'As a Roman emperor and philosopher, he emphasized controlling our perceptions and actions.' : data.author === 'Epictetus' ? 'A former slave turned philosopher, he taught that we should focus only on what we can control.' : data.author === 'Seneca' ? 'A Stoic philosopher and statesman, he wrote extensively on ethics and the art of living well.' : 'Their philosophy reminds us to focus on what we can control and accept what we cannot.'}`
-    });
-  } catch (error) {
-    console.error('Stoic quote API error:', error);
-    // Fallback quotes if API fails
-    const fallbackQuotes = [
+    // Curated collection of authentic Stoic quotes
+    const stoicQuotes = [
+      {
+        quote: "You have power over your mind - not outside events. Realize this, and you will find strength.",
+        author: "Marcus Aurelius",
+        meaning: "Marcus Aurelius, the Roman emperor and philosopher, reminds us that our thoughts and responses are within our control, even when external circumstances are not. True strength comes from mastering our internal reactions rather than trying to control the uncontrollable."
+      },
       {
         quote: "The obstacle is the way.",
         author: "Marcus Aurelius",
-        meaning: "What stands in the way becomes the way. Every obstacle is an opportunity to practice virtue and grow stronger. Marcus Aurelius, the Roman emperor and philosopher, reminds us that challenges are not impediments but the path itself."
+        meaning: "What stands in the way becomes the way. Every obstacle is an opportunity to practice virtue and grow stronger. Marcus Aurelius teaches us that challenges are not impediments but the path itself to wisdom and growth."
       },
       {
-        quote: "He who fears death will never do anything worth of a man who is alive.",
-        author: "Seneca",
-        meaning: "Living in fear prevents us from truly living. Embrace life fully by accepting its temporary nature. Seneca, the Stoic philosopher, teaches us that courage in the face of mortality is essential for a meaningful life."
+        quote: "It's not what happens to you, but how you react to it that matters.",
+        author: "Epictetus",
+        meaning: "Epictetus, who rose from slavery to become one of history's greatest philosophers, knew that we cannot always control events, but we always control our responses. Our interpretation of events shapes our experience more than the events themselves."
       },
       {
         quote: "No man is free who is not master of himself.",
         author: "Epictetus",
-        meaning: "True freedom comes from self-control and mastery over our reactions, not from external circumstances. Epictetus, who rose from slavery to become one of history's greatest philosophers, knew that internal freedom is the only freedom that matters."
+        meaning: "True freedom comes from self-control and mastery over our reactions, not from external circumstances. Epictetus teaches that internal freedom - the ability to govern our thoughts and actions - is the only freedom that truly matters."
       },
       {
-        quote: "Wealth consists not in having great possessions, but in having few wants.",
-        author: "Epictetus",
-        meaning: "True abundance comes from contentment with what we have, not from accumulating more. Epictetus teaches us that reducing our desires is the path to genuine happiness and freedom from material dependency."
+        quote: "He who fears death will never do anything worth of a man who is alive.",
+        author: "Seneca",
+        meaning: "Living in fear prevents us from truly living. Embrace life fully by accepting its temporary nature. Seneca, the Stoic philosopher and statesman, teaches us that courage in the face of mortality is essential for a meaningful life."
+      },
+      {
+        quote: "We suffer more in imagination than in reality.",
+        author: "Seneca",
+        meaning: "Most of our suffering comes not from actual events but from our anxious anticipation and catastrophic thinking. Seneca reminds us that staying present and rational helps us see that our fears are often worse than reality."
       },
       {
         quote: "It is not the man who has too little, but the man who craves more, that is poor.",
         author: "Seneca",
-        meaning: "Poverty is a state of mind characterized by endless wanting, not a measure of material possessions. Seneca reminds us that gratitude and contentment are the foundations of a rich life."
+        meaning: "Poverty is a state of mind characterized by endless wanting, not a measure of material possessions. Seneca teaches that gratitude and contentment are the foundations of a rich life."
+      },
+      {
+        quote: "Wealth consists not in having great possessions, but in having few wants.",
+        author: "Epictetus",
+        meaning: "True abundance comes from contentment with what we have, not from accumulating more. Epictetus shows us that reducing our desires is the path to genuine happiness and freedom from material dependency."
+      },
+      {
+        quote: "The best revenge is not to be like your enemy.",
+        author: "Marcus Aurelius",
+        meaning: "When wronged, the wise person maintains their virtue rather than descending to the level of those who harm them. Marcus Aurelius teaches that preserving our character is more important than seeking vengeance."
+      },
+      {
+        quote: "First say to yourself what you would be; and then do what you have to do.",
+        author: "Epictetus",
+        meaning: "Define your identity and values before taking action. Epictetus guides us to establish our principles first, then align our behavior with them. Clarity of purpose must precede action."
+      },
+      {
+        quote: "The whole future lies in uncertainty: live immediately.",
+        author: "Seneca",
+        meaning: "Since we cannot predict or control the future, wisdom lies in embracing the present moment. Seneca urges us to live fully now rather than postponing life while waiting for ideal circumstances."
+      },
+      {
+        quote: "Dwell on the beauty of life. Watch the stars, and see yourself running with them.",
+        author: "Marcus Aurelius",
+        meaning: "The emperor-philosopher reminds us to appreciate the magnificence of existence. By contemplating the cosmos and our place in it, we gain perspective on our troubles and reconnect with wonder."
+      },
+      {
+        quote: "He is a wise man who does not grieve for the things which he has not, but rejoices for those which he has.",
+        author: "Epictetus",
+        meaning: "Gratitude for what we possess brings more happiness than longing for what we lack. Epictetus teaches that shifting our focus from absence to abundance transforms our experience of life."
+      },
+      {
+        quote: "Luck is what happens when preparation meets opportunity.",
+        author: "Seneca",
+        meaning: "What appears as fortune is often the result of readiness encountering possibility. Seneca reminds us that we create our own 'luck' through diligent preparation and wise action when opportunities arise."
       }
     ];
     
-    // Use date-based selection for consistency
-    const today = new Date().toISOString().split('T')[0];
-    const hash = today.split('-').reduce((acc, val) => acc + parseInt(val), 0);
-    const index = hash % fallbackQuotes.length;
+    // Select quote based on date (consistent for the entire day)
+    const index = dateSeed % stoicQuotes.length;
+    const selectedQuote = stoicQuotes[index];
     
-    return c.json(fallbackQuotes[index]);
+    return c.json(selectedQuote);
+  } catch (error) {
+    console.error('Stoic quote error:', error);
+    // Fallback if something goes wrong
+    return c.json({
+      quote: "You have power over your mind - not outside events. Realize this, and you will find strength.",
+      author: "Marcus Aurelius",
+      meaning: "Marcus Aurelius, the Roman emperor and philosopher, reminds us that our thoughts and responses are within our control, even when external circumstances are not. True strength comes from mastering our internal reactions."
+    });
   }
 });
 
