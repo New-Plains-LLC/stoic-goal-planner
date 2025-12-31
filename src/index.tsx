@@ -1206,6 +1206,7 @@ app.get('/', (c) => {
                                 <option value="health">Health/Fitness</option>
                                 <option value="family">Family/Friends</option>
                                 <option value="learning">Learning</option>
+                                <option value="fun">Fun/Travel</option>
                                 <option value="other">Other</option>
                             </select>
                         </div>
@@ -1270,6 +1271,7 @@ app.get('/', (c) => {
                                 <option value="health">Health/Fitness</option>
                                 <option value="family">Family/Friends</option>
                                 <option value="learning">Learning</option>
+                                <option value="fun">Fun/Travel</option>
                                 <option value="other">Other</option>
                             </select>
                         </div>

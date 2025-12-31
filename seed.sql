@@ -25,9 +25,13 @@ INSERT INTO goals (id, title, description, goal_type, category, status) VALUES
 INSERT INTO goals (id, title, description, goal_type, category, status) VALUES 
   (5, 'Become a lifelong learner', 'Continuously grow knowledge and skills in diverse areas', 'long_term', 'learning', 'active');
 
+-- Fun/Travel
+INSERT INTO goals (id, title, description, goal_type, category, status) VALUES 
+  (6, 'Experience the world and embrace adventure', 'Travel to new places, try new experiences, and enjoy life''s pleasures', 'long_term', 'fun', 'active');
+
 -- Other
 INSERT INTO goals (id, title, description, goal_type, category, status) VALUES 
-  (6, 'Live a life of purpose and impact', 'Make a positive difference in the world and leave a legacy', 'long_term', 'other', 'active');
+  (7, 'Live a life of purpose and impact', 'Make a positive difference in the world and leave a legacy', 'long_term', 'other', 'active');
 
 -- ============= ANNUAL GOALS (2025) =============
 
@@ -56,9 +60,14 @@ INSERT INTO goals (id, title, description, goal_type, category, parent_id, year,
   (19, 'Learn Spanish to conversational level', 'Complete language course and practice with native speakers', 'annual', 'learning', 5, 2025, 'active'),
   (20, 'Complete professional certification', 'Earn certification in my field to advance career', 'annual', 'learning', 5, 2025, 'active');
 
--- Other (parent: 6)
+-- Fun/Travel (parent: 6)
 INSERT INTO goals (id, title, description, goal_type, category, parent_id, year, status) VALUES 
-  (21, 'Volunteer 50 hours this year', 'Give back to community through regular volunteering', 'annual', 'other', 6, 2025, 'active');
+  (21, 'Visit 3 new countries or states', 'Explore new destinations and cultures', 'annual', 'fun', 6, 2025, 'active'),
+  (22, 'Try 12 new experiences', 'Do something new and exciting each month', 'annual', 'fun', 6, 2025, 'active');
+
+-- Other (parent: 7)
+INSERT INTO goals (id, title, description, goal_type, category, parent_id, year, status) VALUES 
+  (23, 'Volunteer 50 hours this year', 'Give back to community through regular volunteering', 'annual', 'other', 7, 2025, 'active');
 
 -- ============= QUARTERLY GOALS (Q1 2025) =============
 
@@ -84,9 +93,14 @@ INSERT INTO goals (id, title, description, goal_type, category, parent_id, year,
 INSERT INTO goals (id, title, description, goal_type, category, parent_id, year, quarter, status) VALUES 
   (37, 'Complete Spanish basics', 'Finish first 3 modules of Spanish course', 'quarterly', 'learning', 19, 2025, 1, 'active');
 
--- Other (parent: 21)
+-- Fun/Travel (parent: 21)
 INSERT INTO goals (id, title, description, goal_type, category, parent_id, year, quarter, status) VALUES 
-  (38, 'Volunteer 15 hours', 'Complete 15 hours of community service', 'quarterly', 'other', 21, 2025, 1, 'active');
+  (38, 'Plan spring break trip', 'Research and book destination for Q2', 'quarterly', 'fun', 21, 2025, 1, 'active'),
+  (39, 'Try 3 new activities', 'Experience new hobbies or adventures', 'quarterly', 'fun', 22, 2025, 1, 'active');
+
+-- Other (parent: 23)
+INSERT INTO goals (id, title, description, goal_type, category, parent_id, year, quarter, status) VALUES 
+  (40, 'Volunteer 15 hours', 'Complete 15 hours of community service', 'quarterly', 'other', 23, 2025, 1, 'active');
 
 -- ============= WEEKLY GOALS (Week 1, 2025) =============
 
@@ -110,9 +124,13 @@ INSERT INTO goals (id, title, description, goal_type, category, parent_id, year,
 INSERT INTO goals (id, title, description, goal_type, category, parent_id, year, week_number, status) VALUES 
   (55, 'Complete 5 Spanish lessons', 'Practice daily for 30 minutes', 'weekly', 'learning', 37, 2025, 1, 'active');
 
--- Other (parent: 38)
+-- Fun/Travel (parent: 38)
 INSERT INTO goals (id, title, description, goal_type, category, parent_id, year, week_number, status) VALUES 
-  (56, 'Sign up for volunteer opportunity', 'Research and register with local organization', 'weekly', 'other', 38, 2025, 1, 'active');
+  (56, 'Research weekend getaway destinations', 'Find 3 potential places for spring trip', 'weekly', 'fun', 38, 2025, 1, 'active');
+
+-- Other (parent: 40)
+INSERT INTO goals (id, title, description, goal_type, category, parent_id, year, week_number, status) VALUES 
+  (57, 'Sign up for volunteer opportunity', 'Research and register with local organization', 'weekly', 'other', 40, 2025, 1, 'active');
 
 -- ============= TASKS =============
 
@@ -141,6 +159,11 @@ INSERT INTO tasks (title, description, goal_id, category, priority, status, due_
   ('Spanish lesson 1 - Greetings', 'Learn basic greetings and introductions', 55, 'learning', 'medium', 'pending', '2025-01-02'),
   ('Spanish practice with app', '30 minutes on Duolingo', 55, 'learning', 'medium', 'pending', '2025-01-02');
 
+-- Fun/Travel tasks
+INSERT INTO tasks (title, description, goal_id, category, priority, status, due_date) VALUES 
+  ('Research beach destinations', 'Look into coastal getaways within 3 hours drive', 56, 'fun', 'medium', 'pending', '2025-01-02'),
+  ('Check hotel rates for spring', 'Compare prices for March-April dates', 56, 'fun', 'low', 'pending', '2025-01-03');
+
 -- Other tasks
 INSERT INTO tasks (title, description, goal_id, category, priority, status, due_date) VALUES 
-  ('Research local volunteer opportunities', 'Find organizations aligned with my values', 56, 'other', 'low', 'pending', '2025-01-03');
+  ('Research local volunteer opportunities', 'Find organizations aligned with my values', 57, 'other', 'low', 'pending', '2025-01-03');
