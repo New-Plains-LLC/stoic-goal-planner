@@ -16,11 +16,12 @@ app.use('/static/*', serveStatic({ root: './public' }))
 
 // ============= GOALS API =============
 
-// Get all goals (optionally filtered by type)
+// Get all goals (optionally filtered by type and category)
 app.get('/api/goals', async (c) => {
   const { env } = c;
   const goalType = c.req.query('type');
   const parentId = c.req.query('parent_id');
+  const category = c.req.query('category');
   
   let query = 'SELECT * FROM goals WHERE status != "archived"';
   const params: any[] = [];
@@ -28,6 +29,11 @@ app.get('/api/goals', async (c) => {
   if (goalType) {
     query += ' AND goal_type = ?';
     params.push(goalType);
+  }
+  
+  if (category) {
+    query += ' AND category = ?';
+    params.push(category);
   }
   
   if (parentId !== undefined) {
@@ -39,7 +45,7 @@ app.get('/api/goals', async (c) => {
     }
   }
   
-  query += ' ORDER BY created_at DESC';
+  query += ' ORDER BY category, created_at DESC';
   
   const { results } = await env.DB.prepare(query).bind(...params).all();
   return c.json(results);
@@ -64,12 +70,12 @@ app.post('/api/goals', async (c) => {
   const { env } = c;
   const body = await c.req.json();
   
-  const { title, description, goal_type, parent_id, year, quarter, week_number } = body;
+  const { title, description, goal_type, category, parent_id, year, quarter, week_number } = body;
   
   const result = await env.DB.prepare(`
-    INSERT INTO goals (title, description, goal_type, parent_id, year, quarter, week_number)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
-  `).bind(title, description, goal_type, parent_id || null, year || null, quarter || null, week_number || null).run();
+    INSERT INTO goals (title, description, goal_type, category, parent_id, year, quarter, week_number)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+  `).bind(title, description, goal_type, category || 'other', parent_id || null, year || null, quarter || null, week_number || null).run();
   
   return c.json({ id: result.meta.last_row_id, ...body }, 201);
 });
@@ -80,13 +86,13 @@ app.put('/api/goals/:id', async (c) => {
   const id = c.req.param('id');
   const body = await c.req.json();
   
-  const { title, description, status, progress, completed_at } = body;
+  const { title, description, category, status, progress, completed_at } = body;
   
   await env.DB.prepare(`
     UPDATE goals 
-    SET title = ?, description = ?, status = ?, progress = ?, completed_at = ?, updated_at = CURRENT_TIMESTAMP
+    SET title = ?, description = ?, category = ?, status = ?, progress = ?, completed_at = ?, updated_at = CURRENT_TIMESTAMP
     WHERE id = ?
-  `).bind(title, description, status, progress, completed_at || null, id).run();
+  `).bind(title, description, category, status, progress, completed_at || null, id).run();
   
   return c.json({ id: parseInt(id), ...body });
 });
@@ -115,12 +121,13 @@ app.get('/api/goals/:id/hierarchy', async (c) => {
 
 // ============= TASKS API =============
 
-// Get all tasks (optionally filtered by goal or date)
+// Get all tasks (optionally filtered by goal, date, or category)
 app.get('/api/tasks', async (c) => {
   const { env } = c;
   const goalId = c.req.query('goal_id');
   const dueDate = c.req.query('due_date');
   const status = c.req.query('status');
+  const category = c.req.query('category');
   
   let query = 'SELECT * FROM tasks WHERE 1=1';
   const params: any[] = [];
@@ -140,7 +147,12 @@ app.get('/api/tasks', async (c) => {
     params.push(status);
   }
   
-  query += ' ORDER BY priority DESC, due_date ASC';
+  if (category) {
+    query += ' AND category = ?';
+    params.push(category);
+  }
+  
+  query += ' ORDER BY category, priority DESC, due_date ASC';
   
   const { results } = await env.DB.prepare(query).bind(...params).all();
   return c.json(results);
@@ -151,12 +163,12 @@ app.post('/api/tasks', async (c) => {
   const { env } = c;
   const body = await c.req.json();
   
-  const { title, description, goal_id, priority, due_date } = body;
+  const { title, description, goal_id, category, priority, due_date } = body;
   
   const result = await env.DB.prepare(`
-    INSERT INTO tasks (title, description, goal_id, priority, due_date)
-    VALUES (?, ?, ?, ?, ?)
-  `).bind(title, description, goal_id || null, priority || 'medium', due_date || null).run();
+    INSERT INTO tasks (title, description, goal_id, category, priority, due_date)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `).bind(title, description, goal_id || null, category || 'other', priority || 'medium', due_date || null).run();
   
   return c.json({ id: result.meta.last_row_id, ...body }, 201);
 });
@@ -167,14 +179,14 @@ app.put('/api/tasks/:id', async (c) => {
   const id = c.req.param('id');
   const body = await c.req.json();
   
-  const { title, description, priority, status, due_date, completed_at } = body;
+  const { title, description, category, priority, status, due_date, completed_at } = body;
   
   await env.DB.prepare(`
     UPDATE tasks 
-    SET title = ?, description = ?, priority = ?, status = ?, due_date = ?, 
+    SET title = ?, description = ?, category = ?, priority = ?, status = ?, due_date = ?, 
         completed_at = ?, updated_at = CURRENT_TIMESTAMP
     WHERE id = ?
-  `).bind(title, description, priority, status, due_date, completed_at || null, id).run();
+  `).bind(title, description, category, priority, status, due_date, completed_at || null, id).run();
   
   return c.json({ id: parseInt(id), ...body });
 });

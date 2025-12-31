@@ -182,7 +182,10 @@ function renderDailyTasks(tasks) {
                        onchange="toggleTaskComplete(${task.id}, this.checked)"
                        class="w-5 h-5 text-indigo-600 rounded">
                 <div>
-                    <p class="font-semibold ${task.completed ? 'line-through text-gray-500' : 'text-gray-800'}">${task.title}</p>
+                    <div class="flex items-center space-x-2">
+                        <p class="font-semibold ${task.completed ? 'line-through text-gray-500' : 'text-gray-800'}">${task.title}</p>
+                        ${task.category ? `<span class="px-2 py-0.5 text-xs font-semibold rounded-full ${getCategoryBadgeColor(task.category)}">${getCategoryName(task.category)}</span>` : ''}
+                    </div>
                     ${task.description ? `<p class="text-sm text-gray-600">${task.description}</p>` : ''}
                 </div>
             </div>
@@ -196,6 +199,30 @@ function renderDailyTasks(tasks) {
             </div>
         </div>
     `).join('');
+}
+
+function getCategoryName(category) {
+    const names = {
+        spiritual: 'Spiritual',
+        financial: 'Financial',
+        health: 'Health',
+        family: 'Family',
+        learning: 'Learning',
+        other: 'Other'
+    };
+    return names[category] || 'Other';
+}
+
+function getCategoryBadgeColor(category) {
+    switch(category) {
+        case 'spiritual': return 'bg-purple-100 text-purple-800';
+        case 'financial': return 'bg-green-100 text-green-800';
+        case 'health': return 'bg-red-100 text-red-800';
+        case 'family': return 'bg-blue-100 text-blue-800';
+        case 'learning': return 'bg-indigo-100 text-indigo-800';
+        case 'other': return 'bg-gray-100 text-gray-800';
+        default: return 'bg-gray-100 text-gray-800';
+    }
 }
 
 function getPriorityColor(priority) {
@@ -321,49 +348,87 @@ function renderGoals(goals) {
         return;
     }
     
-    container.innerHTML = goals.map(goal => `
-        <div class="card border rounded-lg p-6 bg-white">
-            <div class="flex items-start justify-between mb-4">
-                <div class="flex-1">
-                    <h3 class="text-xl font-bold text-gray-800 mb-2">${goal.title}</h3>
-                    ${goal.description ? `<p class="text-gray-600 mb-3">${goal.description}</p>` : ''}
-                    <div class="flex items-center space-x-4 text-sm text-gray-500">
-                        ${goal.year ? `<span><i class="fas fa-calendar mr-1"></i>${goal.year}</span>` : ''}
-                        ${goal.quarter ? `<span><i class="fas fa-chart-pie mr-1"></i>Q${goal.quarter}</span>` : ''}
-                        ${goal.week_number ? `<span><i class="fas fa-calendar-week mr-1"></i>Week ${goal.week_number}</span>` : ''}
+    // Group goals by category
+    const categories = {
+        spiritual: { name: 'Spiritual/Faith', icon: 'fa-pray', color: 'purple', goals: [] },
+        financial: { name: 'Financial/Career', icon: 'fa-dollar-sign', color: 'green', goals: [] },
+        health: { name: 'Health/Fitness', icon: 'fa-heartbeat', color: 'red', goals: [] },
+        family: { name: 'Family/Friends', icon: 'fa-users', color: 'blue', goals: [] },
+        learning: { name: 'Learning', icon: 'fa-book', color: 'indigo', goals: [] },
+        other: { name: 'Other', icon: 'fa-star', color: 'gray', goals: [] }
+    };
+    
+    // Sort goals into categories
+    goals.forEach(goal => {
+        const category = goal.category || 'other';
+        if (categories[category]) {
+            categories[category].goals.push(goal);
+        }
+    });
+    
+    // Render each category with its goals
+    let html = '';
+    Object.keys(categories).forEach(catKey => {
+        const cat = categories[catKey];
+        if (cat.goals.length > 0) {
+            html += `
+                <div class="mb-8">
+                    <h3 class="text-xl font-bold text-${cat.color}-600 mb-4 flex items-center">
+                        <i class="fas ${cat.icon} mr-2"></i>
+                        ${cat.name}
+                        <span class="ml-2 text-sm font-normal text-gray-500">(${cat.goals.length})</span>
+                    </h3>
+                    <div class="space-y-4">
+                        ${cat.goals.map(goal => `
+                            <div class="card border-l-4 border-${cat.color}-500 rounded-lg p-6 bg-white">
+                                <div class="flex items-start justify-between mb-4">
+                                    <div class="flex-1">
+                                        <h4 class="text-lg font-bold text-gray-800 mb-2">${goal.title}</h4>
+                                        ${goal.description ? `<p class="text-gray-600 mb-3 text-sm">${goal.description}</p>` : ''}
+                                        <div class="flex items-center space-x-4 text-xs text-gray-500">
+                                            ${goal.year ? `<span><i class="fas fa-calendar mr-1"></i>${goal.year}</span>` : ''}
+                                            ${goal.quarter ? `<span><i class="fas fa-chart-pie mr-1"></i>Q${goal.quarter}</span>` : ''}
+                                            ${goal.week_number ? `<span><i class="fas fa-calendar-week mr-1"></i>Week ${goal.week_number}</span>` : ''}
+                                        </div>
+                                    </div>
+                                    <span class="px-3 py-1 text-xs font-semibold rounded-full ${getStatusColor(goal.status)}">
+                                        ${goal.status}
+                                    </span>
+                                </div>
+                                
+                                <!-- Progress bar -->
+                                <div class="mb-4">
+                                    <div class="flex items-center justify-between mb-1">
+                                        <span class="text-xs text-gray-600">Progress</span>
+                                        <span class="text-xs font-semibold text-gray-700">${goal.progress}%</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                        <div class="bg-${cat.color}-600 h-2 rounded-full" style="width: ${goal.progress}%"></div>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-center justify-between">
+                                    <button onclick="viewGoalDetails(${goal.id})" class="text-${cat.color}-600 hover:text-${cat.color}-800 text-sm">
+                                        <i class="fas fa-eye mr-1"></i> View Details
+                                    </button>
+                                    <div class="space-x-2">
+                                        <button onclick="editGoal(${goal.id})" class="text-blue-600 hover:text-blue-800">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button onclick="deleteGoal(${goal.id})" class="text-red-600 hover:text-red-800">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
                     </div>
                 </div>
-                <span class="px-3 py-1 text-sm font-semibold rounded-full ${getStatusColor(goal.status)}">
-                    ${goal.status}
-                </span>
-            </div>
-            
-            <!-- Progress bar -->
-            <div class="mb-4">
-                <div class="flex items-center justify-between mb-1">
-                    <span class="text-sm text-gray-600">Progress</span>
-                    <span class="text-sm font-semibold text-gray-700">${goal.progress}%</span>
-                </div>
-                <div class="w-full bg-gray-200 rounded-full h-2">
-                    <div class="bg-indigo-600 h-2 rounded-full" style="width: ${goal.progress}%"></div>
-                </div>
-            </div>
-            
-            <div class="flex items-center justify-between">
-                <button onclick="viewGoalDetails(${goal.id})" class="text-indigo-600 hover:text-indigo-800">
-                    <i class="fas fa-eye mr-1"></i> View Details
-                </button>
-                <div class="space-x-2">
-                    <button onclick="editGoal(${goal.id})" class="text-blue-600 hover:text-blue-800">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button onclick="deleteGoal(${goal.id})" class="text-red-600 hover:text-red-800">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </div>
-            </div>
-        </div>
-    `).join('');
+            `;
+        }
+    });
+    
+    container.innerHTML = html || '<p class="text-gray-500">No goals yet. Click "Add New Goal" to create one.</p>';
 }
 
 function getStatusColor(status) {
@@ -381,10 +446,17 @@ async function showAddGoalModal() {
     
     const description = prompt('Description (optional):');
     
+    // Category selection
+    const categoryChoice = prompt('Category:\n1. Spiritual/Faith\n2. Financial/Career\n3. Health/Fitness\n4. Family/Friends\n5. Learning\n6. Other\n\nEnter number (1-6):');
+    
+    const categories = ['spiritual', 'financial', 'health', 'family', 'learning', 'other'];
+    const category = categories[parseInt(categoryChoice) - 1] || 'other';
+    
     const goalData = {
         title,
         description,
-        goal_type: currentGoalType
+        goal_type: currentGoalType,
+        category
     };
     
     // Add year/quarter/week based on type
@@ -419,12 +491,20 @@ async function editGoal(id) {
         if (!title) return;
         
         const description = prompt('Description:', goal.description || '');
+        
+        // Category selection
+        const categoryNames = ['spiritual', 'financial', 'health', 'family', 'learning', 'other'];
+        const currentCategoryIndex = categoryNames.indexOf(goal.category) + 1;
+        const categoryChoice = prompt(`Category:\n1. Spiritual/Faith\n2. Financial/Career\n3. Health/Fitness\n4. Family/Friends\n5. Learning\n6. Other\n\nEnter number (1-6):`, currentCategoryIndex);
+        const category = categoryNames[parseInt(categoryChoice) - 1] || goal.category;
+        
         const progress = prompt('Progress (0-100):', goal.progress);
         const status = prompt('Status (active/completed/archived):', goal.status);
         
         await axios.put(`/api/goals/${id}`, {
             title,
             description,
+            category,
             status,
             progress: parseInt(progress),
             completed_at: status === 'completed' ? new Date().toISOString() : null
