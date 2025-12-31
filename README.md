@@ -1,15 +1,26 @@
 # Goal Planner - Your Path to Success
 
 ## Project Overview
-A comprehensive goal planning and tracking application that helps you manage your long-term vision through structured daily, weekly, quarterly, and annual goals. The app includes daily affirmations, gratitude tracking, task management, daily wins reflection, and weekly reviews.
+A comprehensive goal planning and tracking application that helps you manage your long-term vision through structured daily, weekly, quarterly, and annual goals. **Every goal is organized by life categories** (Spiritual/Faith, Financial/Career, Health/Fitness, Family/Friends, Learning, Other) to ensure balanced progress across all important areas of your life.
+
+The app includes daily affirmations, gratitude tracking, task management, daily wins reflection, and weekly reviews.
 
 **Live Application**: https://3000-it4k2jghikjq8k7pi5xo6-0e616f0a.sandbox.novita.ai
 
 ## ✅ Currently Completed Features
 
-### 🎯 Goal Management System
-- **Hierarchical Goal Structure**: Long-term → Annual → Quarterly → Weekly → Daily goals
-- **Goal Creation & Editing**: Create goals at any level with descriptions and progress tracking
+### 🎯 Goal Management System with Life Categories
+- **6 Life Categories**: Every goal belongs to one category:
+  - 🙏 **Spiritual/Faith**: Prayer, meditation, spiritual growth
+  - 💰 **Financial/Career**: Business, income, career advancement
+  - ❤️ **Health/Fitness**: Exercise, nutrition, mental health
+  - 👨‍👩‍👧 **Family/Friends**: Relationships, quality time, connections
+  - 📚 **Learning**: Education, skills, personal development
+  - ⭐ **Other**: Travel, hobbies, personal projects
+  
+- **Hierarchical Goal Structure**: Long-term → Annual → Quarterly → Weekly → Daily goals (all categorized)
+- **Category-Based Organization**: Goals displayed grouped by category with color-coding and icons
+- **Goal Creation & Editing**: Create goals at any level with category selection
 - **Goal Relationships**: Link child goals to parent goals for clear progression tracking
 - **Progress Tracking**: Visual progress bars showing completion percentage for each goal
 - **Goal Status Management**: Track goals as active, completed, or archived
@@ -37,12 +48,14 @@ A comprehensive goal planning and tracking application that helps you manage you
 - **Historical Reviews**: Access past weekly evaluations
 
 ### 🔄 Task Management
-- **Task Creation**: Create tasks linked to specific goals
+- **Task Creation**: Create tasks linked to specific goals with category assignment
+- **Category Badges**: Visual category indicators on every task (color-coded)
 - **Priority Levels**: High, medium, low priority tasks
 - **Due Date Tracking**: Set and track task deadlines
 - **Task Status**: Pending, in progress, completed, cancelled
-- **Daily Task Selection**: Choose which tasks to tackle each day
+- **Daily Task Selection**: Choose which tasks to tackle each day (shows category badges)
 - **Task Completion**: Mark tasks complete with timestamp
+- **Category Filtering**: Filter tasks by life category
 
 ### 💾 Data Persistence
 - **Cloudflare D1 Database**: SQLite-based persistent storage
@@ -59,17 +72,17 @@ A comprehensive goal planning and tracking application that helps you manage you
 ## 📋 API Endpoints Summary
 
 ### Goals API
-- `GET /api/goals` - Get all goals (filter by type, parent_id)
+- `GET /api/goals` - Get all goals (filter by type, category, parent_id)
 - `GET /api/goals/:id` - Get single goal
-- `POST /api/goals` - Create new goal
-- `PUT /api/goals/:id` - Update goal
+- `POST /api/goals` - Create new goal (requires category)
+- `PUT /api/goals/:id` - Update goal (can update category)
 - `DELETE /api/goals/:id` - Delete goal
 - `GET /api/goals/:id/hierarchy` - Get child goals
 
 ### Tasks API
-- `GET /api/tasks` - Get all tasks (filter by goal_id, due_date, status)
-- `POST /api/tasks` - Create new task
-- `PUT /api/tasks/:id` - Update task
+- `GET /api/tasks` - Get all tasks (filter by goal_id, due_date, status, category)
+- `POST /api/tasks` - Create new task (with category)
+- `PUT /api/tasks/:id` - Update task (can update category)
 - `DELETE /api/tasks/:id` - Delete task
 
 ### Daily Entries API
@@ -148,6 +161,7 @@ A comprehensive goal planning and tracking application that helps you manage you
 
 ### Goals Table
 - Hierarchical structure supporting 5 levels (long-term, annual, quarterly, weekly, daily)
+- **Category field**: spiritual, financial, health, family, learning, or other (REQUIRED)
 - Parent-child relationships via `parent_id`
 - Progress tracking (0-100%)
 - Status: active, completed, archived
@@ -155,6 +169,7 @@ A comprehensive goal planning and tracking application that helps you manage you
 
 ### Tasks Table
 - Linked to goals via `goal_id`
+- **Category field**: matches parent goal category or can be independent
 - Priority: low, medium, high
 - Status: pending, in_progress, completed, cancelled
 - Due date tracking
@@ -210,11 +225,19 @@ A comprehensive goal planning and tracking application that helps you manage you
    - Review what worked and what didn't
 
 ### Goal Management
-1. **Create Long-term Goals**: Start with your big picture vision
-2. **Break Down to Annual**: What can you achieve this year?
-3. **Define Quarterly Milestones**: 3-month chunks
-4. **Plan Weekly Objectives**: Weekly focus areas
+1. **Create Long-term Goals**: Start with your big picture vision in each life category:
+   - Spiritual/Faith: What's your spiritual journey?
+   - Financial/Career: What's your career/business vision?
+   - Health/Fitness: What's your health ideal?
+   - Family/Friends: What relationships do you want to nurture?
+   - Learning: What do you want to master?
+   - Other: What else matters to you?
+
+2. **Break Down to Annual**: What can you achieve this year in each category?
+3. **Define Quarterly Milestones**: 3-month chunks for each category
+4. **Plan Weekly Objectives**: Weekly focus areas across categories
 5. **Track Progress**: Update progress percentages regularly
+6. **Balance Check**: Ensure you have goals in multiple categories for life balance
 
 ### Weekly Review
 1. **End of Week**: Fill out the weekly evaluation form
