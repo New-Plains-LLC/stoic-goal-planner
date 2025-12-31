@@ -7,7 +7,19 @@ The app includes daily affirmations, gratitude tracking, task management, daily 
 
 **Live Application**: https://3000-it4k2jghikjq8k7pi5xo6-0e616f0a.sandbox.novita.ai
 
+## 🎨 Design Philosophy
+- **Elegant & Subdued**: Minimalist design with carefully chosen neutral colors
+- **Dark Mode Support**: Full light/dark mode toggle with refined color palette
+- **No Distracting Icons**: Clean, text-focused interface for better concentration
+- **Professional Aesthetics**: Sophisticated gray tones instead of bright accent colors
+
 ## ✅ Currently Completed Features
+
+### 🌓 Dark Mode
+- **Light/Dark Toggle**: Seamless switching between light and dark themes
+- **Persistent State**: Dark mode preference saved across sessions
+- **Refined Colors**: Subdued gray palette instead of bright indigo accents
+- **All Components**: Full dark mode support for modals, inputs, buttons, and cards
 
 ### 🎯 Goal Management System with Life Categories
 - **6 Life Categories**: Every goal belongs to one category:
@@ -44,6 +56,8 @@ The app includes daily affirmations, gratitude tracking, task management, daily 
   - View and manage your calendar events
   - **Google Calendar Sync**: Import events from Google Calendar with persistent token storage
   - **Add Events**: Create calendar events directly in the app
+  - **Edit Events**: Update event details (title, time, location, description)
+  - **Delete Events**: Remove events with confirmation
   - **Auto Token Storage**: Access token saved in localStorage for convenience
   - Schedule integration with real-time updates
 - **Daily Wins Reflection**: 
@@ -143,7 +157,6 @@ The app includes daily affirmations, gratitude tracking, task management, daily 
 - **Outlook Calendar**: Microsoft Outlook/Office 365 integration
 - **iCal Import/Export**: Import/export calendar files
 - **Recurring Events**: Support for repeating calendar events
-- **Calendar Event Editing**: Edit and delete events from the UI
 
 ### Advanced Task Features
 - **Task Reminders**: Push notifications for upcoming tasks
@@ -180,19 +193,20 @@ The app includes daily affirmations, gratitude tracking, task management, daily 
 2. ~~Add Task Creation from Daily Page~~ ✅ "New Task" button with full form
 3. ~~Improve Goal/Task Forms~~ ✅ Proper modals with dropdowns
 4. ~~Persistent Google Calendar Token~~ ✅ localStorage storage with auto-reuse
+5. ~~Calendar Event Edit/Delete~~ ✅ Edit and delete buttons on all events
+6. ~~Elegant UI with Subdued Colors~~ ✅ Gray palette, no icons
+7. ~~Dark Mode~~ ✅ Full light/dark theme support
 
 ### Priority 2 (Important)
 1. **Complete Google Calendar OAuth**: Set up client ID/secret in Google Cloud Console
 2. **Progress Auto-calculation**: Auto-calculate goal progress based on child goal completion
 3. **Task Templates**: Create pre-defined task templates for common goals
-4. **Calendar Event Editing**: Edit and delete calendar events from the UI
-5. **Task Dependencies**: Link tasks that must be completed in order
+4. **Task Dependencies**: Link tasks that must be completed in order
 
 ### Priority 3 (Enhancement)
-7. **Add Analytics Dashboard**: Visual charts showing progress trends
-8. **Implement Search**: Search across goals, tasks, and daily entries
-9. **Export Functionality**: Export goals and progress reports to PDF/CSV
-10. **Dark Mode**: Add dark theme option
+1. **Add Analytics Dashboard**: Visual charts showing progress trends
+2. **Implement Search**: Search across goals, tasks, and daily entries
+3. **Export Functionality**: Export goals and progress reports to PDF/CSV
 
 ## 📊 Data Models
 
