@@ -167,14 +167,21 @@ async function saveWins() {
 }
 
 function renderDailyTasks(tasks) {
-    const container = document.getElementById('daily-tasks-list');
+    const highContainer = document.getElementById('daily-tasks-high');
+    const otherContainer = document.getElementById('daily-tasks-other');
     
     if (!tasks || tasks.length === 0) {
-        container.innerHTML = '<p class="text-gray-500">No tasks selected for today. Click "Add Task" to get started.</p>';
+        highContainer.innerHTML = '<p class="text-gray-500">No high priority tasks.</p>';
+        otherContainer.innerHTML = '<p class="text-gray-500">No other tasks. Click "New Task" or "Add from List" to get started.</p>';
         return;
     }
     
-    container.innerHTML = tasks.map(task => `
+    // Split tasks by priority
+    const highPriorityTasks = tasks.filter(t => t.priority === 'high');
+    const otherTasks = tasks.filter(t => t.priority !== 'high');
+    
+    // Render task card
+    const renderTaskCard = (task) => `
         <div class="flex items-center justify-between p-4 border rounded-lg ${task.completed ? 'bg-green-50' : 'bg-white'}">
             <div class="flex items-center space-x-3">
                 <input type="checkbox" 
@@ -198,7 +205,17 @@ function renderDailyTasks(tasks) {
                 </button>
             </div>
         </div>
-    `).join('');
+    `;
+    
+    // Render high priority tasks
+    highContainer.innerHTML = highPriorityTasks.length > 0 
+        ? highPriorityTasks.map(renderTaskCard).join('')
+        : '<p class="text-gray-500">No high priority tasks.</p>';
+    
+    // Render other tasks
+    otherContainer.innerHTML = otherTasks.length > 0 
+        ? otherTasks.map(renderTaskCard).join('')
+        : '<p class="text-gray-500">No other tasks.</p>';
 }
 
 function getCategoryName(category) {
@@ -262,26 +279,96 @@ async function showTaskSelector() {
         const tasks = response.data;
         
         if (tasks.length === 0) {
-            alert('No pending tasks available. Create some tasks from the Goals page first!');
+            alert('No pending tasks available. Create a new task using the "New Task" button!');
             return;
         }
         
-        const taskOptions = tasks.map(task => 
-            `<option value="${task.id}">${task.title} (${task.priority})</option>`
-        ).join('');
+        // Show modal
+        const modal = document.getElementById('task-selector-modal');
+        const taskList = document.getElementById('task-selector-list');
         
-        const taskId = prompt(`Select a task to add to today:\n\n${tasks.map((t, i) => `${i+1}. ${t.title}`).join('\n')}\n\nEnter task number:`);
+        // Group tasks by category
+        const categories = {
+            spiritual: { name: 'Spiritual/Faith', icon: 'fa-pray', color: 'purple', tasks: [] },
+            financial: { name: 'Financial/Career', icon: 'fa-dollar-sign', color: 'green', tasks: [] },
+            health: { name: 'Health/Fitness', icon: 'fa-heartbeat', color: 'red', tasks: [] },
+            family: { name: 'Family/Friends', icon: 'fa-users', color: 'blue', tasks: [] },
+            learning: { name: 'Learning', icon: 'fa-book', color: 'indigo', tasks: [] },
+            other: { name: 'Other', icon: 'fa-star', color: 'gray', tasks: [] }
+        };
         
-        if (taskId) {
-            const selectedTask = tasks[parseInt(taskId) - 1];
-            if (selectedTask) {
-                await axios.post(`/api/daily/${currentDate}/tasks/${selectedTask.id}`);
-                loadDailyData(currentDate);
+        tasks.forEach(task => {
+            const category = task.category || 'other';
+            if (categories[category]) {
+                categories[category].tasks.push(task);
             }
-        }
+        });
+        
+        // Render tasks grouped by category
+        let html = '';
+        Object.keys(categories).forEach(catKey => {
+            const cat = categories[catKey];
+            if (cat.tasks.length > 0) {
+                html += `
+                    <div class="mb-4">
+                        <h4 class="text-sm font-bold text-${cat.color}-600 mb-2 flex items-center">
+                            <i class="fas ${cat.icon} mr-2"></i>
+                            ${cat.name}
+                        </h4>
+                        <div class="space-y-2">
+                            ${cat.tasks.map(task => `
+                                <label class="flex items-center p-3 border rounded hover:bg-gray-50 cursor-pointer">
+                                    <input type="checkbox" class="task-checkbox w-5 h-5 text-indigo-600 rounded mr-3" data-task-id="${task.id}" />
+                                    <div class="flex-1">
+                                        <div class="flex items-center space-x-2">
+                                            <p class="font-semibold text-gray-800">${task.title}</p>
+                                            <span class="px-2 py-0.5 text-xs font-semibold rounded-full ${getPriorityColor(task.priority)}">
+                                                ${task.priority}
+                                            </span>
+                                        </div>
+                                        ${task.description ? `<p class="text-sm text-gray-600 mt-1">${task.description}</p>` : ''}
+                                    </div>
+                                </label>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+        });
+        
+        taskList.innerHTML = html || '<p class="text-gray-500">No tasks available.</p>';
+        modal.classList.remove('hidden');
+        
     } catch (error) {
         console.error('Error showing task selector:', error);
         alert('Failed to load tasks');
+    }
+}
+
+function closeTaskSelectorModal() {
+    document.getElementById('task-selector-modal').classList.add('hidden');
+}
+
+async function addSelectedTasks() {
+    const checkboxes = document.querySelectorAll('.task-checkbox:checked');
+    
+    if (checkboxes.length === 0) {
+        alert('Please select at least one task');
+        return;
+    }
+    
+    try {
+        for (const checkbox of checkboxes) {
+            const taskId = checkbox.getAttribute('data-task-id');
+            await axios.post(`/api/daily/${currentDate}/tasks/${taskId}`);
+        }
+        
+        closeTaskSelectorModal();
+        loadDailyData(currentDate);
+        
+    } catch (error) {
+        console.error('Error adding tasks:', error);
+        alert('Failed to add some tasks');
     }
 }
 
@@ -440,47 +527,7 @@ function getStatusColor(status) {
     }
 }
 
-async function showAddGoalModal() {
-    const title = prompt('Goal Title:');
-    if (!title) return;
-    
-    const description = prompt('Description (optional):');
-    
-    // Category selection
-    const categoryChoice = prompt('Category:\n1. Spiritual/Faith\n2. Financial/Career\n3. Health/Fitness\n4. Family/Friends\n5. Learning\n6. Other\n\nEnter number (1-6):');
-    
-    const categories = ['spiritual', 'financial', 'health', 'family', 'learning', 'other'];
-    const category = categories[parseInt(categoryChoice) - 1] || 'other';
-    
-    const goalData = {
-        title,
-        description,
-        goal_type: currentGoalType,
-        category
-    };
-    
-    // Add year/quarter/week based on type
-    if (currentGoalType === 'annual' || currentGoalType === 'quarterly' || currentGoalType === 'weekly') {
-        goalData.year = new Date().getFullYear();
-    }
-    
-    if (currentGoalType === 'quarterly') {
-        goalData.quarter = Math.ceil((new Date().getMonth() + 1) / 3);
-    }
-    
-    if (currentGoalType === 'weekly') {
-        goalData.week_number = getWeekNumber(new Date());
-    }
-    
-    try {
-        await axios.post('/api/goals', goalData);
-        loadGoals(currentGoalType);
-        alert('Goal created successfully!');
-    } catch (error) {
-        console.error('Error creating goal:', error);
-        alert('Failed to create goal');
-    }
-}
+// showAddGoalModal is now at the end of the file (modal version)
 
 async function editGoal(id) {
     try {
@@ -659,21 +706,29 @@ async function showAddEventModal() {
 }
 
 async function showGoogleCalendarSync() {
-    const accessToken = prompt(
-        'Enter your Google Calendar Access Token:\n\n' +
-        'To get your access token:\n' +
-        '1. Go to https://developers.google.com/oauthplayground/\n' +
-        '2. Select "Google Calendar API v3"\n' +
-        '3. Select "https://www.googleapis.com/auth/calendar.readonly"\n' +
-        '4. Click "Authorize APIs"\n' +
-        '5. Click "Exchange authorization code for tokens"\n' +
-        '6. Copy the "Access token" value\n\n' +
-        'Paste your access token here:'
-    );
+    // Check for stored token
+    let accessToken = getGoogleAccessToken();
     
     if (!accessToken) {
-        alert('Access token is required to sync Google Calendar');
-        return;
+        accessToken = prompt(
+            'Enter your Google Calendar Access Token:\n\n' +
+            'To get your access token:\n' +
+            '1. Go to https://developers.google.com/oauthplayground/\n' +
+            '2. Select "Google Calendar API v3"\n' +
+            '3. Select "https://www.googleapis.com/auth/calendar.readonly"\n' +
+            '4. Click "Authorize APIs"\n' +
+            '5. Click "Exchange authorization code for tokens"\n' +
+            '6. Copy the "Access token" value\n\n' +
+            'Paste your access token here:'
+        );
+        
+        if (!accessToken) {
+            alert('Access token is required to sync Google Calendar');
+            return;
+        }
+        
+        // Save token for future use
+        saveGoogleAccessToken(accessToken);
     }
     
     try {
@@ -694,7 +749,13 @@ async function showGoogleCalendarSync() {
     } catch (error) {
         console.error('Error syncing calendar:', error);
         if (error.response && error.response.data) {
-            alert(`Failed to sync calendar: ${error.response.data.error || error.response.data.details || 'Unknown error'}`);
+            // Token might be expired, clear it
+            if (error.response.status === 401 || error.response.data.error?.includes('Failed to fetch')) {
+                localStorage.removeItem('google_calendar_token');
+                alert('Access token expired or invalid. Please try again with a new token.');
+            } else {
+                alert(`Failed to sync calendar: ${error.response.data.error || error.response.data.details || 'Unknown error'}`);
+            }
         } else {
             alert('Failed to sync calendar. Please check your access token.');
         }
@@ -708,5 +769,133 @@ function saveGoogleAccessToken(token) {
 
 function getGoogleAccessToken() {
     return localStorage.getItem('google_calendar_token');
+}
+
+// ========== CREATE TASK MODAL ==========
+
+async function showCreateTaskModal() {
+    // Load goals for dropdown
+    try {
+        const response = await axios.get('/api/goals');
+        const goals = response.data;
+        
+        const goalSelect = document.getElementById('new-task-goal');
+        goalSelect.innerHTML = '<option value="">No goal (standalone task)</option>' + 
+            goals.map(goal => `<option value="${goal.id}">${goal.title} (${goal.goal_type})</option>`).join('');
+        
+        // Set default due date to today
+        document.getElementById('new-task-due-date').value = currentDate;
+        
+        // Show modal
+        document.getElementById('create-task-modal').classList.remove('hidden');
+    } catch (error) {
+        console.error('Error loading goals:', error);
+        document.getElementById('create-task-modal').classList.remove('hidden');
+    }
+}
+
+function closeCreateTaskModal() {
+    document.getElementById('create-task-modal').classList.add('hidden');
+    // Clear form
+    document.getElementById('new-task-title').value = '';
+    document.getElementById('new-task-description').value = '';
+    document.getElementById('new-task-category').value = 'other';
+    document.getElementById('new-task-priority').value = 'medium';
+    document.getElementById('new-task-due-date').value = '';
+    document.getElementById('new-task-goal').value = '';
+}
+
+async function createNewTask() {
+    const title = document.getElementById('new-task-title').value.trim();
+    const description = document.getElementById('new-task-description').value.trim();
+    const category = document.getElementById('new-task-category').value;
+    const priority = document.getElementById('new-task-priority').value;
+    const dueDate = document.getElementById('new-task-due-date').value;
+    const goalId = document.getElementById('new-task-goal').value;
+    
+    if (!title) {
+        alert('Please enter a task title');
+        return;
+    }
+    
+    try {
+        // Create the task
+        const response = await axios.post('/api/tasks', {
+            title,
+            description,
+            category,
+            priority,
+            due_date: dueDate || null,
+            goal_id: goalId ? parseInt(goalId) : null
+        });
+        
+        const newTaskId = response.data.id;
+        
+        // Automatically add to today's task list
+        await axios.post(`/api/daily/${currentDate}/tasks/${newTaskId}`);
+        
+        closeCreateTaskModal();
+        loadDailyData(currentDate);
+        alert('Task created and added to today!');
+        
+    } catch (error) {
+        console.error('Error creating task:', error);
+        alert('Failed to create task');
+    }
+}
+
+// ========== CREATE GOAL MODAL ==========
+
+function showAddGoalModal() {
+    document.getElementById('create-goal-modal').classList.remove('hidden');
+}
+
+function closeCreateGoalModal() {
+    document.getElementById('create-goal-modal').classList.add('hidden');
+    // Clear form
+    document.getElementById('new-goal-title').value = '';
+    document.getElementById('new-goal-description').value = '';
+    document.getElementById('new-goal-category').value = 'other';
+}
+
+async function createNewGoal() {
+    const title = document.getElementById('new-goal-title').value.trim();
+    const description = document.getElementById('new-goal-description').value.trim();
+    const category = document.getElementById('new-goal-category').value;
+    
+    if (!title) {
+        alert('Please enter a goal title');
+        return;
+    }
+    
+    const goalData = {
+        title,
+        description,
+        goal_type: currentGoalType,
+        category
+    };
+    
+    // Add year/quarter/week based on type
+    if (currentGoalType === 'annual' || currentGoalType === 'quarterly' || currentGoalType === 'weekly') {
+        goalData.year = new Date().getFullYear();
+    }
+    
+    if (currentGoalType === 'quarterly') {
+        goalData.quarter = Math.ceil((new Date().getMonth() + 1) / 3);
+    }
+    
+    if (currentGoalType === 'weekly') {
+        goalData.week_number = getWeekNumber(new Date());
+    }
+    
+    try {
+        await axios.post('/api/goals', goalData);
+        closeCreateGoalModal();
+        loadGoals(currentGoalType);
+        alert('Goal created successfully!');
+    } catch (error) {
+        console.error('Error creating goal:', error);
+        alert('Failed to create goal');
+    }
 }
 

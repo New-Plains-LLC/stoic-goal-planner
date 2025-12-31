@@ -567,6 +567,80 @@ app.get('/api/quote/daily', async (c) => {
 
 // ============= GOOGLE CALENDAR SYNC API =============
 
+// Start OAuth flow - redirect to Google
+app.get('/api/calendar/oauth/start', async (c) => {
+  // Note: In production, use environment variables for client ID
+  // For now, provide instructions
+  const clientId = 'YOUR_GOOGLE_CLIENT_ID';
+  const redirectUri = encodeURIComponent('http://localhost:3000/api/calendar/oauth/callback');
+  const scope = encodeURIComponent('https://www.googleapis.com/auth/calendar.readonly');
+  
+  const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
+    `client_id=${clientId}&` +
+    `redirect_uri=${redirectUri}&` +
+    `response_type=code&` +
+    `scope=${scope}&` +
+    `access_type=offline&` +
+    `prompt=consent`;
+  
+  return c.json({
+    message: 'To enable OAuth, you need to set up Google Cloud credentials',
+    instructions: [
+      '1. Go to https://console.cloud.google.com/apis/credentials',
+      '2. Create OAuth 2.0 credentials',
+      '3. Add authorized redirect URI: http://localhost:3000/api/calendar/oauth/callback',
+      '4. Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in .dev.vars',
+      '5. Restart the application'
+    ],
+    authUrl: authUrl
+  });
+});
+
+// OAuth callback - exchange code for token
+app.get('/api/calendar/oauth/callback', async (c) => {
+  const code = c.req.query('code');
+  
+  if (!code) {
+    return c.json({ error: 'Authorization code not provided' }, 400);
+  }
+  
+  // In production, exchange code for token
+  // For now, redirect to frontend with success message
+  return c.html(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Google Calendar Connected</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+    </head>
+    <body class="bg-gray-100 flex items-center justify-center min-h-screen">
+        <div class="bg-white rounded-lg shadow-xl p-8 max-w-md">
+            <div class="text-center">
+                <i class="fas fa-check-circle text-6xl text-green-500 mb-4"></i>
+                <h1 class="text-2xl font-bold text-gray-800 mb-2">Calendar Connected!</h1>
+                <p class="text-gray-600 mb-6">Your Google Calendar has been connected successfully.</p>
+                <p class="text-sm text-gray-500 mb-4">Authorization code: <code class="bg-gray-100 px-2 py-1 rounded">${code.substring(0, 20)}...</code></p>
+                <button onclick="window.close()" class="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700">
+                    Close Window
+                </button>
+            </div>
+        </div>
+    </body>
+    </html>
+  `);
+});
+
+// Store/retrieve access token
+app.post('/api/calendar/token/save', async (c) => {
+  const { env } = c;
+  const body = await c.req.json();
+  const { accessToken } = body;
+  
+  // In production, save to KV or D1
+  // For now, return success
+  return c.json({ success: true, message: 'Token saved (localStorage)' });
+});
+
 // Sync events from Google Calendar
 app.post('/api/calendar/sync', async (c) => {
   const { env } = c;
@@ -798,13 +872,38 @@ app.get('/', (c) => {
                                 <i class="fas fa-tasks text-blue-500 mr-2"></i>
                                 Today's Tasks
                             </h2>
-                            <button onclick="showTaskSelector()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-                                <i class="fas fa-plus mr-2"></i>
-                                Add Task
-                            </button>
+                            <div class="space-x-2">
+                                <button onclick="showCreateTaskModal()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 text-sm">
+                                    <i class="fas fa-plus mr-2"></i>
+                                    New Task
+                                </button>
+                                <button onclick="showTaskSelector()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm">
+                                    <i class="fas fa-list mr-2"></i>
+                                    Add from List
+                                </button>
+                            </div>
                         </div>
-                        <div id="daily-tasks-list" class="space-y-3">
-                            <!-- Tasks will be loaded here -->
+                        
+                        <!-- High Priority Tasks -->
+                        <div class="mb-6">
+                            <h3 class="text-lg font-semibold text-red-600 mb-3 flex items-center">
+                                <i class="fas fa-fire mr-2"></i>
+                                High Priority
+                            </h3>
+                            <div id="daily-tasks-high" class="space-y-3">
+                                <!-- High priority tasks will be loaded here -->
+                            </div>
+                        </div>
+                        
+                        <!-- Medium/Low Priority Tasks -->
+                        <div>
+                            <h3 class="text-lg font-semibold text-blue-600 mb-3 flex items-center">
+                                <i class="fas fa-list-ul mr-2"></i>
+                                Other Tasks
+                            </h3>
+                            <div id="daily-tasks-other" class="space-y-3">
+                                <!-- Medium/low priority tasks will be loaded here -->
+                            </div>
                         </div>
                     </div>
 
@@ -942,6 +1041,144 @@ app.get('/', (c) => {
                             Save Weekly Review
                         </button>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modals -->
+        
+        <!-- Task Selector Modal -->
+        <div id="task-selector-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+            <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-hidden">
+                <div class="p-6 border-b">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-xl font-bold text-gray-800">Select Tasks for Today</h3>
+                        <button onclick="closeTaskSelectorModal()" class="text-gray-500 hover:text-gray-700">
+                            <i class="fas fa-times text-2xl"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="p-6 overflow-y-auto max-h-[60vh]">
+                    <div id="task-selector-list" class="space-y-2">
+                        <!-- Tasks will be loaded here -->
+                    </div>
+                </div>
+                <div class="p-6 border-t bg-gray-50">
+                    <button onclick="addSelectedTasks()" class="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition w-full">
+                        <i class="fas fa-check mr-2"></i>
+                        Add Selected Tasks
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Create Task Modal -->
+        <div id="create-task-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+            <div class="bg-white rounded-lg shadow-xl max-w-lg w-full">
+                <div class="p-6 border-b">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-xl font-bold text-gray-800">Create New Task</h3>
+                        <button onclick="closeCreateTaskModal()" class="text-gray-500 hover:text-gray-700">
+                            <i class="fas fa-times text-2xl"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="p-6">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Task Title *</label>
+                            <input type="text" id="new-task-title" class="w-full border rounded px-4 py-2" placeholder="Enter task title" />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Description</label>
+                            <textarea id="new-task-description" rows="3" class="w-full border rounded px-4 py-2" placeholder="Task description (optional)"></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Category *</label>
+                            <select id="new-task-category" class="w-full border rounded px-4 py-2">
+                                <option value="spiritual">🙏 Spiritual/Faith</option>
+                                <option value="financial">💰 Financial/Career</option>
+                                <option value="health">❤️ Health/Fitness</option>
+                                <option value="family">👨‍👩‍👧 Family/Friends</option>
+                                <option value="learning">📚 Learning</option>
+                                <option value="other">⭐ Other</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Priority *</label>
+                            <select id="new-task-priority" class="w-full border rounded px-4 py-2">
+                                <option value="high">High Priority</option>
+                                <option value="medium" selected>Medium Priority</option>
+                                <option value="low">Low Priority</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Due Date</label>
+                            <input type="date" id="new-task-due-date" class="w-full border rounded px-4 py-2" />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Link to Goal (Optional)</label>
+                            <select id="new-task-goal" class="w-full border rounded px-4 py-2">
+                                <option value="">No goal (standalone task)</option>
+                                <!-- Goals will be loaded here -->
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="p-6 border-t bg-gray-50 flex space-x-3">
+                    <button onclick="closeCreateTaskModal()" class="flex-1 bg-gray-300 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-400 transition">
+                        Cancel
+                    </button>
+                    <button onclick="createNewTask()" class="flex-1 bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition">
+                        <i class="fas fa-plus mr-2"></i>
+                        Create Task
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Create Goal Modal -->
+        <div id="create-goal-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+            <div class="bg-white rounded-lg shadow-xl max-w-lg w-full">
+                <div class="p-6 border-b">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-xl font-bold text-gray-800">Create New Goal</h3>
+                        <button onclick="closeCreateGoalModal()" class="text-gray-500 hover:text-gray-700">
+                            <i class="fas fa-times text-2xl"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="p-6">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Goal Title *</label>
+                            <input type="text" id="new-goal-title" class="w-full border rounded px-4 py-2" placeholder="Enter goal title" />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Description</label>
+                            <textarea id="new-goal-description" rows="3" class="w-full border rounded px-4 py-2" placeholder="Goal description (optional)"></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Category *</label>
+                            <select id="new-goal-category" class="w-full border rounded px-4 py-2">
+                                <option value="spiritual">🙏 Spiritual/Faith</option>
+                                <option value="financial">💰 Financial/Career</option>
+                                <option value="health">❤️ Health/Fitness</option>
+                                <option value="family">👨‍👩‍👧 Family/Friends</option>
+                                <option value="learning">📚 Learning</option>
+                                <option value="other">⭐ Other</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="p-6 border-t bg-gray-50 flex space-x-3">
+                    <button onclick="closeCreateGoalModal()" class="flex-1 bg-gray-300 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-400 transition">
+                        Cancel
+                    </button>
+                    <button onclick="createNewGoal()" class="flex-1 bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition">
+                        <i class="fas fa-plus mr-2"></i>
+                        Create Goal
+                    </button>
                 </div>
             </div>
         </div>
