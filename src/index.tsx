@@ -525,7 +525,7 @@ app.post('/api/schedule', async (c) => {
 
 // ============= STOIC QUOTE API =============
 
-// Get daily stoic quote (using free API)
+// Get daily stoic quote (using free API with daily caching)
 app.get('/api/quote/daily', async (c) => {
   try {
     // Using Stoic Quotes API (free, no auth required)
@@ -535,33 +535,52 @@ app.get('/api/quote/daily', async (c) => {
     // The API returns data nested in a 'data' object
     const data = result.data || result;
     
+    if (!data.quote || !data.author) {
+      throw new Error('Invalid API response');
+    }
+    
     return c.json({
       quote: data.quote,
       author: data.author,
-      meaning: `This quote by ${data.author} reminds us to focus on what we can control and accept what we cannot. Stoic philosophy teaches us to find peace through wisdom, courage, and self-discipline.`
+      meaning: `This Stoic wisdom from ${data.author} teaches us about resilience, virtue, and living in accordance with nature. ${data.author === 'Marcus Aurelius' ? 'As a Roman emperor and philosopher, he emphasized controlling our perceptions and actions.' : data.author === 'Epictetus' ? 'A former slave turned philosopher, he taught that we should focus only on what we can control.' : data.author === 'Seneca' ? 'A Stoic philosopher and statesman, he wrote extensively on ethics and the art of living well.' : 'Their philosophy reminds us to focus on what we can control and accept what we cannot.'}`
     });
   } catch (error) {
+    console.error('Stoic quote API error:', error);
     // Fallback quotes if API fails
     const fallbackQuotes = [
       {
         quote: "The obstacle is the way.",
         author: "Marcus Aurelius",
-        meaning: "What stands in the way becomes the way. Every obstacle is an opportunity to practice virtue and grow stronger."
+        meaning: "What stands in the way becomes the way. Every obstacle is an opportunity to practice virtue and grow stronger. Marcus Aurelius, the Roman emperor and philosopher, reminds us that challenges are not impediments but the path itself."
       },
       {
         quote: "He who fears death will never do anything worth of a man who is alive.",
         author: "Seneca",
-        meaning: "Living in fear prevents us from truly living. Embrace life fully by accepting its temporary nature."
+        meaning: "Living in fear prevents us from truly living. Embrace life fully by accepting its temporary nature. Seneca, the Stoic philosopher, teaches us that courage in the face of mortality is essential for a meaningful life."
       },
       {
         quote: "No man is free who is not master of himself.",
         author: "Epictetus",
-        meaning: "True freedom comes from self-control and mastery over our reactions, not from external circumstances."
+        meaning: "True freedom comes from self-control and mastery over our reactions, not from external circumstances. Epictetus, who rose from slavery to become one of history's greatest philosophers, knew that internal freedom is the only freedom that matters."
+      },
+      {
+        quote: "Wealth consists not in having great possessions, but in having few wants.",
+        author: "Epictetus",
+        meaning: "True abundance comes from contentment with what we have, not from accumulating more. Epictetus teaches us that reducing our desires is the path to genuine happiness and freedom from material dependency."
+      },
+      {
+        quote: "It is not the man who has too little, but the man who craves more, that is poor.",
+        author: "Seneca",
+        meaning: "Poverty is a state of mind characterized by endless wanting, not a measure of material possessions. Seneca reminds us that gratitude and contentment are the foundations of a rich life."
       }
     ];
     
-    const randomQuote = fallbackQuotes[Math.floor(Math.random() * fallbackQuotes.length)];
-    return c.json(randomQuote);
+    // Use date-based selection for consistency
+    const today = new Date().toISOString().split('T')[0];
+    const hash = today.split('-').reduce((acc, val) => acc + parseInt(val), 0);
+    const index = hash % fallbackQuotes.length;
+    
+    return c.json(fallbackQuotes[index]);
   }
 });
 
@@ -762,45 +781,97 @@ app.get('/', (c) => {
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Goal Planner - Your Path to Success</title>
         <script src="https://cdn.tailwindcss.com"></script>
-        <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
+        <script>
+            tailwind.config = {
+                darkMode: 'class',
+                theme: {
+                    extend: {
+                        colors: {
+                            primary: {
+                                50: '#f5f7fa',
+                                100: '#ebeef3',
+                                200: '#d3dae5',
+                                300: '#adb9cd',
+                                400: '#8193b0',
+                                500: '#607396',
+                                600: '#4c5c7d',
+                                700: '#3f4c66',
+                                800: '#374156',
+                                900: '#303949',
+                            }
+                        }
+                    }
+                }
+            }
+        </script>
         <style>
+            * {
+                transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+            }
+            
             body {
-                font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
             }
-            .nav-link {
-                transition: all 0.3s ease;
-            }
-            .nav-link:hover {
-                transform: translateY(-2px);
-            }
+            
             .card {
-                transition: all 0.3s ease;
+                transition: all 0.2s ease;
             }
+            
             .card:hover {
-                transform: translateY(-4px);
-                box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+                transform: translateY(-1px);
+            }
+            
+            /* Remove all transform effects that might be jarring */
+            .nav-link {
+                transition: color 0.2s ease;
+            }
+            
+            /* Smooth scroll */
+            html {
+                scroll-behavior: smooth;
+            }
+            
+            /* Custom scrollbar for dark mode */
+            ::-webkit-scrollbar {
+                width: 10px;
+            }
+            
+            ::-webkit-scrollbar-track {
+                background: transparent;
+            }
+            
+            ::-webkit-scrollbar-thumb {
+                background: #cbd5e1;
+                border-radius: 5px;
+            }
+            
+            .dark ::-webkit-scrollbar-thumb {
+                background: #475569;
             }
         </style>
     </head>
-    <body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+    <body class="bg-gray-50 dark:bg-gray-900 min-h-screen text-gray-900 dark:text-gray-100">
         <!-- Navigation -->
-        <nav class="bg-white shadow-lg mb-8">
+        <nav class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-40">
             <div class="container mx-auto px-6 py-4">
                 <div class="flex items-center justify-between">
-                    <div class="text-2xl font-bold text-indigo-600">
-                        <i class="fas fa-bullseye mr-2"></i>
+                    <div class="text-xl font-semibold text-gray-900 dark:text-white">
                         Goal Planner
                     </div>
-                    <div class="flex space-x-6">
-                        <a href="#" onclick="showPage('daily')" class="nav-link text-gray-700 hover:text-indigo-600">
-                            <i class="fas fa-calendar-day mr-1"></i> Daily
+                    <div class="flex items-center space-x-6">
+                        <a href="#" onclick="showPage('daily')" class="nav-link text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white text-sm font-medium">
+                            Daily
                         </a>
-                        <a href="#" onclick="showPage('goals')" class="nav-link text-gray-700 hover:text-indigo-600">
-                            <i class="fas fa-trophy mr-1"></i> Goals
+                        <a href="#" onclick="showPage('goals')" class="nav-link text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white text-sm font-medium">
+                            Goals
                         </a>
-                        <a href="#" onclick="showPage('weekly')" class="nav-link text-gray-700 hover:text-indigo-600">
-                            <i class="fas fa-chart-line mr-1"></i> Weekly Review
+                        <a href="#" onclick="showPage('weekly')" class="nav-link text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white text-sm font-medium">
+                            Weekly
                         </a>
+                        <button onclick="toggleDarkMode()" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300">
+                            <span class="dark-mode-icon hidden dark:inline">☀️</span>
+                            <span class="light-mode-icon dark:hidden">🌙</span>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -810,75 +881,63 @@ app.get('/', (c) => {
         <div class="container mx-auto px-6 pb-12">
             <!-- Daily Page -->
             <div id="daily-page" class="page">
-                <div class="max-w-6xl mx-auto">
-                    <div class="bg-white rounded-lg shadow-xl p-8 mb-6">
-                        <div class="flex justify-between items-center mb-6">
-                            <h1 class="text-3xl font-bold text-gray-800">
-                                <i class="fas fa-sun text-yellow-500 mr-2"></i>
-                                Daily Planner
-                            </h1>
-                            <input type="date" id="daily-date" class="border rounded px-4 py-2" />
+                <div class="max-w-6xl mx-auto mt-8">
+                    <!-- Header -->
+                    <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 mb-6">
+                        <div class="flex justify-between items-center">
+                            <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">Daily Planner</h1>
+                            <input type="date" id="daily-date" class="border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400" />
                         </div>
+                    </div>
 
-                        <!-- Stoic Quote -->
-                        <div id="stoic-quote-section" class="bg-gradient-to-r from-purple-100 to-indigo-100 rounded-lg p-6 mb-6">
-                            <div class="flex items-start">
-                                <i class="fas fa-quote-left text-purple-500 text-2xl mr-4 mt-1"></i>
-                                <div>
-                                    <p id="stoic-quote" class="text-lg italic text-gray-800 mb-2"></p>
-                                    <p id="stoic-author" class="text-sm font-semibold text-purple-600 mb-3"></p>
-                                    <p id="stoic-meaning" class="text-sm text-gray-700"></p>
-                                </div>
-                            </div>
+                    <!-- Stoic Quote -->
+                    <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 mb-6">
+                        <div class="border-l-4 border-indigo-500 dark:border-indigo-400 pl-4">
+                            <p id="stoic-quote" class="text-lg italic text-gray-700 dark:text-gray-300 mb-2 leading-relaxed"></p>
+                            <p id="stoic-author" class="text-sm font-medium text-gray-600 dark:text-gray-400 mb-3"></p>
+                            <p id="stoic-meaning" class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed"></p>
                         </div>
+                    </div>
 
+                    <!-- Affirmations & Gratitude -->
+                    <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 mb-6">
                         <!-- Affirmations -->
                         <div class="mb-6">
-                            <h3 class="text-xl font-semibold text-gray-800 mb-3">
-                                <i class="fas fa-heart text-red-500 mr-2"></i>
-                                My Affirmations
-                            </h3>
-                            <div class="space-y-2">
-                                <input type="text" id="affirmation-1" placeholder="I am..." class="w-full border rounded px-4 py-2" />
-                                <input type="text" id="affirmation-2" placeholder="I will..." class="w-full border rounded px-4 py-2" />
-                                <input type="text" id="affirmation-3" placeholder="I believe..." class="w-full border rounded px-4 py-2" />
+                            <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-3 pb-2 border-b border-gray-200 dark:border-gray-700">Affirmations</h3>
+                            <div class="space-y-3">
+                                <input type="text" id="affirmation-1" placeholder="I am..." class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent" />
+                                <input type="text" id="affirmation-2" placeholder="I will..." class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent" />
+                                <input type="text" id="affirmation-3" placeholder="I believe..." class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent" />
                             </div>
                         </div>
 
                         <!-- Gratitude -->
-                        <div class="mb-6">
-                            <h3 class="text-xl font-semibold text-gray-800 mb-3">
-                                <i class="fas fa-hands-praying text-green-500 mr-2"></i>
-                                I'm Grateful For
-                            </h3>
-                            <div class="space-y-2">
-                                <input type="text" id="gratitude-1" placeholder="Today I'm grateful for..." class="w-full border rounded px-4 py-2" />
-                                <input type="text" id="gratitude-2" placeholder="I appreciate..." class="w-full border rounded px-4 py-2" />
-                                <input type="text" id="gratitude-3" placeholder="I'm thankful for..." class="w-full border rounded px-4 py-2" />
+                        <div>
+                            <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-3 pb-2 border-b border-gray-200 dark:border-gray-700">Gratitude</h3>
+                            <div class="space-y-3">
+                                <input type="text" id="gratitude-1" placeholder="Today I'm grateful for..." class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent" />
+                                <input type="text" id="gratitude-2" placeholder="I appreciate..." class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent" />
+                                <input type="text" id="gratitude-3" placeholder="I'm thankful for..." class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent" />
                             </div>
                         </div>
 
                         <!-- Save Button -->
-                        <button onclick="saveDailyEntry()" class="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition">
-                            <i class="fas fa-save mr-2"></i>
-                            Save Daily Entry
-                        </button>
+                        <div class="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+                            <button onclick="saveDailyEntry()" class="bg-indigo-600 dark:bg-indigo-500 text-white px-6 py-2.5 rounded-lg hover:bg-indigo-700 dark:hover:bg-indigo-600 transition font-medium">
+                                Save Entry
+                            </button>
+                        </div>
                     </div>
 
                     <!-- Tasks for Today -->
-                    <div class="bg-white rounded-lg shadow-xl p-8 mb-6">
+                    <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 mb-6">
                         <div class="flex justify-between items-center mb-6">
-                            <h2 class="text-2xl font-bold text-gray-800">
-                                <i class="fas fa-tasks text-blue-500 mr-2"></i>
-                                Today's Tasks
-                            </h2>
-                            <div class="space-x-2">
-                                <button onclick="showCreateTaskModal()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 text-sm">
-                                    <i class="fas fa-plus mr-2"></i>
+                            <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Today's Tasks</h2>
+                            <div class="flex gap-2">
+                                <button onclick="showCreateTaskModal()" class="bg-indigo-600 dark:bg-indigo-500 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 dark:hover:bg-indigo-600 transition text-sm font-medium">
                                     New Task
                                 </button>
-                                <button onclick="showTaskSelector()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm">
-                                    <i class="fas fa-list mr-2"></i>
+                                <button onclick="showTaskSelector()" class="border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition text-sm font-medium">
                                     Add from List
                                 </button>
                             </div>
@@ -886,111 +945,94 @@ app.get('/', (c) => {
                         
                         <!-- High Priority Tasks -->
                         <div class="mb-6">
-                            <h3 class="text-lg font-semibold text-red-600 mb-3 flex items-center">
-                                <i class="fas fa-fire mr-2"></i>
-                                High Priority
-                            </h3>
-                            <div id="daily-tasks-high" class="space-y-3">
+                            <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">High Priority</h3>
+                            <div id="daily-tasks-high" class="space-y-2">
                                 <!-- High priority tasks will be loaded here -->
                             </div>
                         </div>
                         
                         <!-- Medium/Low Priority Tasks -->
                         <div>
-                            <h3 class="text-lg font-semibold text-blue-600 mb-3 flex items-center">
-                                <i class="fas fa-list-ul mr-2"></i>
-                                Other Tasks
-                            </h3>
-                            <div id="daily-tasks-other" class="space-y-3">
+                            <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">Other Tasks</h3>
+                            <div id="daily-tasks-other" class="space-y-2">
                                 <!-- Medium/low priority tasks will be loaded here -->
                             </div>
                         </div>
                     </div>
 
                     <!-- Schedule -->
-                    <div class="bg-white rounded-lg shadow-xl p-8 mb-6">
+                    <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 mb-6">
                         <div class="flex justify-between items-center mb-6">
-                            <h2 class="text-2xl font-bold text-gray-800">
-                                <i class="fas fa-clock text-orange-500 mr-2"></i>
-                                Today's Schedule
-                            </h2>
-                            <div class="space-x-2">
-                                <button onclick="showAddEventModal()" class="bg-orange-600 text-white px-4 py-2 rounded hover:bg-orange-700 text-sm">
-                                    <i class="fas fa-plus mr-1"></i>
+                            <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Today's Schedule</h2>
+                            <div class="flex gap-2">
+                                <button onclick="showAddEventModal()" class="bg-indigo-600 dark:bg-indigo-500 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 dark:hover:bg-indigo-600 transition text-sm font-medium">
                                     Add Event
                                 </button>
-                                <button onclick="showGoogleCalendarSync()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm">
-                                    <i class="fab fa-google mr-1"></i>
+                                <button onclick="showGoogleCalendarSync()" class="border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition text-sm font-medium">
                                     Sync Google
                                 </button>
                             </div>
                         </div>
-                        <div id="schedule-list" class="space-y-3">
+                        <div id="schedule-list" class="space-y-2">
                             <!-- Schedule will be loaded here -->
                         </div>
                     </div>
 
                     <!-- Daily Wins -->
-                    <div class="bg-white rounded-lg shadow-xl p-8">
-                        <h2 class="text-2xl font-bold text-gray-800 mb-6">
-                            <i class="fas fa-star text-yellow-500 mr-2"></i>
-                            Daily Wins
-                        </h2>
+                    <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+                        <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">Daily Reflection</h2>
                         
                         <div class="mb-6">
-                            <h3 class="text-lg font-semibold text-gray-700 mb-3">Today's Wins</h3>
+                            <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">Today's Wins</h3>
                             <div class="space-y-2">
-                                <input type="text" id="win-today-1" placeholder="Win #1" class="w-full border rounded px-4 py-2" />
-                                <input type="text" id="win-today-2" placeholder="Win #2" class="w-full border rounded px-4 py-2" />
-                                <input type="text" id="win-today-3" placeholder="Win #3" class="w-full border rounded px-4 py-2" />
+                                <input type="text" id="win-today-1" placeholder="Win #1" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent" />
+                                <input type="text" id="win-today-2" placeholder="Win #2" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent" />
+                                <input type="text" id="win-today-3" placeholder="Win #3" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent" />
                             </div>
                         </div>
 
                         <div class="mb-6">
-                            <h3 class="text-lg font-semibold text-gray-700 mb-3">Tomorrow's Planned Wins</h3>
+                            <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">Tomorrow's Planned Wins</h3>
                             <div class="space-y-2">
-                                <input type="text" id="win-tomorrow-1" placeholder="Planned win #1" class="w-full border rounded px-4 py-2" />
-                                <input type="text" id="win-tomorrow-2" placeholder="Planned win #2" class="w-full border rounded px-4 py-2" />
-                                <input type="text" id="win-tomorrow-3" placeholder="Planned win #3" class="w-full border rounded px-4 py-2" />
+                                <input type="text" id="win-tomorrow-1" placeholder="Planned win #1" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent" />
+                                <input type="text" id="win-tomorrow-2" placeholder="Planned win #2" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent" />
+                                <input type="text" id="win-tomorrow-3" placeholder="Planned win #3" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent" />
                             </div>
                         </div>
 
-                        <button onclick="saveWins()" class="bg-yellow-600 text-white px-6 py-3 rounded-lg hover:bg-yellow-700 transition">
-                            <i class="fas fa-save mr-2"></i>
-                            Save Wins
-                        </button>
+                        <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
+                            <button onclick="saveWins()" class="bg-indigo-600 dark:bg-indigo-500 text-white px-6 py-2.5 rounded-lg hover:bg-indigo-700 dark:hover:bg-indigo-600 transition font-medium">
+                                Save Wins
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
 
             <!-- Goals Page -->
             <div id="goals-page" class="page hidden">
-                <div class="max-w-6xl mx-auto">
-                    <h1 class="text-3xl font-bold text-gray-800 mb-6">
-                        <i class="fas fa-trophy text-yellow-500 mr-2"></i>
-                        Goal Management
-                    </h1>
+                <div class="max-w-6xl mx-auto mt-8">
+                    <h1 class="text-2xl font-semibold text-gray-900 dark:text-white mb-6">Goals</h1>
 
                     <!-- Goal Type Tabs -->
-                    <div class="bg-white rounded-lg shadow-xl p-6 mb-6">
-                        <div class="flex flex-wrap gap-2 mb-6 border-b pb-2">
-                            <button onclick="showGoalType('long_term')" class="goal-tab px-3 py-2 text-sm font-semibold border-b-2 border-indigo-600 text-indigo-600 whitespace-nowrap">
+                    <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 mb-6">
+                        <div class="flex flex-wrap gap-2 mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">
+                            <button onclick="showGoalType('long_term')" class="goal-tab px-4 py-2 text-sm font-medium rounded-lg border-2 border-indigo-600 dark:border-indigo-400 text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/20 whitespace-nowrap">
                                 Long-term
                             </button>
-                            <button onclick="showGoalType('annual')" class="goal-tab px-3 py-2 text-sm font-semibold text-gray-600 hover:text-indigo-600 whitespace-nowrap">
+                            <button onclick="showGoalType('annual')" class="goal-tab px-4 py-2 text-sm font-medium rounded-lg border-2 border-transparent text-gray-600 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-600 whitespace-nowrap">
                                 Annual
                             </button>
-                            <button onclick="showGoalType('quarterly')" class="goal-tab px-3 py-2 text-sm font-semibold text-gray-600 hover:text-indigo-600 whitespace-nowrap">
+                            <button onclick="showGoalType('quarterly')" class="goal-tab px-4 py-2 text-sm font-medium rounded-lg border-2 border-transparent text-gray-600 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-600 whitespace-nowrap">
                                 Quarterly
                             </button>
-                            <button onclick="showGoalType('weekly')" class="goal-tab px-3 py-2 text-sm font-semibold text-gray-600 hover:text-indigo-600 whitespace-nowrap">
+                            <button onclick="showGoalType('weekly')" class="goal-tab px-4 py-2 text-sm font-medium rounded-lg border-2 border-transparent text-gray-600 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-600 whitespace-nowrap">
                                 Weekly
                             </button>
                         </div>
 
                         <!-- Add Goal Button -->
-                        <button onclick="showAddGoalModal()" class="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition mb-6">
-                            <i class="fas fa-plus mr-2"></i>
+                        <button onclick="showAddGoalModal()" class="bg-indigo-600 dark:bg-indigo-500 text-white px-6 py-2.5 rounded-lg hover:bg-indigo-700 dark:hover:bg-indigo-600 transition font-medium mb-6">
                             Add New Goal
                         </button>
 
@@ -1004,42 +1046,40 @@ app.get('/', (c) => {
 
             <!-- Weekly Review Page -->
             <div id="weekly-page" class="page hidden">
-                <div class="max-w-4xl mx-auto">
-                    <div class="bg-white rounded-lg shadow-xl p-8">
-                        <h1 class="text-3xl font-bold text-gray-800 mb-6">
-                            <i class="fas fa-chart-line text-green-500 mr-2"></i>
-                            Weekly Review
-                        </h1>
+                <div class="max-w-4xl mx-auto mt-8">
+                    <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+                        <h1 class="text-2xl font-semibold text-gray-900 dark:text-white mb-6">Weekly Review</h1>
 
                         <div class="mb-6">
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">Select Week</label>
-                            <input type="week" id="weekly-week" class="border rounded px-4 py-2" />
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Select Week</label>
+                            <input type="week" id="weekly-week" class="border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent" />
                         </div>
 
                         <div class="mb-6">
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">Overall Evaluation</label>
-                            <textarea id="weekly-evaluation" rows="4" class="w-full border rounded px-4 py-2" placeholder="How did this week go?"></textarea>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Overall Evaluation</label>
+                            <textarea id="weekly-evaluation" rows="4" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent" placeholder="How did this week go?"></textarea>
                         </div>
 
                         <div class="mb-6">
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">Achievements</label>
-                            <textarea id="weekly-achievements" rows="4" class="w-full border rounded px-4 py-2" placeholder="What did you accomplish?"></textarea>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Achievements</label>
+                            <textarea id="weekly-achievements" rows="4" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent" placeholder="What did you accomplish?"></textarea>
                         </div>
 
                         <div class="mb-6">
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">Challenges</label>
-                            <textarea id="weekly-challenges" rows="4" class="w-full border rounded px-4 py-2" placeholder="What challenges did you face?"></textarea>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Challenges</label>
+                            <textarea id="weekly-challenges" rows="4" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent" placeholder="What challenges did you face?"></textarea>
                         </div>
 
                         <div class="mb-6">
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">Next Week Plan</label>
-                            <textarea id="weekly-next-plan" rows="4" class="w-full border rounded px-4 py-2" placeholder="What are your plans for next week?"></textarea>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Next Week Plan</label>
+                            <textarea id="weekly-next-plan" rows="4" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent" placeholder="What are your plans for next week?"></textarea>
                         </div>
 
-                        <button onclick="saveWeeklyReview()" class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition">
-                            <i class="fas fa-save mr-2"></i>
-                            Save Weekly Review
-                        </button>
+                        <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
+                            <button onclick="saveWeeklyReview()" class="bg-indigo-600 dark:bg-indigo-500 text-white px-6 py-2.5 rounded-lg hover:bg-indigo-700 dark:hover:bg-indigo-600 transition font-medium">
+                                Save Review
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1048,13 +1088,13 @@ app.get('/', (c) => {
         <!-- Modals -->
         
         <!-- Task Selector Modal -->
-        <div id="task-selector-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-            <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-hidden">
-                <div class="p-6 border-b">
+        <div id="task-selector-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 dark:bg-opacity-70 z-50 flex items-center justify-center p-4">
+            <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 max-w-2xl w-full max-h-[80vh] overflow-hidden">
+                <div class="p-6 border-b border-gray-200 dark:border-gray-700">
                     <div class="flex justify-between items-center">
-                        <h3 class="text-xl font-bold text-gray-800">Select Tasks for Today</h3>
-                        <button onclick="closeTaskSelectorModal()" class="text-gray-500 hover:text-gray-700">
-                            <i class="fas fa-times text-2xl"></i>
+                        <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Select Tasks for Today</h3>
+                        <button onclick="closeTaskSelectorModal()" class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 text-xl">
+                            ×
                         </button>
                     </div>
                 </div>
@@ -1063,9 +1103,8 @@ app.get('/', (c) => {
                         <!-- Tasks will be loaded here -->
                     </div>
                 </div>
-                <div class="p-6 border-t bg-gray-50">
-                    <button onclick="addSelectedTasks()" class="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition w-full">
-                        <i class="fas fa-check mr-2"></i>
+                <div class="p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
+                    <button onclick="addSelectedTasks()" class="bg-indigo-600 dark:bg-indigo-500 text-white px-6 py-2.5 rounded-lg hover:bg-indigo-700 dark:hover:bg-indigo-600 transition w-full font-medium">
                         Add Selected Tasks
                     </button>
                 </div>
@@ -1073,64 +1112,63 @@ app.get('/', (c) => {
         </div>
 
         <!-- Create Task Modal -->
-        <div id="create-task-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-            <div class="bg-white rounded-lg shadow-xl max-w-lg w-full">
-                <div class="p-6 border-b">
+        <div id="create-task-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 dark:bg-opacity-70 z-50 flex items-center justify-center p-4">
+            <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 max-w-lg w-full">
+                <div class="p-6 border-b border-gray-200 dark:border-gray-700">
                     <div class="flex justify-between items-center">
-                        <h3 class="text-xl font-bold text-gray-800">Create New Task</h3>
-                        <button onclick="closeCreateTaskModal()" class="text-gray-500 hover:text-gray-700">
-                            <i class="fas fa-times text-2xl"></i>
+                        <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Create New Task</h3>
+                        <button onclick="closeCreateTaskModal()" class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 text-xl">
+                            ×
                         </button>
                     </div>
                 </div>
                 <div class="p-6">
                     <div class="space-y-4">
                         <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">Task Title *</label>
-                            <input type="text" id="new-task-title" class="w-full border rounded px-4 py-2" placeholder="Enter task title" />
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Task Title *</label>
+                            <input type="text" id="new-task-title" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent" placeholder="Enter task title" />
                         </div>
                         <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">Description</label>
-                            <textarea id="new-task-description" rows="3" class="w-full border rounded px-4 py-2" placeholder="Task description (optional)"></textarea>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Description</label>
+                            <textarea id="new-task-description" rows="3" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent" placeholder="Task description (optional)"></textarea>
                         </div>
                         <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">Category *</label>
-                            <select id="new-task-category" class="w-full border rounded px-4 py-2">
-                                <option value="spiritual">🙏 Spiritual/Faith</option>
-                                <option value="financial">💰 Financial/Career</option>
-                                <option value="health">❤️ Health/Fitness</option>
-                                <option value="family">👨‍👩‍👧 Family/Friends</option>
-                                <option value="learning">📚 Learning</option>
-                                <option value="other">⭐ Other</option>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Category *</label>
+                            <select id="new-task-category" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent">
+                                <option value="spiritual">Spiritual/Faith</option>
+                                <option value="financial">Financial/Career</option>
+                                <option value="health">Health/Fitness</option>
+                                <option value="family">Family/Friends</option>
+                                <option value="learning">Learning</option>
+                                <option value="other">Other</option>
                             </select>
                         </div>
                         <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">Priority *</label>
-                            <select id="new-task-priority" class="w-full border rounded px-4 py-2">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Priority *</label>
+                            <select id="new-task-priority" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent">
                                 <option value="high">High Priority</option>
                                 <option value="medium" selected>Medium Priority</option>
                                 <option value="low">Low Priority</option>
                             </select>
                         </div>
                         <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">Due Date</label>
-                            <input type="date" id="new-task-due-date" class="w-full border rounded px-4 py-2" />
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Due Date</label>
+                            <input type="date" id="new-task-due-date" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent" />
                         </div>
                         <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">Link to Goal (Optional)</label>
-                            <select id="new-task-goal" class="w-full border rounded px-4 py-2">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Link to Goal (Optional)</label>
+                            <select id="new-task-goal" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent">
                                 <option value="">No goal (standalone task)</option>
                                 <!-- Goals will be loaded here -->
                             </select>
                         </div>
                     </div>
                 </div>
-                <div class="p-6 border-t bg-gray-50 flex space-x-3">
-                    <button onclick="closeCreateTaskModal()" class="flex-1 bg-gray-300 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-400 transition">
+                <div class="p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 flex gap-3">
+                    <button onclick="closeCreateTaskModal()" class="flex-1 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-6 py-2.5 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition font-medium">
                         Cancel
                     </button>
-                    <button onclick="createNewTask()" class="flex-1 bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition">
-                        <i class="fas fa-plus mr-2"></i>
+                    <button onclick="createNewTask()" class="flex-1 bg-indigo-600 dark:bg-indigo-500 text-white px-6 py-2.5 rounded-lg hover:bg-indigo-700 dark:hover:bg-indigo-600 transition font-medium">
                         Create Task
                     </button>
                 </div>
@@ -1138,45 +1176,44 @@ app.get('/', (c) => {
         </div>
 
         <!-- Create Goal Modal -->
-        <div id="create-goal-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-            <div class="bg-white rounded-lg shadow-xl max-w-lg w-full">
-                <div class="p-6 border-b">
+        <div id="create-goal-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 dark:bg-opacity-70 z-50 flex items-center justify-center p-4">
+            <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 max-w-lg w-full">
+                <div class="p-6 border-b border-gray-200 dark:border-gray-700">
                     <div class="flex justify-between items-center">
-                        <h3 class="text-xl font-bold text-gray-800">Create New Goal</h3>
-                        <button onclick="closeCreateGoalModal()" class="text-gray-500 hover:text-gray-700">
-                            <i class="fas fa-times text-2xl"></i>
+                        <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Create New Goal</h3>
+                        <button onclick="closeCreateGoalModal()" class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 text-xl">
+                            ×
                         </button>
                     </div>
                 </div>
                 <div class="p-6">
                     <div class="space-y-4">
                         <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">Goal Title *</label>
-                            <input type="text" id="new-goal-title" class="w-full border rounded px-4 py-2" placeholder="Enter goal title" />
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Goal Title *</label>
+                            <input type="text" id="new-goal-title" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent" placeholder="Enter goal title" />
                         </div>
                         <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">Description</label>
-                            <textarea id="new-goal-description" rows="3" class="w-full border rounded px-4 py-2" placeholder="Goal description (optional)"></textarea>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Description</label>
+                            <textarea id="new-goal-description" rows="3" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent" placeholder="Goal description (optional)"></textarea>
                         </div>
                         <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">Category *</label>
-                            <select id="new-goal-category" class="w-full border rounded px-4 py-2">
-                                <option value="spiritual">🙏 Spiritual/Faith</option>
-                                <option value="financial">💰 Financial/Career</option>
-                                <option value="health">❤️ Health/Fitness</option>
-                                <option value="family">👨‍👩‍👧 Family/Friends</option>
-                                <option value="learning">📚 Learning</option>
-                                <option value="other">⭐ Other</option>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Category *</label>
+                            <select id="new-goal-category" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent">
+                                <option value="spiritual">Spiritual/Faith</option>
+                                <option value="financial">Financial/Career</option>
+                                <option value="health">Health/Fitness</option>
+                                <option value="family">Family/Friends</option>
+                                <option value="learning">Learning</option>
+                                <option value="other">Other</option>
                             </select>
                         </div>
                     </div>
                 </div>
-                <div class="p-6 border-t bg-gray-50 flex space-x-3">
-                    <button onclick="closeCreateGoalModal()" class="flex-1 bg-gray-300 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-400 transition">
+                <div class="p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 flex gap-3">
+                    <button onclick="closeCreateGoalModal()" class="flex-1 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-6 py-2.5 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition font-medium">
                         Cancel
                     </button>
-                    <button onclick="createNewGoal()" class="flex-1 bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition">
-                        <i class="fas fa-plus mr-2"></i>
+                    <button onclick="createNewGoal()" class="flex-1 bg-indigo-600 dark:bg-indigo-500 text-white px-6 py-2.5 rounded-lg hover:bg-indigo-700 dark:hover:bg-indigo-600 transition font-medium">
                         Create Goal
                     </button>
                 </div>

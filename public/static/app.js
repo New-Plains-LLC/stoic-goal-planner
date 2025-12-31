@@ -2,6 +2,18 @@
 let currentGoalType = 'long_term';
 let currentDate = new Date().toISOString().split('T')[0];
 
+// Dark mode
+function toggleDarkMode() {
+    const html = document.documentElement;
+    html.classList.toggle('dark');
+    localStorage.setItem('darkMode', html.classList.contains('dark') ? 'true' : 'false');
+}
+
+// Initialize dark mode from localStorage
+if (localStorage.getItem('darkMode') === 'true') {
+    document.documentElement.classList.add('dark');
+}
+
 // Initialize app
 document.addEventListener('DOMContentLoaded', () => {
     // Set today's date
@@ -95,20 +107,51 @@ async function loadDailyData(date) {
 
 async function loadStoicQuote(date) {
     try {
+        // Check if we already have a quote for this date
+        const cachedQuoteDate = localStorage.getItem('stoic_quote_date');
+        const cachedQuote = localStorage.getItem('stoic_quote');
+        const cachedAuthor = localStorage.getItem('stoic_author');
+        const cachedMeaning = localStorage.getItem('stoic_meaning');
+        
+        if (cachedQuoteDate === date && cachedQuote && cachedAuthor) {
+            // Use cached quote for today
+            document.getElementById('stoic-quote').textContent = cachedQuote;
+            document.getElementById('stoic-author').textContent = `— ${cachedAuthor}`;
+            document.getElementById('stoic-meaning').textContent = cachedMeaning || '';
+            return;
+        }
+        
+        // Fetch new quote
         const response = await axios.get('/api/quote/daily');
         const quote = response.data;
         
+        if (!quote.quote || !quote.author) {
+            console.error('Invalid quote data:', quote);
+            return;
+        }
+        
+        // Display quote
         document.getElementById('stoic-quote').textContent = quote.quote;
         document.getElementById('stoic-author').textContent = `— ${quote.author}`;
         document.getElementById('stoic-meaning').textContent = quote.meaning;
         
+        // Cache quote for today
+        localStorage.setItem('stoic_quote_date', date);
+        localStorage.setItem('stoic_quote', quote.quote);
+        localStorage.setItem('stoic_author', quote.author);
+        localStorage.setItem('stoic_meaning', quote.meaning);
+        
         // Save quote to daily entry
         await axios.put(`/api/daily/${date}`, {
             stoic_quote: quote.quote,
-            stoic_quote_meaning: quote.meaning
+            stoic_quote_meaning: `${quote.author}: ${quote.meaning}`
         });
     } catch (error) {
         console.error('Error loading stoic quote:', error);
+        // Show fallback
+        document.getElementById('stoic-quote').textContent = 'The obstacle is the way.';
+        document.getElementById('stoic-author').textContent = '— Marcus Aurelius';
+        document.getElementById('stoic-meaning').textContent = 'What stands in the way becomes the way.';
     }
 }
 
