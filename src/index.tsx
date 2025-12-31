@@ -523,6 +523,33 @@ app.post('/api/schedule', async (c) => {
   return c.json({ id: result.meta.last_row_id, ...body }, 201);
 });
 
+// Update schedule event
+app.put('/api/schedule/:id', async (c) => {
+  const { env } = c;
+  const id = c.req.param('id');
+  const body = await c.req.json();
+  
+  const { title, description, start_time, end_time, location } = body;
+  
+  await env.DB.prepare(`
+    UPDATE schedule_events 
+    SET title = ?, description = ?, start_time = ?, end_time = ?, location = ?, updated_at = CURRENT_TIMESTAMP
+    WHERE id = ?
+  `).bind(title, description, start_time, end_time, location || null, id).run();
+  
+  return c.json({ id, ...body });
+});
+
+// Delete schedule event
+app.delete('/api/schedule/:id', async (c) => {
+  const { env } = c;
+  const id = c.req.param('id');
+  
+  await env.DB.prepare(`DELETE FROM schedule_events WHERE id = ?`).bind(id).run();
+  
+  return c.json({ success: true });
+});
+
 // ============= STOIC QUOTE API =============
 
 // Get daily stoic quote (curated collection with daily rotation)

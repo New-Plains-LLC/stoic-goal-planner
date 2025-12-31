@@ -419,7 +419,7 @@ function renderSchedule(events) {
     const container = document.getElementById('schedule-list');
     
     if (!events || events.length === 0) {
-        container.innerHTML = '<p class="text-gray-500">No events scheduled for today.</p>';
+        container.innerHTML = '<p class="text-gray-500 dark:text-gray-400">No events scheduled for today.</p>';
         return;
     }
     
@@ -428,12 +428,21 @@ function renderSchedule(events) {
         const endTime = new Date(event.end_time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
         
         return `
-            <div class="p-4 border-l-4 border-orange-500 bg-white rounded">
+            <div class="p-4 border-l-4 border-gray-400 dark:border-gray-500 bg-gray-50 dark:bg-gray-750 rounded-lg">
                 <div class="flex items-center justify-between">
-                    <div>
-                        <p class="font-semibold text-gray-800">${event.title}</p>
-                        <p class="text-sm text-gray-600">${startTime} - ${endTime}</p>
-                        ${event.location ? `<p class="text-sm text-gray-500"><i class="fas fa-map-marker-alt mr-1"></i>${event.location}</p>` : ''}
+                    <div class="flex-1">
+                        <p class="font-medium text-gray-900 dark:text-gray-100">${event.title}</p>
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">${startTime} - ${endTime}</p>
+                        ${event.location ? `<p class="text-sm text-gray-500 dark:text-gray-400 mt-1">${event.location}</p>` : ''}
+                        ${event.description ? `<p class="text-sm text-gray-600 dark:text-gray-400 mt-1">${event.description}</p>` : ''}
+                    </div>
+                    <div class="flex gap-2 ml-4">
+                        <button onclick="editScheduleEvent(${event.id})" class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 text-sm">
+                            Edit
+                        </button>
+                        <button onclick="deleteScheduleEvent(${event.id})" class="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 text-sm">
+                            Delete
+                        </button>
                     </div>
                 </div>
             </div>
@@ -448,12 +457,12 @@ function showGoalType(type) {
     
     // Update tabs
     document.querySelectorAll('.goal-tab').forEach(tab => {
-        tab.classList.remove('border-indigo-600', 'text-indigo-600');
-        tab.classList.add('text-gray-600');
+        tab.classList.remove('border-gray-700', 'dark:border-gray-400', 'text-gray-700', 'dark:text-gray-300', 'bg-gray-100', 'dark:bg-gray-700');
+        tab.classList.add('border-transparent', 'text-gray-600', 'dark:text-gray-400');
     });
     
-    event.target.classList.remove('text-gray-600');
-    event.target.classList.add('border-indigo-600', 'text-indigo-600');
+    event.target.classList.remove('border-transparent', 'text-gray-600', 'dark:text-gray-400');
+    event.target.classList.add('border-gray-700', 'dark:border-gray-400', 'text-gray-700', 'dark:text-gray-300', 'bg-gray-100', 'dark:bg-gray-700');
     
     loadGoals(type);
 }
@@ -503,10 +512,9 @@ function renderGoals(goals) {
         if (cat.goals.length > 0) {
             html += `
                 <div class="mb-8">
-                    <h3 class="text-xl font-bold text-${cat.color}-600 mb-4 flex items-center">
-                        <i class="fas ${cat.icon} mr-2"></i>
+                    <h3 class="text-xl font-semibold text-${cat.color}-600 dark:text-${cat.color}-400 mb-4 flex items-center">
                         ${cat.name}
-                        <span class="ml-2 text-sm font-normal text-gray-500">(${cat.goals.length})</span>
+                        <span class="ml-2 text-sm font-normal text-gray-500 dark:text-gray-400">(${cat.goals.length})</span>
                     </h3>
                     <div class="space-y-4">
                         ${cat.goals.map(goal => `
@@ -802,6 +810,67 @@ async function showGoogleCalendarSync() {
         } else {
             alert('Failed to sync calendar. Please check your access token.');
         }
+    }
+}
+
+async function editScheduleEvent(eventId) {
+    try {
+        // Get current event details
+        const dailyData = await axios.get(`/api/daily/${currentDate}`);
+        const event = dailyData.data.schedule.find(e => e.id === eventId);
+        
+        if (!event) {
+            alert('Event not found');
+            return;
+        }
+        
+        const title = prompt('Event Title:', event.title);
+        if (!title) return;
+        
+        const description = prompt('Description (optional):', event.description || '');
+        const location = prompt('Location (optional):', event.location || '');
+        
+        const startDate = new Date(event.start_time);
+        const endDate = new Date(event.end_time);
+        const startTimeStr = prompt('Start Time (YYYY-MM-DD HH:MM):', 
+            `${startDate.getFullYear()}-${String(startDate.getMonth() + 1).padStart(2, '0')}-${String(startDate.getDate()).padStart(2, '0')} ${String(startDate.getHours()).padStart(2, '0')}:${String(startDate.getMinutes()).padStart(2, '0')}`);
+        if (!startTimeStr) return;
+        
+        const endTimeStr = prompt('End Time (YYYY-MM-DD HH:MM):', 
+            `${endDate.getFullYear()}-${String(endDate.getMonth() + 1).padStart(2, '0')}-${String(endDate.getDate()).padStart(2, '0')} ${String(endDate.getHours()).padStart(2, '0')}:${String(endDate.getMinutes()).padStart(2, '0')}`);
+        if (!endTimeStr) return;
+        
+        const startTime = new Date(startTimeStr).toISOString();
+        const endTime = new Date(endTimeStr).toISOString();
+        
+        await axios.put(`/api/schedule/${eventId}`, {
+            title,
+            description,
+            location,
+            start_time: startTime,
+            end_time: endTime
+        });
+        
+        loadDailyData(currentDate);
+        alert('Event updated successfully!');
+    } catch (error) {
+        console.error('Error updating event:', error);
+        alert('Failed to update event. Please check the date/time format.');
+    }
+}
+
+async function deleteScheduleEvent(eventId) {
+    if (!confirm('Are you sure you want to delete this event?')) {
+        return;
+    }
+    
+    try {
+        await axios.delete(`/api/schedule/${eventId}`);
+        loadDailyData(currentDate);
+        alert('Event deleted successfully!');
+    } catch (error) {
+        console.error('Error deleting event:', error);
+        alert('Failed to delete event.');
     }
 }
 
