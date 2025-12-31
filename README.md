@@ -286,10 +286,19 @@ The app includes daily affirmations, gratitude tracking, task management, daily 
 
 2. **Sync Calendar**:
    - Click "Sync Google" button on Daily page
-   - Paste your access token
+   - Paste your access token (first time only)
    - Events from the next 7 days will be imported
+   - **Token is automatically saved** in localStorage for future syncs
 
-3. **Note**: Token expires after 1 hour. For production use, implement full OAuth flow.
+3. **Token Management**:
+   - Token persists between sessions
+   - If token expires (401 error), it's automatically cleared
+   - Simply sync again to enter a new token
+   
+4. **Optional - Full OAuth Setup** (for production):
+   - Create OAuth credentials in Google Cloud Console
+   - Set `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` in `.dev.vars`
+   - Use `/api/calendar/oauth/start` endpoint for automatic flow
 
 ## 🚀 Deployment
 
