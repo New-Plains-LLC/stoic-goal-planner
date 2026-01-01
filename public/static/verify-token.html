@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Google Calendar Token</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-2xl mx-auto bg-white rounded-lg shadow-lg p-6">
+        <h1 class="text-2xl font-bold mb-4">Google Calendar Token Verifier</h1>
+        
+        <div class="mb-4">
+            <label class="block text-sm font-medium mb-2">Paste your Access Token:</label>
+            <textarea id="token" rows="3" class="w-full border border-gray-300 rounded-lg px-4 py-2" placeholder="ya29.a0..."></textarea>
+        </div>
+        
+        <button onclick="verifyToken()" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">
+            Verify Token
+        </button>
+        
+        <div id="result" class="mt-6 hidden">
+            <h2 class="text-xl font-semibold mb-2">Results:</h2>
+            <pre id="output" class="bg-gray-100 p-4 rounded-lg overflow-auto text-sm"></pre>
+        </div>
+    </div>
+    
+    <script>
+        async function verifyToken() {
+            const token = document.getElementById('token').value.trim();
+            
+            if (!token) {
+                alert('Please enter an access token');
+                return;
+            }
+            
+            const resultDiv = document.getElementById('result');
+            const output = document.getElementById('output');
+            
+            resultDiv.classList.remove('hidden');
+            output.textContent = 'Verifying token...\n\n';
+            
+            try {
+                // Verify token with Google's tokeninfo endpoint
+                const tokenInfoResponse = await fetch(`https://oauth2.googleapis.com/tokeninfo?access_token=${token}`);
+                const tokenInfo = await tokenInfoResponse.json();
+                
+                output.textContent += '=== TOKEN INFO ===\n';
+                output.textContent += JSON.stringify(tokenInfo, null, 2) + '\n\n';
+                
+                if (tokenInfo.error) {
+                    output.textContent += '❌ ERROR: ' + tokenInfo.error_description + '\n';
+                    return;
+                }
+                
+                // Check scopes
+                output.textContent += '=== SCOPES ===\n';
+                const scopes = tokenInfo.scope ? tokenInfo.scope.split(' ') : [];
+                scopes.forEach(scope => {
+                    output.textContent += '  • ' + scope + '\n';
+                });
+                
+                const hasCalendarReadonly = scopes.includes('https://www.googleapis.com/auth/calendar.readonly');
+                const hasCalendarEvents = scopes.includes('https://www.googleapis.com/auth/calendar.events');
+                
+                output.textContent += '\n=== SCOPE CHECK ===\n';
+                if (hasCalendarReadonly) {
+                    output.textContent += '✅ Has calendar.readonly scope - GOOD!\n';
+                } else if (hasCalendarEvents) {
+                    output.textContent += '⚠️ Has calendar.events scope - This might work\n';
+                } else {
+                    output.textContent += '❌ Missing calendar.readonly scope - WON\'T WORK!\n';
+                }
+                
+                // Try to fetch calendar events
+                output.textContent += '\n=== TESTING CALENDAR API ===\n';
+                const calendarResponse = await fetch(
+                    'https://www.googleapis.com/calendar/v3/calendars/primary/events?maxResults=5&singleEvents=true&orderBy=startTime',
+                    {
+                        headers: {
+                            'Authorization': 'Bearer ' + token,
+                            'Accept': 'application/json'
+                        }
+                    }
+                );
+                
+                const calendarData = await calendarResponse.json();
+                
+                if (calendarResponse.ok) {
+                    output.textContent += '✅ Calendar API request SUCCESSFUL!\n';
+                    output.textContent += `Found ${calendarData.items ? calendarData.items.length : 0} events\n`;
+                    if (calendarData.items && calendarData.items.length > 0) {
+                        output.textContent += '\nFirst event: ' + calendarData.items[0].summary + '\n';
+                    }
+                } else {
+                    output.textContent += '❌ Calendar API request FAILED!\n';
+                    output.textContent += 'Status: ' + calendarResponse.status + '\n';
+                    output.textContent += 'Error: ' + JSON.stringify(calendarData.error, null, 2) + '\n';
+                }
+                
+            } catch (error) {
+                output.textContent += '\n❌ EXCEPTION: ' + error.message;
+            }
+        }
+    </script>
+</body>
+</html>

@@ -955,6 +955,122 @@ function getGoogleAccessToken() {
     return localStorage.getItem('google_calendar_token');
 }
 
+// ========== MICROSOFT CALENDAR SYNC ==========
+
+async function showMicrosoftCalendarSync() {
+    // Check for stored token
+    let accessToken = getMicrosoftAccessToken();
+    
+    if (!accessToken) {
+        const instructions = 
+            '📅 Microsoft Calendar Sync - OAuth Token Setup\n\n' +
+            '══════════════════════════════════\n' +
+            '⚠️ IMPORTANT: You need an OAuth Access Token\n' +
+            '══════════════════════════════════\n\n' +
+            'QUICK SETUP INSTRUCTIONS:\n\n' +
+            '1. Go to: https://developer.microsoft.com/en-us/graph/graph-explorer\n\n' +
+            '2. Click "Sign in to Graph Explorer" (top right)\n' +
+            '   • Sign in with your Microsoft/Outlook account\n\n' +
+            '3. After signing in, click your profile icon → "Consent to permissions"\n' +
+            '   • Find and consent to: Calendars.Read\n' +
+            '   • Click "Consent"\n\n' +
+            '4. Click "Access token" tab (middle of screen)\n' +
+            '   • Copy the entire access token\n\n' +
+            'ALTERNATIVE METHOD (Azure Portal):\n' +
+            '1. Go to: https://portal.azure.com/#blade/Microsoft_AAD_RegisteredApps/ApplicationsListBlade\n' +
+            '2. Register a new app\n' +
+            '3. Add Microsoft Graph API permissions: Calendars.Read\n' +
+            '4. Use OAuth flow to get access token\n\n' +
+            '══════════════════════════════════\n\n' +
+            'Paste your Microsoft Access Token below:';
+        
+        accessToken = prompt(instructions);
+        
+        if (!accessToken) {
+            alert('Access token is required to sync Microsoft Calendar');
+            return;
+        }
+        
+        // Save token for future use
+        saveMicrosoftAccessToken(accessToken);
+    } else {
+        // Ask if user wants to use stored token or get a new one
+        const useStored = confirm('Use stored Microsoft access token?\n\nClick OK to use stored token\nClick Cancel to enter a new token');
+        if (!useStored) {
+            localStorage.removeItem('microsoft_calendar_token');
+            return showMicrosoftCalendarSync(); // Recursive call to show prompt
+        }
+    }
+    
+    try {
+        // Sync events for next 7 days
+        const startDate = new Date().toISOString();
+        const endDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+        
+        const response = await axios.post('/api/calendar/sync/microsoft', {
+            accessToken,
+            startDate,
+            endDate
+        });
+        
+        if (response.data.success) {
+            alert(response.data.message);
+            loadDailyData(currentDate);
+        }
+    } catch (error) {
+        console.error('Error syncing Microsoft Calendar:', error);
+        console.error('Full error:', error.response);
+        
+        if (error.response && error.response.data) {
+            const errorDetails = error.response.data.fullError || error.response.data.details || '';
+            
+            // Token expired or invalid
+            if (error.response.status === 401 || error.response.data.error?.includes('token') || error.response.data.error?.includes('expired')) {
+                localStorage.removeItem('microsoft_calendar_token');
+                alert(
+                    '🔑 Access Token Expired or Invalid\n\n' +
+                    'Your Microsoft access token has expired or is invalid.\n\n' +
+                    'To sync again:\n' +
+                    '1. Go to https://developer.microsoft.com/en-us/graph/graph-explorer\n' +
+                    '2. Sign in and consent to Calendars.Read permission\n' +
+                    '3. Copy the access token\n' +
+                    '4. Click "Microsoft" button again and paste the new token\n\n' +
+                    'Error details: ' + (error.response.data.details || errorDetails)
+                );
+            }
+            // Permission error
+            else if (error.response.status === 403 || errorDetails.includes('permission')) {
+                alert(
+                    '🔒 Permission Error\n\n' +
+                    'The access token doesn\'t have Calendars.Read permission.\n\n' +
+                    'Make sure you:\n' +
+                    '1. Consented to Calendars.Read in Graph Explorer\n' +
+                    '2. Or added Calendars.Read permission in Azure Portal\n\n' +
+                    'Error details: ' + errorDetails
+                );
+            }
+            // Other errors
+            else {
+                const errorMsg = error.response.data.error || 'Unknown error';
+                const details = error.response.data.details || errorDetails || '';
+                alert(`Failed to sync Microsoft Calendar\n\nError: ${errorMsg}\n\nDetails: ${details}`);
+            }
+        } else if (error.message) {
+            alert(`Failed to sync Microsoft Calendar\n\nError: ${error.message}`);
+        } else {
+            alert('Failed to sync Microsoft Calendar. Please check your access token and try again.');
+        }
+    }
+}
+
+function saveMicrosoftAccessToken(token) {
+    localStorage.setItem('microsoft_calendar_token', token);
+}
+
+function getMicrosoftAccessToken() {
+    return localStorage.getItem('microsoft_calendar_token');
+}
+
 // ========== CREATE TASK MODAL ==========
 
 async function showCreateTaskModal() {

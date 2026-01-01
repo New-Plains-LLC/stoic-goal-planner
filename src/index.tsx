@@ -1055,6 +1055,123 @@ app.post('/api/calendar/sync', async (c) => {
   }
 });
 
+// Sync events from Microsoft Calendar (Outlook)
+app.post('/api/calendar/sync/microsoft', async (c) => {
+  const { env } = c;
+  const body = await c.req.json();
+  
+  const { accessToken, startDate, endDate } = body;
+  
+  if (!accessToken) {
+    return c.json({ error: 'Access token required' }, 400);
+  }
+  
+  try {
+    // Fetch events from Microsoft Graph API
+    const timeMin = startDate ? new Date(startDate).toISOString() : new Date().toISOString();
+    const timeMax = endDate ? new Date(endDate).toISOString() : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+    
+    // Microsoft Graph API endpoint for calendar events
+    const calendarResponse = await fetch(
+      `https://graph.microsoft.com/v1.0/me/calendar/calendarView?startDateTime=${timeMin}&endDateTime=${timeMax}&$orderby=start/dateTime`,
+      {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Accept': 'application/json',
+          'Prefer': 'outlook.timezone="UTC"'
+        }
+      }
+    );
+    
+    if (!calendarResponse.ok) {
+      const errorText = await calendarResponse.text();
+      console.error('Microsoft Calendar API error:', calendarResponse.status, errorText);
+      throw new Error(`Microsoft Calendar API returned ${calendarResponse.status}: ${errorText}`);
+    }
+    
+    const calendarData = await calendarResponse.json();
+    
+    // Check for API error in response
+    if (calendarData.error) {
+      console.error('Microsoft Calendar API error:', calendarData.error);
+      throw new Error(`Microsoft Calendar API error: ${calendarData.error.message || JSON.stringify(calendarData.error)}`);
+    }
+    
+    const events = calendarData.value || [];
+    
+    // Insert events into database
+    let syncedCount = 0;
+    for (const event of events) {
+      const startTime = event.start.dateTime;
+      const endTime = event.end.dateTime;
+      
+      // Check if event already exists
+      const { results } = await env.DB.prepare(
+        'SELECT * FROM schedule_events WHERE external_event_id = ?'
+      ).bind(event.id).all();
+      
+      if (results && results.length > 0) {
+        // Update existing event
+        await env.DB.prepare(`
+          UPDATE schedule_events
+          SET title = ?, description = ?, start_time = ?, end_time = ?, location = ?, updated_at = CURRENT_TIMESTAMP
+          WHERE external_event_id = ?
+        `).bind(
+          event.subject || 'Untitled Event',
+          event.bodyPreview || '',
+          startTime,
+          endTime,
+          event.location?.displayName || '',
+          event.id
+        ).run();
+      } else {
+        // Insert new event
+        await env.DB.prepare(`
+          INSERT INTO schedule_events (title, description, start_time, end_time, location, calendar_source, external_event_id)
+          VALUES (?, ?, ?, ?, ?, 'microsoft_calendar', ?)
+        `).bind(
+          event.subject || 'Untitled Event',
+          event.bodyPreview || '',
+          startTime,
+          endTime,
+          event.location?.displayName || '',
+          event.id
+        ).run();
+      }
+      
+      syncedCount++;
+    }
+    
+    return c.json({ 
+      success: true, 
+      synced: syncedCount,
+      message: `Successfully synced ${syncedCount} events from Microsoft Calendar`
+    });
+    
+  } catch (error) {
+    console.error('Microsoft Calendar sync error:', error);
+    console.error('Error details:', error.stack || error);
+    
+    let errorMessage = 'Failed to sync Microsoft Calendar';
+    let details = error.message || 'Unknown error';
+    
+    // Check if error is from Microsoft API
+    if (error.message && error.message.includes('401')) {
+      errorMessage = 'Invalid or expired access token';
+      details = 'Please get a new access token from Microsoft';
+    } else if (error.message && error.message.includes('403')) {
+      errorMessage = 'Access forbidden - Insufficient permissions';
+      details = 'You must authorize the Calendars.Read scope';
+    }
+    
+    return c.json({ 
+      error: errorMessage, 
+      details: details,
+      fullError: error.message
+    }, 500);
+  }
+});
+
 // Get Google Calendar OAuth URL
 app.get('/api/calendar/auth-url', async (c) => {
   // This would normally use environment variables for client ID
@@ -1273,12 +1390,15 @@ app.get('/', (c) => {
                         <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
                             <div class="flex justify-between items-center mb-6">
                                 <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Today's Schedule</h2>
-                                <div class="flex gap-2">
+                                <div class="flex gap-2 flex-wrap">
                                     <button onclick="showAddEventModal()" class="bg-gray-800 dark:bg-gray-700 text-white px-4 py-2 rounded-lg hover:bg-gray-700 dark:hover:bg-gray-600 transition text-sm font-medium">
                                         Add Event
                                     </button>
-                                    <button onclick="showGoogleCalendarSync()" class="border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition text-sm font-medium">
-                                        Sync Google
+                                    <button onclick="showGoogleCalendarSync()" class="border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 px-3 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition text-sm font-medium">
+                                        Google
+                                    </button>
+                                    <button onclick="showMicrosoftCalendarSync()" class="border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 px-3 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition text-sm font-medium">
+                                        Microsoft
                                     </button>
                                 </div>
                             </div>
