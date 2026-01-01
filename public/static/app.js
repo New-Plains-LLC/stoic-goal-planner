@@ -777,17 +777,26 @@ async function showGoogleCalendarSync() {
     let accessToken = getGoogleAccessToken();
     
     if (!accessToken) {
-        accessToken = prompt(
-            'Enter your Google Calendar Access Token:\n\n' +
-            'To get your access token:\n' +
-            '1. Go to https://developers.google.com/oauthplayground/\n' +
-            '2. Select "Google Calendar API v3"\n' +
-            '3. Select "https://www.googleapis.com/auth/calendar.readonly"\n' +
-            '4. Click "Authorize APIs"\n' +
-            '5. Click "Exchange authorization code for tokens"\n' +
-            '6. Copy the "Access token" value\n\n' +
-            'Paste your access token here:'
-        );
+        const instructions = 
+            '📅 Google Calendar Sync Setup\n\n' +
+            '⚠️ IMPORTANT: OAuth Playground tokens expire in 1 hour!\n\n' +
+            'STEPS TO GET ACCESS TOKEN:\n' +
+            '1. Visit: https://developers.google.com/oauthplayground/\n' +
+            '2. Click the gear icon (⚙️) in top right\n' +
+            '3. Check "Use your own OAuth credentials"\n' +
+            '4. Leave Client ID and Secret empty (we\'ll use default)\n' +
+            '5. In Step 1 (left side):\n' +
+            '   - Scroll to "Google Calendar API v3"\n' +
+            '   - Check: calendar.readonly\n' +
+            '6. Click "Authorize APIs" (blue button)\n' +
+            '7. Sign in with your Google account\n' +
+            '8. Click "Allow" to grant permissions\n' +
+            '9. In Step 2: Click "Exchange authorization code for tokens"\n' +
+            '10. Copy the "Access token" (NOT refresh token)\n\n' +
+            '⏱️ Token expires in 1 hour - you\'ll need to repeat this process\n\n' +
+            'Paste your access token below:';
+        
+        accessToken = prompt(instructions);
         
         if (!accessToken) {
             alert('Access token is required to sync Google Calendar');
@@ -796,6 +805,13 @@ async function showGoogleCalendarSync() {
         
         // Save token for future use
         saveGoogleAccessToken(accessToken);
+    } else {
+        // Ask if user wants to use stored token or get a new one
+        const useStored = confirm('Use stored access token?\n\nClick OK to use stored token\nClick Cancel to enter a new token');
+        if (!useStored) {
+            localStorage.removeItem('google_calendar_token');
+            return showGoogleCalendarSync(); // Recursive call to show prompt
+        }
     }
     
     try {
@@ -819,13 +835,21 @@ async function showGoogleCalendarSync() {
         
         if (error.response && error.response.data) {
             // Token might be expired, clear it
-            if (error.response.status === 401 || error.response.data.error?.includes('token')) {
+            if (error.response.status === 401 || error.response.data.error?.includes('token') || error.response.data.error?.includes('expired')) {
                 localStorage.removeItem('google_calendar_token');
-                alert(`Access token error: ${error.response.data.details || 'Token expired or invalid'}\n\nPlease try again with a new token.`);
+                alert(
+                    '🔑 Access Token Expired or Invalid\n\n' +
+                    'OAuth Playground tokens expire after 1 hour.\n\n' +
+                    'To sync again:\n' +
+                    '1. Go to https://developers.google.com/oauthplayground/\n' +
+                    '2. Follow the steps to get a new access token\n' +
+                    '3. Click "Sync Google" again and paste the new token\n\n' +
+                    'Error details: ' + (error.response.data.details || error.response.data.fullError || 'Token expired')
+                );
             } else {
                 const errorMsg = error.response.data.error || 'Unknown error';
                 const details = error.response.data.details || error.response.data.fullError || '';
-                alert(`Failed to sync calendar\n\nError: ${errorMsg}\n\nDetails: ${details}`);
+                alert(`Failed to sync calendar\n\nError: ${errorMsg}\n\nDetails: ${details}\n\nTip: Make sure you authorized the calendar.readonly scope`);
             }
         } else if (error.message) {
             alert(`Failed to sync calendar\n\nError: ${error.message}`);
