@@ -779,22 +779,28 @@ async function showGoogleCalendarSync() {
     if (!accessToken) {
         const instructions = 
             '📅 Google Calendar Sync Setup\n\n' +
-            '⚠️ IMPORTANT: OAuth Playground tokens expire in 1 hour!\n\n' +
-            'STEPS TO GET ACCESS TOKEN:\n' +
+            '⚠️ IMPORTANT: You need an OAuth Access Token (not an API Key)\n\n' +
+            'Google Calendar requires OAuth for private calendar access.\n' +
+            'API Keys from Cloud Console won\'t work for this.\n\n' +
+            '══════════════════════════════════\n' +
+            'OPTION 1: Quick Test (OAuth Playground)\n' +
+            '══════════════════════════════════\n' +
             '1. Visit: https://developers.google.com/oauthplayground/\n' +
-            '2. Click the gear icon (⚙️) in top right\n' +
-            '3. Check "Use your own OAuth credentials"\n' +
-            '4. Leave Client ID and Secret empty (we\'ll use default)\n' +
-            '5. In Step 1 (left side):\n' +
-            '   - Scroll to "Google Calendar API v3"\n' +
-            '   - Check: calendar.readonly\n' +
-            '6. Click "Authorize APIs" (blue button)\n' +
-            '7. Sign in with your Google account\n' +
-            '8. Click "Allow" to grant permissions\n' +
-            '9. In Step 2: Click "Exchange authorization code for tokens"\n' +
-            '10. Copy the "Access token" (NOT refresh token)\n\n' +
-            '⏱️ Token expires in 1 hour - you\'ll need to repeat this process\n\n' +
-            'Paste your access token below:';
+            '2. In Step 1: Select "Google Calendar API v3" → calendar.readonly\n' +
+            '3. Click "Authorize APIs" → Sign in → Allow\n' +
+            '4. In Step 2: Click "Exchange authorization code for tokens"\n' +
+            '5. Copy the "Access token" (expires in 1 hour)\n\n' +
+            '══════════════════════════════════\n' +
+            'OPTION 2: Production Setup (Google Cloud Console)\n' +
+            '══════════════════════════════════\n' +
+            '1. Go to: https://console.cloud.google.com/apis/credentials\n' +
+            '2. Create OAuth 2.0 Client ID (Web application)\n' +
+            '3. Add authorized redirect URI: ' + window.location.origin + '/calendar/callback\n' +
+            '4. Use the Client ID/Secret with OAuth flow\n' +
+            '5. This is more complex but tokens can be refreshed\n\n' +
+            '══════════════════════════════════\n\n' +
+            'For now, use Option 1 to test.\n' +
+            'Paste your OAuth Access Token below:';
         
         accessToken = prompt(instructions);
         
@@ -834,25 +840,46 @@ async function showGoogleCalendarSync() {
         console.error('Full error:', error.response);
         
         if (error.response && error.response.data) {
-            // Token might be expired, clear it
-            if (error.response.status === 401 || error.response.data.error?.includes('token') || error.response.data.error?.includes('expired')) {
+            const errorDetails = error.response.data.fullError || error.response.data.details || '';
+            
+            // Check if it's an API key issue
+            if (errorDetails.includes('API key') || errorDetails.includes('invalid authentication credentials')) {
+                localStorage.removeItem('google_calendar_token');
+                alert(
+                    '🔑 Authentication Error\n\n' +
+                    'It looks like you may have entered an API Key instead of an OAuth Access Token.\n\n' +
+                    'Google Calendar API requires OAuth for private calendar access.\n' +
+                    'API Keys from Google Cloud Console won\'t work.\n\n' +
+                    'You need an OAuth Access Token:\n' +
+                    '1. Go to https://developers.google.com/oauthplayground/\n' +
+                    '2. Select "Google Calendar API v3" → calendar.readonly\n' +
+                    '3. Authorize and get the Access Token\n' +
+                    '4. Try syncing again\n\n' +
+                    'Technical details: ' + errorDetails
+                );
+            }
+            // Token expired
+            else if (error.response.status === 401 || error.response.data.error?.includes('token') || error.response.data.error?.includes('expired')) {
                 localStorage.removeItem('google_calendar_token');
                 alert(
                     '🔑 Access Token Expired or Invalid\n\n' +
-                    'OAuth Playground tokens expire after 1 hour.\n\n' +
+                    'Your OAuth access token has expired or is invalid.\n\n' +
                     'To sync again:\n' +
                     '1. Go to https://developers.google.com/oauthplayground/\n' +
                     '2. Follow the steps to get a new access token\n' +
                     '3. Click "Sync Google" again and paste the new token\n\n' +
-                    'Error details: ' + (error.response.data.details || error.response.data.fullError || 'Token expired')
+                    'Note: Tokens from OAuth Playground expire after 1 hour.\n\n' +
+                    'Error details: ' + (error.response.data.details || errorDetails)
                 );
-            } else {
+            }
+            // Other errors
+            else {
                 const errorMsg = error.response.data.error || 'Unknown error';
-                const details = error.response.data.details || error.response.data.fullError || '';
-                alert(`Failed to sync calendar\n\nError: ${errorMsg}\n\nDetails: ${details}\n\nTip: Make sure you authorized the calendar.readonly scope`);
+                const details = error.response.data.details || errorDetails || '';
+                alert(`Failed to sync calendar\n\nError: ${errorMsg}\n\nDetails: ${details}\n\nTip: Make sure you're using an OAuth Access Token (not an API Key)`);
             }
         } else if (error.message) {
-            alert(`Failed to sync calendar\n\nError: ${error.message}`);
+            alert(`Failed to sync calendar\n\nError: ${error.message}\n\nTip: Make sure you're using an OAuth Access Token from OAuth Playground`);
         } else {
             alert('Failed to sync calendar. Please check your access token and try again.');
         }
