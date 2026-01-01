@@ -32,11 +32,17 @@ The app includes daily affirmations, gratitude tracking, task management, daily 
   - ⭐ **Other**: Miscellaneous goals and personal projects
   
 - **Hierarchical Goal Structure**: Long-term → Annual → Quarterly → Weekly → Daily goals (all categorized)
-- **Category-Based Organization**: Goals displayed grouped by category with color-coding and icons
-- **Goal Creation & Editing**: Create goals at any level with category selection
+- **Category-Based Organization**: Goals displayed grouped by category with color-coding
+- **Goal Management**:
+  - **Create goals** at any level with category selection
+  - **Edit goals** - Click "Edit" on any goal to modify details, progress, or status
+  - **Delete goals** - Remove goals with confirmation (at any level: long-term, annual, quarterly, weekly)
+  - **Drag-and-drop reordering** - Grab the ⋮⋮ handle to reorder goals within each category
+  - Works across all goal types: Long-term, Annual, Quarterly, Weekly
 - **Goal Relationships**: Link child goals to parent goals for clear progression tracking
 - **Progress Tracking**: Visual progress bars showing completion percentage for each goal
 - **Goal Status Management**: Track goals as active, completed, or archived
+- **Custom Order**: Goals display in your preferred order within each category
 
 ### 📅 Daily Planner
 - **Daily Entry System**: One entry per day with automatic date selection
@@ -73,8 +79,10 @@ The app includes daily affirmations, gratitude tracking, task management, daily 
 - **Check-off System**: Simple checkbox interface to mark habits complete
 - **Category Organization**: Habits organized by the same 7 life categories
 - **Habit Management**:
-  - Create new habits with name, description, category, and frequency
-  - Delete habits (with confirmation)
+  - **Create new habits** with name, description, category, and frequency
+  - **Edit habits** - Click "Edit" to modify any habit details
+  - **Delete habits** (with confirmation)
+  - **Drag-and-drop reordering** - Grab the ⋮⋮ handle to reorder habits
   - View only habits scheduled for today
 - **Automatic Scheduling**: Weekly habits only show on their target days
 - **Sample Habits Included**:
@@ -82,6 +90,7 @@ The app includes daily affirmations, gratitude tracking, task management, daily 
   - Weekly: Meal prep (Sunday), Review finances (Sunday), Family game night (Friday), Deep work (Mon/Wed/Fri)
 - **Persistence**: Completion history tracked in database
 - **Visual Feedback**: Completed habits show with green background and strikethrough
+- **Custom Order**: Habits display in your preferred order every day
 
 ### 📊 Weekly Review System
 - **Week Selection**: Choose any week for review or planning
