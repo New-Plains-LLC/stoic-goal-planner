@@ -97,10 +97,31 @@ app.put('/api/goals/:id', async (c) => {
   return c.json({ id: parseInt(id), ...body });
 });
 
+// Helper function to recursively delete a goal and all its descendants
+async function deleteGoalRecursive(db: any, goalId: number) {
+  // First, get all child goals
+  const { results: childGoals } = await db.prepare(
+    'SELECT id FROM goals WHERE parent_id = ?'
+  ).bind(goalId).all();
+  
+  // Recursively delete all children first
+  for (const child of childGoals) {
+    await deleteGoalRecursive(db, child.id);
+  }
+  
+  // Update tasks to remove goal_id reference (SET NULL)
+  await db.prepare(
+    'UPDATE tasks SET goal_id = NULL WHERE goal_id = ?'
+  ).bind(goalId).run();
+  
+  // Now delete the goal itself (no more children or task references)
+  await db.prepare('DELETE FROM goals WHERE id = ?').bind(goalId).run();
+}
+
 // Delete goal
 app.delete('/api/goals/:id', async (c) => {
   const { env } = c;
-  const id = c.req.param('id');
+  const id = parseInt(c.req.param('id'));
   
   try {
     // First check if goal exists
@@ -112,27 +133,12 @@ app.delete('/api/goals/:id', async (c) => {
       return c.json({ error: 'Goal not found' }, 404);
     }
     
-    // Manually delete child goals first (recursive delete)
-    const { results: childGoals } = await env.DB.prepare(
-      'SELECT id FROM goals WHERE parent_id = ?'
-    ).bind(id).all();
+    // Recursively delete the goal and all its descendants
+    await deleteGoalRecursive(env.DB, id);
     
-    // Recursively delete child goals
-    for (const child of childGoals) {
-      await env.DB.prepare('DELETE FROM goals WHERE id = ?').bind(child.id).run();
-    }
+    console.log('Goal deleted successfully:', id);
     
-    // Update tasks to remove goal_id reference (SET NULL)
-    await env.DB.prepare(
-      'UPDATE tasks SET goal_id = NULL WHERE goal_id = ?'
-    ).bind(id).run();
-    
-    // Now delete the goal itself
-    const result = await env.DB.prepare('DELETE FROM goals WHERE id = ?').bind(id).run();
-    
-    console.log('Delete goal result:', result);
-    
-    return c.json({ success: true, message: 'Goal deleted successfully' });
+    return c.json({ success: true, message: 'Goal and all sub-goals deleted successfully' });
   } catch (error) {
     console.error('Error deleting goal:', error);
     return c.json({ 
