@@ -961,10 +961,19 @@ app.post('/api/calendar/sync', async (c) => {
     );
     
     if (!calendarResponse.ok) {
-      throw new Error('Failed to fetch calendar events');
+      const errorText = await calendarResponse.text();
+      console.error('Google Calendar API error:', calendarResponse.status, errorText);
+      throw new Error(`Google Calendar API returned ${calendarResponse.status}: ${errorText}`);
     }
     
     const calendarData = await calendarResponse.json();
+    
+    // Check for API error in response
+    if (calendarData.error) {
+      console.error('Google Calendar API error:', calendarData.error);
+      throw new Error(`Google Calendar API error: ${calendarData.error.message || JSON.stringify(calendarData.error)}`);
+    }
+    
     const events = calendarData.items || [];
     
     // Insert events into database
@@ -1018,9 +1027,27 @@ app.post('/api/calendar/sync', async (c) => {
     
   } catch (error) {
     console.error('Calendar sync error:', error);
+    console.error('Error details:', error.stack || error);
+    
+    let errorMessage = 'Failed to sync calendar';
+    let details = error.message || 'Unknown error';
+    
+    // Check if error is from Google API
+    if (error.message && error.message.includes('401')) {
+      errorMessage = 'Invalid or expired access token';
+      details = 'Please get a new access token from Google OAuth Playground';
+    } else if (error.message && error.message.includes('403')) {
+      errorMessage = 'Access forbidden';
+      details = 'Please make sure you authorized the Calendar API scope';
+    } else if (error.message && error.message.includes('404')) {
+      errorMessage = 'Calendar not found';
+      details = 'Please check your Google Calendar settings';
+    }
+    
     return c.json({ 
-      error: 'Failed to sync calendar', 
-      details: error.message 
+      error: errorMessage, 
+      details: details,
+      fullError: error.message
     }, 500);
   }
 });

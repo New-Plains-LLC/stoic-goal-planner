@@ -815,16 +815,22 @@ async function showGoogleCalendarSync() {
         }
     } catch (error) {
         console.error('Error syncing calendar:', error);
+        console.error('Full error:', error.response);
+        
         if (error.response && error.response.data) {
             // Token might be expired, clear it
-            if (error.response.status === 401 || error.response.data.error?.includes('Failed to fetch')) {
+            if (error.response.status === 401 || error.response.data.error?.includes('token')) {
                 localStorage.removeItem('google_calendar_token');
-                alert('Access token expired or invalid. Please try again with a new token.');
+                alert(`Access token error: ${error.response.data.details || 'Token expired or invalid'}\n\nPlease try again with a new token.`);
             } else {
-                alert(`Failed to sync calendar: ${error.response.data.error || error.response.data.details || 'Unknown error'}`);
+                const errorMsg = error.response.data.error || 'Unknown error';
+                const details = error.response.data.details || error.response.data.fullError || '';
+                alert(`Failed to sync calendar\n\nError: ${errorMsg}\n\nDetails: ${details}`);
             }
+        } else if (error.message) {
+            alert(`Failed to sync calendar\n\nError: ${error.message}`);
         } else {
-            alert('Failed to sync calendar. Please check your access token.');
+            alert('Failed to sync calendar. Please check your access token and try again.');
         }
     }
 }
