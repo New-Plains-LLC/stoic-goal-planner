@@ -112,7 +112,22 @@ app.delete('/api/goals/:id', async (c) => {
       return c.json({ error: 'Goal not found' }, 404);
     }
     
-    // Delete the goal (CASCADE will handle child goals)
+    // Manually delete child goals first (recursive delete)
+    const { results: childGoals } = await env.DB.prepare(
+      'SELECT id FROM goals WHERE parent_id = ?'
+    ).bind(id).all();
+    
+    // Recursively delete child goals
+    for (const child of childGoals) {
+      await env.DB.prepare('DELETE FROM goals WHERE id = ?').bind(child.id).run();
+    }
+    
+    // Update tasks to remove goal_id reference (SET NULL)
+    await env.DB.prepare(
+      'UPDATE tasks SET goal_id = NULL WHERE goal_id = ?'
+    ).bind(id).run();
+    
+    // Now delete the goal itself
     const result = await env.DB.prepare('DELETE FROM goals WHERE id = ?').bind(id).run();
     
     console.log('Delete goal result:', result);
