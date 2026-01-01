@@ -1155,7 +1155,7 @@ app.get('/', (c) => {
         <div class="container mx-auto px-6 pb-12">
             <!-- Daily Page -->
             <div id="daily-page" class="page">
-                <div class="max-w-6xl mx-auto mt-8">
+                <div class="max-w-7xl mx-auto mt-8">
                     <!-- Header -->
                     <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 mb-6">
                         <div class="flex justify-between items-center">
@@ -1164,7 +1164,7 @@ app.get('/', (c) => {
                         </div>
                     </div>
 
-                    <!-- Stoic Quote -->
+                    <!-- Stoic Quote - Full Width -->
                     <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 mb-6">
                         <div class="border-l-4 border-gray-400 dark:border-gray-500 pl-4">
                             <p id="stoic-quote" class="text-lg italic text-gray-700 dark:text-gray-300 mb-2 leading-relaxed"></p>
@@ -1173,117 +1173,125 @@ app.get('/', (c) => {
                         </div>
                     </div>
 
-                    <!-- Affirmations & Gratitude -->
-                    <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 mb-6">
-                        <!-- Affirmations -->
-                        <div class="mb-6">
-                            <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-3 pb-2 border-b border-gray-200 dark:border-gray-700">Affirmations</h3>
-                            <div class="space-y-3">
-                                <input type="text" id="affirmation-1" placeholder="I am..." class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 focus:border-transparent" />
-                                <input type="text" id="affirmation-2" placeholder="I will..." class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 focus:border-transparent" />
-                                <input type="text" id="affirmation-3" placeholder="I believe..." class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 focus:border-transparent" />
+                    <!-- Row 1: Affirmations & Gratitude + Tasks -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                        <!-- Affirmations & Gratitude -->
+                        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+                            <!-- Affirmations -->
+                            <div class="mb-6">
+                                <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-3 pb-2 border-b border-gray-200 dark:border-gray-700">Affirmations</h3>
+                                <div class="space-y-3">
+                                    <input type="text" id="affirmation-1" placeholder="I am..." class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 focus:border-transparent" />
+                                    <input type="text" id="affirmation-2" placeholder="I will..." class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 focus:border-transparent" />
+                                    <input type="text" id="affirmation-3" placeholder="I believe..." class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 focus:border-transparent" />
+                                </div>
                             </div>
-                        </div>
 
-                        <!-- Gratitude -->
-                        <div>
-                            <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-3 pb-2 border-b border-gray-200 dark:border-gray-700">Gratitude</h3>
-                            <div class="space-y-3">
-                                <input type="text" id="gratitude-1" placeholder="Today I'm grateful for..." class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 focus:border-transparent" />
-                                <input type="text" id="gratitude-2" placeholder="I appreciate..." class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 focus:border-transparent" />
-                                <input type="text" id="gratitude-3" placeholder="I'm thankful for..." class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 focus:border-transparent" />
+                            <!-- Gratitude -->
+                            <div>
+                                <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-3 pb-2 border-b border-gray-200 dark:border-gray-700">Gratitude</h3>
+                                <div class="space-y-3">
+                                    <input type="text" id="gratitude-1" placeholder="Today I'm grateful for..." class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 focus:border-transparent" />
+                                    <input type="text" id="gratitude-2" placeholder="I appreciate..." class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 focus:border-transparent" />
+                                    <input type="text" id="gratitude-3" placeholder="I'm thankful for..." class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 focus:border-transparent" />
+                                </div>
                             </div>
-                        </div>
 
-                        <!-- Save Button -->
-                        <div class="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
-                            <button onclick="saveDailyEntry()" class="bg-gray-800 dark:bg-gray-700 text-white px-6 py-2.5 rounded-lg hover:bg-gray-700 dark:hover:bg-gray-600 transition font-medium">
-                                Save Entry
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Tasks for Today -->
-                    <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 mb-6">
-                        <div class="flex justify-between items-center mb-6">
-                            <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Today's Tasks</h2>
-                            <div class="flex gap-2">
-                                <button onclick="showCreateTaskModal()" class="bg-gray-800 dark:bg-gray-700 text-white px-4 py-2 rounded-lg hover:bg-gray-700 dark:hover:bg-gray-600 transition text-sm font-medium">
-                                    New Task
-                                </button>
-                                <button onclick="showTaskSelector()" class="border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition text-sm font-medium">
-                                    Add from List
+                            <!-- Save Button -->
+                            <div class="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+                                <button onclick="saveDailyEntry()" class="bg-gray-800 dark:bg-gray-700 text-white px-6 py-2.5 rounded-lg hover:bg-gray-700 dark:hover:bg-gray-600 transition font-medium">
+                                    Save Entry
                                 </button>
                             </div>
                         </div>
-                        
-                        <!-- High Priority Tasks -->
-                        <div class="mb-6">
-                            <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">High Priority</h3>
-                            <div id="daily-tasks-high" class="space-y-2">
-                                <!-- High priority tasks will be loaded here -->
+
+                        <!-- Tasks for Today -->
+                        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+                            <div class="flex justify-between items-center mb-6">
+                                <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Today's Tasks</h2>
+                                <div class="flex gap-2">
+                                    <button onclick="showCreateTaskModal()" class="bg-gray-800 dark:bg-gray-700 text-white px-4 py-2 rounded-lg hover:bg-gray-700 dark:hover:bg-gray-600 transition text-sm font-medium">
+                                        New Task
+                                    </button>
+                                    <button onclick="showTaskSelector()" class="border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition text-sm font-medium">
+                                        Add from List
+                                    </button>
+                                </div>
                             </div>
-                        </div>
-                        
-                        <!-- Medium/Low Priority Tasks -->
-                        <div>
-                            <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">Other Tasks</h3>
-                            <div id="daily-tasks-other" class="space-y-2">
-                                <!-- Medium/low priority tasks will be loaded here -->
+                            
+                            <!-- High Priority Tasks -->
+                            <div class="mb-6">
+                                <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">High Priority</h3>
+                                <div id="daily-tasks-high" class="space-y-2">
+                                    <!-- High priority tasks will be loaded here -->
+                                </div>
+                            </div>
+                            
+                            <!-- Medium/Low Priority Tasks -->
+                            <div>
+                                <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">Other Tasks</h3>
+                                <div id="daily-tasks-other" class="space-y-2">
+                                    <!-- Medium/low priority tasks will be loaded here -->
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Schedule -->
-                    <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 mb-6">
-                        <div class="flex justify-between items-center mb-6">
-                            <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Today's Schedule</h2>
-                            <div class="flex gap-2">
-                                <button onclick="showAddEventModal()" class="bg-gray-800 dark:bg-gray-700 text-white px-4 py-2 rounded-lg hover:bg-gray-700 dark:hover:bg-gray-600 transition text-sm font-medium">
-                                    Add Event
+                    <!-- Row 2: Schedule + Habits -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                        <!-- Schedule -->
+                        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+                            <div class="flex justify-between items-center mb-6">
+                                <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Today's Schedule</h2>
+                                <div class="flex gap-2">
+                                    <button onclick="showAddEventModal()" class="bg-gray-800 dark:bg-gray-700 text-white px-4 py-2 rounded-lg hover:bg-gray-700 dark:hover:bg-gray-600 transition text-sm font-medium">
+                                        Add Event
+                                    </button>
+                                    <button onclick="showGoogleCalendarSync()" class="border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition text-sm font-medium">
+                                        Sync Google
+                                    </button>
+                                </div>
+                            </div>
+                            <div id="schedule-list" class="space-y-2">
+                                <!-- Schedule will be loaded here -->
+                            </div>
+                        </div>
+
+                        <!-- Habit Tracker -->
+                        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+                            <div class="flex justify-between items-center mb-6">
+                                <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Daily Habits</h2>
+                                <button onclick="showCreateHabitModal()" class="bg-gray-800 dark:bg-gray-700 text-white px-4 py-2 rounded-lg hover:bg-gray-700 dark:hover:bg-gray-600 transition text-sm font-medium">
+                                    New Habit
                                 </button>
-                                <button onclick="showGoogleCalendarSync()" class="border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition text-sm font-medium">
-                                    Sync Google
-                                </button>
+                            </div>
+                            <div id="habits-list" class="space-y-2">
+                                <!-- Habits will be loaded here -->
                             </div>
                         </div>
-                        <div id="schedule-list" class="space-y-2">
-                            <!-- Schedule will be loaded here -->
-                        </div>
                     </div>
 
-                    <!-- Habit Tracker -->
-                    <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 mb-6">
-                        <div class="flex justify-between items-center mb-6">
-                            <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Daily Habits</h2>
-                            <button onclick="showCreateHabitModal()" class="bg-gray-800 dark:bg-gray-700 text-white px-4 py-2 rounded-lg hover:bg-gray-700 dark:hover:bg-gray-600 transition text-sm font-medium">
-                                New Habit
-                            </button>
-                        </div>
-                        <div id="habits-list" class="space-y-2">
-                            <!-- Habits will be loaded here -->
-                        </div>
-                    </div>
-
-                    <!-- Daily Wins -->
+                    <!-- Daily Wins - Full Width -->
                     <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
                         <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">Daily Reflection</h2>
                         
-                        <div class="mb-6">
-                            <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">Today's Wins</h3>
-                            <div class="space-y-2">
-                                <input type="text" id="win-today-1" placeholder="Win #1" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 focus:border-transparent" />
-                                <input type="text" id="win-today-2" placeholder="Win #2" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 focus:border-transparent" />
-                                <input type="text" id="win-today-3" placeholder="Win #3" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 focus:border-transparent" />
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                            <div>
+                                <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">Today's Wins</h3>
+                                <div class="space-y-2">
+                                    <input type="text" id="win-today-1" placeholder="Win #1" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 focus:border-transparent" />
+                                    <input type="text" id="win-today-2" placeholder="Win #2" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 focus:border-transparent" />
+                                    <input type="text" id="win-today-3" placeholder="Win #3" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 focus:border-transparent" />
+                                </div>
                             </div>
-                        </div>
 
-                        <div class="mb-6">
-                            <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">Tomorrow's Planned Wins</h3>
-                            <div class="space-y-2">
-                                <input type="text" id="win-tomorrow-1" placeholder="Planned win #1" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 focus:border-transparent" />
-                                <input type="text" id="win-tomorrow-2" placeholder="Planned win #2" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 focus:border-transparent" />
-                                <input type="text" id="win-tomorrow-3" placeholder="Planned win #3" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 focus:border-transparent" />
+                            <div>
+                                <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">Tomorrow's Planned Wins</h3>
+                                <div class="space-y-2">
+                                    <input type="text" id="win-tomorrow-1" placeholder="Planned win #1" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 focus:border-transparent" />
+                                    <input type="text" id="win-tomorrow-2" placeholder="Planned win #2" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 focus:border-transparent" />
+                                    <input type="text" id="win-tomorrow-3" placeholder="Planned win #3" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 focus:border-transparent" />
+                                </div>
                             </div>
                         </div>
 
