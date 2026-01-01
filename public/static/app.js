@@ -522,46 +522,53 @@ function renderGoals(goals) {
                         ${cat.name}
                         <span class="ml-2 text-sm font-normal text-gray-500 dark:text-gray-400">(${cat.goals.length})</span>
                     </h3>
-                    <div class="space-y-4">
+                    <div class="space-y-4" data-category="${catKey}">
                         ${cat.goals.map(goal => `
-                            <div class="card border-l-4 border-${cat.color}-500 rounded-lg p-6 bg-white">
-                                <div class="flex items-start justify-between mb-4">
-                                    <div class="flex-1">
-                                        <h4 class="text-lg font-bold text-gray-800 mb-2">${goal.title}</h4>
-                                        ${goal.description ? `<p class="text-gray-600 mb-3 text-sm">${goal.description}</p>` : ''}
-                                        <div class="flex items-center space-x-4 text-xs text-gray-500">
-                                            ${goal.year ? `<span><i class="fas fa-calendar mr-1"></i>${goal.year}</span>` : ''}
-                                            ${goal.quarter ? `<span><i class="fas fa-chart-pie mr-1"></i>Q${goal.quarter}</span>` : ''}
-                                            ${goal.week_number ? `<span><i class="fas fa-calendar-week mr-1"></i>Week ${goal.week_number}</span>` : ''}
-                                        </div>
-                                    </div>
-                                    <span class="px-3 py-1 text-xs font-semibold rounded-full ${getStatusColor(goal.status)}">
-                                        ${goal.status}
-                                    </span>
-                                </div>
-                                
-                                <!-- Progress bar -->
-                                <div class="mb-4">
-                                    <div class="flex items-center justify-between mb-1">
-                                        <span class="text-xs text-gray-600">Progress</span>
-                                        <span class="text-xs font-semibold text-gray-700">${goal.progress}%</span>
-                                    </div>
-                                    <div class="w-full bg-gray-200 rounded-full h-2">
-                                        <div class="bg-${cat.color}-600 h-2 rounded-full" style="width: ${goal.progress}%"></div>
-                                    </div>
-                                </div>
-                                
-                                <div class="flex items-center justify-between">
-                                    <button onclick="viewGoalDetails(${goal.id})" class="text-${cat.color}-600 hover:text-${cat.color}-800 text-sm">
-                                        <i class="fas fa-eye mr-1"></i> View Details
+                            <div class="goal-item card border-l-4 border-${cat.color}-500 rounded-lg p-6 bg-white dark:bg-gray-800" data-goal-id="${goal.id}" draggable="true">
+                                <div class="flex items-start gap-3">
+                                    <button class="drag-handle cursor-move text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 mt-1" title="Drag to reorder">
+                                        ⋮⋮
                                     </button>
-                                    <div class="space-x-2">
-                                        <button onclick="editGoal(${goal.id})" class="text-blue-600 hover:text-blue-800">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
-                                        <button onclick="deleteGoal(${goal.id})" class="text-red-600 hover:text-red-800">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
+                                    <div class="flex-1">
+                                        <div class="flex items-start justify-between mb-4">
+                                            <div class="flex-1">
+                                                <h4 class="text-lg font-bold text-gray-800 dark:text-gray-100 mb-2">${goal.title}</h4>
+                                                ${goal.description ? `<p class="text-gray-600 dark:text-gray-400 mb-3 text-sm">${goal.description}</p>` : ''}
+                                                <div class="flex items-center space-x-4 text-xs text-gray-500 dark:text-gray-400">
+                                                    ${goal.year ? `<span>📅 ${goal.year}</span>` : ''}
+                                                    ${goal.quarter ? `<span>📊 Q${goal.quarter}</span>` : ''}
+                                                    ${goal.week_number ? `<span>📆 Week ${goal.week_number}</span>` : ''}
+                                                </div>
+                                            </div>
+                                            <span class="px-3 py-1 text-xs font-semibold rounded-full ${getStatusColor(goal.status)}">
+                                                ${goal.status}
+                                            </span>
+                                        </div>
+                                        
+                                        <!-- Progress bar -->
+                                        <div class="mb-4">
+                                            <div class="flex items-center justify-between mb-1">
+                                                <span class="text-xs text-gray-600 dark:text-gray-400">Progress</span>
+                                                <span class="text-xs font-semibold text-gray-700 dark:text-gray-300">${goal.progress}%</span>
+                                            </div>
+                                            <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                                                <div class="bg-${cat.color}-600 dark:bg-${cat.color}-500 h-2 rounded-full" style="width: ${goal.progress}%"></div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="flex items-center justify-between">
+                                            <button onclick="viewGoalDetails(${goal.id})" class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 text-sm">
+                                                View Details
+                                            </button>
+                                            <div class="space-x-2">
+                                                <button onclick="editGoal(${goal.id})" class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200">
+                                                    Edit
+                                                </button>
+                                                <button onclick="deleteGoal(${goal.id})" class="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300">
+                                                    Delete
+                                                </button>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -572,7 +579,10 @@ function renderGoals(goals) {
         }
     });
     
-    container.innerHTML = html || '<p class="text-gray-500">No goals yet. Click "Add New Goal" to create one.</p>';
+    container.innerHTML = html || '<p class="text-gray-500 dark:text-gray-400">No goals yet. Click "Add New Goal" to create one.</p>';
+    
+    // Initialize drag and drop for goals
+    initializeGoalDragDrop();
 }
 
 function getStatusColor(status) {
@@ -1045,12 +1055,15 @@ function renderHabits(habits) {
         return;
     }
     
-    container.innerHTML = todayHabits.map(habit => {
+    container.innerHTML = todayHabits.map((habit, index) => {
         const isCompleted = habit.completed;
         const categoryBadge = getCategoryBadgeColor(habit.category);
         
         return `
-            <div class="flex items-center gap-3 p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-750 transition ${isCompleted ? 'bg-green-50 dark:bg-green-900/20' : ''}">
+            <div class="habit-item flex items-center gap-3 p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-750 transition ${isCompleted ? 'bg-green-50 dark:bg-green-900/20' : ''}" data-habit-id="${habit.id}" draggable="true">
+                <button class="drag-handle cursor-move text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" title="Drag to reorder">
+                    ⋮⋮
+                </button>
                 <input 
                     type="checkbox" 
                     ${isCompleted ? 'checked' : ''}
@@ -1065,12 +1078,18 @@ function renderHabits(habits) {
                     </div>
                     ${habit.description ? `<p class="text-sm text-gray-600 dark:text-gray-400 mt-1">${habit.description}</p>` : ''}
                 </div>
+                <button onclick="editHabit(${habit.id})" class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 text-sm">
+                    Edit
+                </button>
                 <button onclick="deleteHabit(${habit.id})" class="text-gray-400 hover:text-red-600 dark:hover:text-red-400 text-sm">
                     Delete
                 </button>
             </div>
         `;
     }).join('');
+    
+    // Initialize drag and drop for habits
+    initializeHabitDragDrop();
 }
 
 async function toggleHabit(habitId, completed) {
@@ -1160,6 +1179,254 @@ async function createNewHabit() {
     } catch (error) {
         console.error('Error creating habit:', error);
         alert('Failed to create habit');
+    }
+}
+
+async function editHabit(habitId) {
+    try {
+        // Get all habits to find this one
+        const response = await axios.get('/api/habits?is_active=true');
+        const habit = response.data.find(h => h.id === habitId);
+        
+        if (!habit) {
+            alert('Habit not found');
+            return;
+        }
+        
+        // Populate modal with existing data
+        document.getElementById('new-habit-title').value = habit.title;
+        document.getElementById('new-habit-description').value = habit.description || '';
+        document.getElementById('new-habit-category').value = habit.category;
+        document.getElementById('new-habit-frequency').value = habit.frequency;
+        document.getElementById('new-habit-target-days').value = habit.target_days || '';
+        
+        // Show/hide target days based on frequency
+        toggleTargetDays();
+        
+        // Show modal
+        document.getElementById('create-habit-modal').classList.remove('hidden');
+        
+        // Change the create button to update
+        const createBtn = document.querySelector('#create-habit-modal button[onclick="createNewHabit()"]');
+        createBtn.textContent = 'Update Habit';
+        createBtn.setAttribute('onclick', `updateHabit(${habitId})`);
+    } catch (error) {
+        console.error('Error loading habit:', error);
+        alert('Failed to load habit for editing');
+    }
+}
+
+async function updateHabit(habitId) {
+    const title = document.getElementById('new-habit-title').value.trim();
+    const description = document.getElementById('new-habit-description').value.trim();
+    const category = document.getElementById('new-habit-category').value;
+    const frequency = document.getElementById('new-habit-frequency').value;
+    const targetDays = document.getElementById('new-habit-target-days').value.trim();
+    
+    if (!title) {
+        alert('Please enter a habit name');
+        return;
+    }
+    
+    if (frequency === 'weekly' && !targetDays) {
+        alert('Please specify target days for weekly habits');
+        return;
+    }
+    
+    try {
+        await axios.put(`/api/habits/${habitId}`, {
+            title,
+            description,
+            category,
+            frequency,
+            target_days: frequency === 'weekly' ? targetDays : null,
+            is_active: 1
+        });
+        
+        closeCreateHabitModal();
+        
+        // Reset the button back to "Create"
+        const createBtn = document.querySelector('#create-habit-modal button[onclick^="updateHabit"]');
+        if (createBtn) {
+            createBtn.textContent = 'Create Habit';
+            createBtn.setAttribute('onclick', 'createNewHabit()');
+        }
+        
+        loadHabits(currentDate);
+        alert('Habit updated successfully!');
+    } catch (error) {
+        console.error('Error updating habit:', error);
+        alert('Failed to update habit');
+    }
+}
+
+// Drag and drop for habits
+let draggedHabitElement = null;
+
+function initializeHabitDragDrop() {
+    const habitItems = document.querySelectorAll('.habit-item');
+    
+    habitItems.forEach(item => {
+        item.addEventListener('dragstart', handleHabitDragStart);
+        item.addEventListener('dragover', handleHabitDragOver);
+        item.addEventListener('drop', handleHabitDrop);
+        item.addEventListener('dragend', handleHabitDragEnd);
+    });
+}
+
+function handleHabitDragStart(e) {
+    draggedHabitElement = this;
+    this.style.opacity = '0.4';
+    e.dataTransfer.effectAllowed = 'move';
+}
+
+function handleHabitDragOver(e) {
+    if (e.preventDefault) {
+        e.preventDefault();
+    }
+    e.dataTransfer.dropEffect = 'move';
+    
+    if (this !== draggedHabitElement) {
+        this.style.borderTop = '2px solid #4B5563';
+    }
+    
+    return false;
+}
+
+function handleHabitDrop(e) {
+    if (e.stopPropagation) {
+        e.stopPropagation();
+    }
+    
+    if (draggedHabitElement !== this) {
+        // Get all habit items
+        const container = document.getElementById('habits-list');
+        const allItems = Array.from(container.querySelectorAll('.habit-item'));
+        
+        // Get the dragged and target indices
+        const draggedIndex = allItems.indexOf(draggedHabitElement);
+        const targetIndex = allItems.indexOf(this);
+        
+        // Reorder in DOM
+        if (draggedIndex < targetIndex) {
+            this.parentNode.insertBefore(draggedHabitElement, this.nextSibling);
+        } else {
+            this.parentNode.insertBefore(draggedHabitElement, this);
+        }
+        
+        // Save new order to backend
+        saveHabitOrder();
+    }
+    
+    this.style.borderTop = '';
+    return false;
+}
+
+function handleHabitDragEnd(e) {
+    this.style.opacity = '1';
+    
+    document.querySelectorAll('.habit-item').forEach(item => {
+        item.style.borderTop = '';
+    });
+}
+
+async function saveHabitOrder() {
+    const habitItems = document.querySelectorAll('.habit-item');
+    const habitIds = Array.from(habitItems).map(item => parseInt(item.getAttribute('data-habit-id')));
+    
+    try {
+        await axios.post('/api/habits/reorder', { habitIds });
+    } catch (error) {
+        console.error('Error saving habit order:', error);
+        alert('Failed to save habit order');
+    }
+}
+
+// Drag and drop for goals
+let draggedGoalElement = null;
+
+function initializeGoalDragDrop() {
+    const goalItems = document.querySelectorAll('.goal-item');
+    
+    goalItems.forEach(item => {
+        item.addEventListener('dragstart', handleGoalDragStart);
+        item.addEventListener('dragover', handleGoalDragOver);
+        item.addEventListener('drop', handleGoalDrop);
+        item.addEventListener('dragend', handleGoalDragEnd);
+    });
+}
+
+function handleGoalDragStart(e) {
+    draggedGoalElement = this;
+    this.style.opacity = '0.4';
+    e.dataTransfer.effectAllowed = 'move';
+}
+
+function handleGoalDragOver(e) {
+    if (e.preventDefault) {
+        e.preventDefault();
+    }
+    e.dataTransfer.dropEffect = 'move';
+    
+    if (this !== draggedGoalElement) {
+        this.style.borderTop = '2px solid #4B5563';
+    }
+    
+    return false;
+}
+
+function handleGoalDrop(e) {
+    if (e.stopPropagation) {
+        e.stopPropagation();
+    }
+    
+    if (draggedGoalElement !== this) {
+        // Only allow reordering within the same category
+        const draggedCategory = draggedGoalElement.closest('[data-category]');
+        const targetCategory = this.closest('[data-category]');
+        
+        if (draggedCategory === targetCategory) {
+            // Get all goal items in this category
+            const categoryContainer = targetCategory;
+            const allItems = Array.from(categoryContainer.querySelectorAll('.goal-item'));
+            
+            // Get the dragged and target indices
+            const draggedIndex = allItems.indexOf(draggedGoalElement);
+            const targetIndex = allItems.indexOf(this);
+            
+            // Reorder in DOM
+            if (draggedIndex < targetIndex) {
+                categoryContainer.insertBefore(draggedGoalElement, this.nextSibling);
+            } else {
+                categoryContainer.insertBefore(draggedGoalElement, this);
+            }
+            
+            // Save new order to backend
+            saveGoalOrder();
+        }
+    }
+    
+    this.style.borderTop = '';
+    return false;
+}
+
+function handleGoalDragEnd(e) {
+    this.style.opacity = '1';
+    
+    document.querySelectorAll('.goal-item').forEach(item => {
+        item.style.borderTop = '';
+    });
+}
+
+async function saveGoalOrder() {
+    const goalItems = document.querySelectorAll('.goal-item');
+    const goalIds = Array.from(goalItems).map(item => parseInt(item.getAttribute('data-goal-id')));
+    
+    try {
+        await axios.post('/api/goals/reorder', { goalIds });
+    } catch (error) {
+        console.error('Error saving goal order:', error);
+        alert('Failed to save goal order');
     }
 }
 

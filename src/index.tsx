@@ -45,7 +45,7 @@ app.get('/api/goals', async (c) => {
     }
   }
   
-  query += ' ORDER BY category, created_at DESC';
+  query += ' ORDER BY display_order, category, created_at DESC';
   
   const { results } = await env.DB.prepare(query).bind(...params).all();
   return c.json(results);
@@ -103,6 +103,23 @@ app.delete('/api/goals/:id', async (c) => {
   const id = c.req.param('id');
   
   await env.DB.prepare('DELETE FROM goals WHERE id = ?').bind(id).run();
+  
+  return c.json({ success: true });
+});
+
+// Reorder goals
+app.post('/api/goals/reorder', async (c) => {
+  const { env } = c;
+  const body = await c.req.json();
+  
+  const { goalIds } = body; // Array of goal IDs in desired order
+  
+  // Update display_order for each goal
+  for (let i = 0; i < goalIds.length; i++) {
+    await env.DB.prepare(`
+      UPDATE goals SET display_order = ? WHERE id = ?
+    `).bind(i, goalIds[i]).run();
+  }
   
   return c.json({ success: true });
 });
@@ -565,7 +582,7 @@ app.get('/api/habits', async (c) => {
     params.push(is_active === 'true' ? 1 : 0);
   }
   
-  query += ' ORDER BY category, title';
+  query += ' ORDER BY display_order, category, title';
   
   const result = await env.DB.prepare(query).bind(...params).all();
   return c.json(result.results);
@@ -620,7 +637,7 @@ app.get('/api/habits/date/:date', async (c) => {
   
   // Get all active habits
   const habitsResult = await env.DB.prepare(`
-    SELECT * FROM habits WHERE is_active = 1 ORDER BY category, title
+    SELECT * FROM habits WHERE is_active = 1 ORDER BY display_order, category, title
   `).all();
   
   // Get completions for this date
@@ -684,6 +701,23 @@ app.post('/api/habits/:id/complete', async (c) => {
     
     return c.json({ success: true, action: 'created', id: result.meta.last_row_id }, 201);
   }
+});
+
+// Reorder habits
+app.post('/api/habits/reorder', async (c) => {
+  const { env } = c;
+  const body = await c.req.json();
+  
+  const { habitIds } = body; // Array of habit IDs in desired order
+  
+  // Update display_order for each habit
+  for (let i = 0; i < habitIds.length; i++) {
+    await env.DB.prepare(`
+      UPDATE habits SET display_order = ? WHERE id = ?
+    `).bind(i, habitIds[i]).run();
+  }
+  
+  return c.json({ success: true });
 });
 
 // Get habit statistics (streak, completion rate)
