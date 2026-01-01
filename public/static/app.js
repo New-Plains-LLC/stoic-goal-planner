@@ -99,6 +99,9 @@ async function loadDailyData(date) {
         // Load schedule
         renderSchedule(data.schedule);
         
+        // Load habits
+        loadHabits(date);
+        
     } catch (error) {
         console.error('Error loading daily data:', error);
         alert('Failed to load daily data');
@@ -1011,6 +1014,152 @@ async function createNewGoal() {
     } catch (error) {
         console.error('Error creating goal:', error);
         alert('Failed to create goal');
+    }
+}
+
+// ========== HABIT TRACKER ==========
+
+async function loadHabits(date) {
+    try {
+        const response = await axios.get(`/api/habits/date/${date}`);
+        renderHabits(response.data);
+    } catch (error) {
+        console.error('Error loading habits:', error);
+        alert('Failed to load habits');
+    }
+}
+
+function renderHabits(habits) {
+    const container = document.getElementById('habits-list');
+    
+    if (!habits || habits.length === 0) {
+        container.innerHTML = '<p class="text-gray-500 dark:text-gray-400">No habits yet. Click "New Habit" to create one!</p>';
+        return;
+    }
+    
+    // Filter habits that are scheduled for today
+    const todayHabits = habits.filter(h => h.is_scheduled_today);
+    
+    if (todayHabits.length === 0) {
+        container.innerHTML = '<p class="text-gray-500 dark:text-gray-400">No habits scheduled for today.</p>';
+        return;
+    }
+    
+    container.innerHTML = todayHabits.map(habit => {
+        const isCompleted = habit.completed;
+        const categoryBadge = getCategoryBadgeColor(habit.category);
+        
+        return `
+            <div class="flex items-center gap-3 p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-750 transition ${isCompleted ? 'bg-green-50 dark:bg-green-900/20' : ''}">
+                <input 
+                    type="checkbox" 
+                    ${isCompleted ? 'checked' : ''}
+                    onchange="toggleHabit(${habit.id}, this.checked)"
+                    class="w-5 h-5 rounded border-gray-300 text-gray-800 focus:ring-gray-400 cursor-pointer"
+                />
+                <div class="flex-1">
+                    <div class="flex items-center gap-2">
+                        <span class="font-medium text-gray-900 dark:text-gray-100 ${isCompleted ? 'line-through opacity-60' : ''}">${habit.title}</span>
+                        <span class="text-xs px-2 py-0.5 rounded-full ${categoryBadge}">${getCategoryName(habit.category)}</span>
+                        ${habit.frequency === 'weekly' ? '<span class="text-xs text-gray-500 dark:text-gray-400">' + habit.target_days + '</span>' : ''}
+                    </div>
+                    ${habit.description ? `<p class="text-sm text-gray-600 dark:text-gray-400 mt-1">${habit.description}</p>` : ''}
+                </div>
+                <button onclick="deleteHabit(${habit.id})" class="text-gray-400 hover:text-red-600 dark:hover:text-red-400 text-sm">
+                    Delete
+                </button>
+            </div>
+        `;
+    }).join('');
+}
+
+async function toggleHabit(habitId, completed) {
+    try {
+        await axios.post(`/api/habits/${habitId}/complete`, {
+            date: currentDate,
+            completed: completed
+        });
+        
+        // Reload habits to update UI
+        loadHabits(currentDate);
+    } catch (error) {
+        console.error('Error toggling habit:', error);
+        alert('Failed to update habit');
+    }
+}
+
+async function deleteHabit(habitId) {
+    if (!confirm('Are you sure you want to delete this habit? All completion history will be lost.')) {
+        return;
+    }
+    
+    try {
+        await axios.delete(`/api/habits/${habitId}`);
+        loadHabits(currentDate);
+        alert('Habit deleted successfully!');
+    } catch (error) {
+        console.error('Error deleting habit:', error);
+        alert('Failed to delete habit');
+    }
+}
+
+function showCreateHabitModal() {
+    document.getElementById('create-habit-modal').classList.remove('hidden');
+    document.getElementById('new-habit-title').value = '';
+    document.getElementById('new-habit-description').value = '';
+    document.getElementById('new-habit-category').value = 'health';
+    document.getElementById('new-habit-frequency').value = 'daily';
+    document.getElementById('target-days-container').classList.add('hidden');
+    document.getElementById('new-habit-target-days').value = '';
+}
+
+function closeCreateHabitModal() {
+    document.getElementById('create-habit-modal').classList.add('hidden');
+}
+
+function toggleTargetDays() {
+    const frequency = document.getElementById('new-habit-frequency').value;
+    const container = document.getElementById('target-days-container');
+    
+    if (frequency === 'weekly') {
+        container.classList.remove('hidden');
+    } else {
+        container.classList.add('hidden');
+    }
+}
+
+async function createNewHabit() {
+    const title = document.getElementById('new-habit-title').value.trim();
+    const description = document.getElementById('new-habit-description').value.trim();
+    const category = document.getElementById('new-habit-category').value;
+    const frequency = document.getElementById('new-habit-frequency').value;
+    const targetDays = document.getElementById('new-habit-target-days').value.trim();
+    
+    if (!title) {
+        alert('Please enter a habit name');
+        return;
+    }
+    
+    if (frequency === 'weekly' && !targetDays) {
+        alert('Please specify target days for weekly habits');
+        return;
+    }
+    
+    try {
+        await axios.post('/api/habits', {
+            title,
+            description,
+            category,
+            frequency,
+            target_days: frequency === 'weekly' ? targetDays : null
+        });
+        
+        closeCreateHabitModal();
+        loadHabits(currentDate);
+        alert('Habit created successfully!');
+    } catch (error) {
+        console.error('Error creating habit:', error);
+        alert('Failed to create habit');
     }
 }
 

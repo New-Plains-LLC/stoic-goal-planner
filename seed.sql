@@ -167,3 +167,23 @@ INSERT INTO tasks (title, description, goal_id, category, priority, status, due_
 -- Other tasks
 INSERT INTO tasks (title, description, goal_id, category, priority, status, due_date) VALUES 
   ('Research local volunteer opportunities', 'Find organizations aligned with my values', 57, 'other', 'low', 'pending', '2025-01-03');
+
+-- ============= HABITS =============
+
+-- Daily habits
+INSERT INTO habits (title, description, category, frequency, is_active) VALUES 
+  ('Morning prayer/meditation', 'Start the day with 20 minutes of prayer or meditation', 'spiritual', 'daily', 1),
+  ('Read for 30 minutes', 'Read books for learning or spiritual growth', 'learning', 'daily', 1),
+  ('Exercise', 'Complete daily workout routine', 'health', 'daily', 1),
+  ('Drink 8 glasses of water', 'Stay hydrated throughout the day', 'health', 'daily', 1),
+  ('Track expenses', 'Log all spending in budget app', 'financial', 'daily', 1),
+  ('Quality time with family', 'Spend intentional time with loved ones', 'family', 'daily', 1),
+  ('Evening gratitude', 'Write down 3 things I''m grateful for', 'spiritual', 'daily', 1),
+  ('Plan tomorrow', 'Review schedule and set priorities for next day', 'other', 'daily', 1);
+
+-- Weekly habits (specific days)
+INSERT INTO habits (title, description, category, frequency, target_days, is_active) VALUES 
+  ('Meal prep', 'Prepare healthy meals for the week', 'health', 'weekly', 'Sunday', 1),
+  ('Review finances', 'Check budget and investment accounts', 'financial', 'weekly', 'Sunday', 1),
+  ('Family game night', 'Play games with family', 'family', 'weekly', 'Friday', 1),
+  ('Deep work session', 'Focused work on important projects', 'learning', 'weekly', 'Monday,Wednesday,Friday', 1);

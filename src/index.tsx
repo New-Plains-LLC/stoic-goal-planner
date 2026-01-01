@@ -550,6 +550,180 @@ app.delete('/api/schedule/:id', async (c) => {
   return c.json({ success: true });
 });
 
+// ============= HABIT TRACKER API =============
+
+// Get all habits
+app.get('/api/habits', async (c) => {
+  const { env } = c;
+  const { is_active } = c.req.query();
+  
+  let query = 'SELECT * FROM habits';
+  const params = [];
+  
+  if (is_active !== undefined) {
+    query += ' WHERE is_active = ?';
+    params.push(is_active === 'true' ? 1 : 0);
+  }
+  
+  query += ' ORDER BY category, title';
+  
+  const result = await env.DB.prepare(query).bind(...params).all();
+  return c.json(result.results);
+});
+
+// Create habit
+app.post('/api/habits', async (c) => {
+  const { env } = c;
+  const body = await c.req.json();
+  
+  const { title, description, category, frequency, target_days } = body;
+  
+  const result = await env.DB.prepare(`
+    INSERT INTO habits (title, description, category, frequency, target_days)
+    VALUES (?, ?, ?, ?, ?)
+  `).bind(title, description || null, category || 'other', frequency || 'daily', target_days || null).run();
+  
+  return c.json({ id: result.meta.last_row_id, ...body }, 201);
+});
+
+// Update habit
+app.put('/api/habits/:id', async (c) => {
+  const { env } = c;
+  const id = c.req.param('id');
+  const body = await c.req.json();
+  
+  const { title, description, category, frequency, target_days, is_active } = body;
+  
+  await env.DB.prepare(`
+    UPDATE habits 
+    SET title = ?, description = ?, category = ?, frequency = ?, target_days = ?, is_active = ?, updated_at = CURRENT_TIMESTAMP
+    WHERE id = ?
+  `).bind(title, description || null, category, frequency, target_days || null, is_active !== undefined ? is_active : 1, id).run();
+  
+  return c.json({ id, ...body });
+});
+
+// Delete habit
+app.delete('/api/habits/:id', async (c) => {
+  const { env } = c;
+  const id = c.req.param('id');
+  
+  await env.DB.prepare('DELETE FROM habits WHERE id = ?').bind(id).run();
+  
+  return c.json({ success: true });
+});
+
+// Get habits for a specific date (with completion status)
+app.get('/api/habits/date/:date', async (c) => {
+  const { env } = c;
+  const date = c.req.param('date');
+  
+  // Get all active habits
+  const habitsResult = await env.DB.prepare(`
+    SELECT * FROM habits WHERE is_active = 1 ORDER BY category, title
+  `).all();
+  
+  // Get completions for this date
+  const completionsResult = await env.DB.prepare(`
+    SELECT * FROM habit_completions WHERE completion_date = ?
+  `).bind(date).all();
+  
+  const completionsMap = {};
+  completionsResult.results.forEach(comp => {
+    completionsMap[comp.habit_id] = comp;
+  });
+  
+  // Check day of week for weekly habits
+  const dayOfWeek = new Date(date).toLocaleDateString('en-US', { weekday: 'long' });
+  
+  // Combine habits with completion status
+  const habitsWithStatus = habitsResult.results.map(habit => {
+    // For weekly habits, check if today is a target day
+    let isScheduledToday = true;
+    if (habit.frequency === 'weekly' && habit.target_days) {
+      isScheduledToday = habit.target_days.split(',').some(day => day.trim() === dayOfWeek);
+    }
+    
+    return {
+      ...habit,
+      completion: completionsMap[habit.id] || null,
+      completed: completionsMap[habit.id]?.completed === 1,
+      is_scheduled_today: isScheduledToday
+    };
+  });
+  
+  return c.json(habitsWithStatus);
+});
+
+// Toggle habit completion
+app.post('/api/habits/:id/complete', async (c) => {
+  const { env } = c;
+  const habitId = c.req.param('id');
+  const body = await c.req.json();
+  
+  const { date, completed } = body;
+  
+  // Check if completion already exists
+  const existing = await env.DB.prepare(`
+    SELECT * FROM habit_completions WHERE habit_id = ? AND completion_date = ?
+  `).bind(habitId, date).first();
+  
+  if (existing) {
+    // Update existing
+    await env.DB.prepare(`
+      UPDATE habit_completions SET completed = ?, created_at = CURRENT_TIMESTAMP WHERE id = ?
+    `).bind(completed ? 1 : 0, existing.id).run();
+    
+    return c.json({ success: true, action: 'updated' });
+  } else {
+    // Insert new
+    const result = await env.DB.prepare(`
+      INSERT INTO habit_completions (habit_id, completion_date, completed)
+      VALUES (?, ?, ?)
+    `).bind(habitId, date, completed ? 1 : 0).run();
+    
+    return c.json({ success: true, action: 'created', id: result.meta.last_row_id }, 201);
+  }
+});
+
+// Get habit statistics (streak, completion rate)
+app.get('/api/habits/:id/stats', async (c) => {
+  const { env } = c;
+  const habitId = c.req.param('id');
+  
+  // Get last 30 days of completions
+  const completions = await env.DB.prepare(`
+    SELECT * FROM habit_completions 
+    WHERE habit_id = ? AND completion_date >= date('now', '-30 days')
+    ORDER BY completion_date DESC
+  `).bind(habitId).all();
+  
+  const total = completions.results.length;
+  const completed = completions.results.filter(c => c.completed === 1).length;
+  const rate = total > 0 ? Math.round((completed / total) * 100) : 0;
+  
+  // Calculate current streak
+  let streak = 0;
+  const sortedCompletions = completions.results.sort((a, b) => 
+    new Date(b.completion_date).getTime() - new Date(a.completion_date).getTime()
+  );
+  
+  for (let i = 0; i < sortedCompletions.length; i++) {
+    if (sortedCompletions[i].completed === 1) {
+      streak++;
+    } else {
+      break;
+    }
+  }
+  
+  return c.json({
+    total_days: total,
+    completed_days: completed,
+    completion_rate: rate,
+    current_streak: streak
+  });
+});
+
 // ============= STOIC QUOTE API =============
 
 // Get daily stoic quote (curated collection with daily rotation)
@@ -1044,6 +1218,19 @@ app.get('/', (c) => {
                         </div>
                     </div>
 
+                    <!-- Habit Tracker -->
+                    <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 mb-6">
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Daily Habits</h2>
+                            <button onclick="showCreateHabitModal()" class="bg-gray-800 dark:bg-gray-700 text-white px-4 py-2 rounded-lg hover:bg-gray-700 dark:hover:bg-gray-600 transition text-sm font-medium">
+                                New Habit
+                            </button>
+                        </div>
+                        <div id="habits-list" class="space-y-2">
+                            <!-- Habits will be loaded here -->
+                        </div>
+                    </div>
+
                     <!-- Daily Wins -->
                     <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
                         <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">Daily Reflection</h2>
@@ -1152,6 +1339,64 @@ app.get('/', (c) => {
         </div>
 
         <!-- Modals -->
+        
+        <!-- Create Habit Modal -->
+        <div id="create-habit-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 dark:bg-opacity-70 z-50 flex items-center justify-center p-4">
+            <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 max-w-lg w-full">
+                <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Create New Habit</h3>
+                        <button onclick="closeCreateHabitModal()" class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 text-xl">
+                            ×
+                        </button>
+                    </div>
+                </div>
+                <div class="p-6">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Habit Name *</label>
+                            <input type="text" id="new-habit-title" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 focus:border-transparent" placeholder="e.g., Morning meditation" />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Description</label>
+                            <textarea id="new-habit-description" rows="2" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 focus:border-transparent" placeholder="Why is this habit important?"></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Category *</label>
+                            <select id="new-habit-category" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 focus:border-transparent">
+                                <option value="spiritual">Spiritual/Faith</option>
+                                <option value="financial">Financial/Career</option>
+                                <option value="health" selected>Health/Fitness</option>
+                                <option value="family">Family/Friends</option>
+                                <option value="learning">Learning</option>
+                                <option value="fun">Fun/Travel</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Frequency *</label>
+                            <select id="new-habit-frequency" onchange="toggleTargetDays()" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 focus:border-transparent">
+                                <option value="daily" selected>Every day</option>
+                                <option value="weekly">Specific days of the week</option>
+                            </select>
+                        </div>
+                        <div id="target-days-container" class="hidden">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Target Days (for weekly habits)</label>
+                            <input type="text" id="new-habit-target-days" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 focus:border-transparent" placeholder="e.g., Monday,Wednesday,Friday" />
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Comma-separated days</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 flex gap-3">
+                    <button onclick="closeCreateHabitModal()" class="flex-1 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-6 py-2.5 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition font-medium">
+                        Cancel
+                    </button>
+                    <button onclick="createNewHabit()" class="flex-1 bg-gray-800 dark:bg-gray-700 text-white px-6 py-2.5 rounded-lg hover:bg-gray-700 dark:hover:bg-gray-600 transition font-medium">
+                        Create Habit
+                    </button>
+                </div>
+            </div>
+        </div>
         
         <!-- Task Selector Modal -->
         <div id="task-selector-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 dark:bg-opacity-70 z-50 flex items-center justify-center p-4">
