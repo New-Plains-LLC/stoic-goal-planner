@@ -67,6 +67,22 @@ The app includes daily affirmations, gratitude tracking, task management, daily 
 - **Quick Access to Goals**: Navigate to goals page from daily view
 - **Mobile Responsive**: Fully responsive design for mobile devices
 
+### ✅ Habit Tracker
+- **Daily Habits**: Track habits that repeat every day
+- **Weekly Habits**: Track habits for specific days of the week
+- **Check-off System**: Simple checkbox interface to mark habits complete
+- **Category Organization**: Habits organized by the same 7 life categories
+- **Habit Management**:
+  - Create new habits with name, description, category, and frequency
+  - Delete habits (with confirmation)
+  - View only habits scheduled for today
+- **Automatic Scheduling**: Weekly habits only show on their target days
+- **Sample Habits Included**:
+  - Daily: Morning prayer, Read 30 min, Exercise, Drink water, Track expenses, Family time, Evening gratitude, Plan tomorrow
+  - Weekly: Meal prep (Sunday), Review finances (Sunday), Family game night (Friday), Deep work (Mon/Wed/Fri)
+- **Persistence**: Completion history tracked in database
+- **Visual Feedback**: Completed habits show with green background and strikethrough
+
 ### 📊 Weekly Review System
 - **Week Selection**: Choose any week for review or planning
 - **Evaluation Form**:
