@@ -633,15 +633,28 @@ async function editGoal(id) {
 }
 
 async function deleteGoal(id) {
-    if (!confirm('Are you sure you want to delete this goal?')) return;
+    if (!confirm('Are you sure you want to delete this goal?\n\nNote: All child goals (sub-goals) will also be deleted.')) {
+        return;
+    }
     
     try {
-        await axios.delete(`/api/goals/${id}`);
-        loadGoals(currentGoalType);
-        alert('Goal deleted successfully!');
+        const response = await axios.delete(`/api/goals/${id}`);
+        
+        if (response.data.success) {
+            loadGoals(currentGoalType);
+            alert('Goal deleted successfully!');
+        } else {
+            alert('Failed to delete goal: ' + (response.data.error || 'Unknown error'));
+        }
     } catch (error) {
         console.error('Error deleting goal:', error);
-        alert('Failed to delete goal');
+        
+        if (error.response && error.response.data) {
+            alert('Failed to delete goal\n\nError: ' + (error.response.data.error || 'Unknown error') + 
+                  '\n\nDetails: ' + (error.response.data.details || ''));
+        } else {
+            alert('Failed to delete goal: ' + (error.message || 'Unknown error'));
+        }
     }
 }
 

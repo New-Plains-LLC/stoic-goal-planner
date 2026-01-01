@@ -102,9 +102,29 @@ app.delete('/api/goals/:id', async (c) => {
   const { env } = c;
   const id = c.req.param('id');
   
-  await env.DB.prepare('DELETE FROM goals WHERE id = ?').bind(id).run();
-  
-  return c.json({ success: true });
+  try {
+    // First check if goal exists
+    const { results: existingGoal } = await env.DB.prepare(
+      'SELECT * FROM goals WHERE id = ?'
+    ).bind(id).all();
+    
+    if (!existingGoal || existingGoal.length === 0) {
+      return c.json({ error: 'Goal not found' }, 404);
+    }
+    
+    // Delete the goal (CASCADE will handle child goals)
+    const result = await env.DB.prepare('DELETE FROM goals WHERE id = ?').bind(id).run();
+    
+    console.log('Delete goal result:', result);
+    
+    return c.json({ success: true, message: 'Goal deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting goal:', error);
+    return c.json({ 
+      error: 'Failed to delete goal',
+      details: error.message 
+    }, 500);
+  }
 });
 
 // Reorder goals
