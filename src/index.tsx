@@ -1037,8 +1037,11 @@ app.post('/api/calendar/sync', async (c) => {
       errorMessage = 'Invalid or expired access token';
       details = 'Please get a new access token from Google OAuth Playground';
     } else if (error.message && error.message.includes('403')) {
-      errorMessage = 'Access forbidden';
-      details = 'Please make sure you authorized the Calendar API scope';
+      errorMessage = 'Access forbidden - Insufficient authentication scopes';
+      details = 'You MUST authorize the calendar.readonly scope in OAuth Playground. In Step 1, make sure you CHECK THE BOX next to "https://www.googleapis.com/auth/calendar.readonly" under Google Calendar API v3 before clicking Authorize APIs.';
+    } else if (error.message && error.message.includes('insufficientPermissions')) {
+      errorMessage = 'Insufficient permissions';
+      details = 'The access token does not have calendar.readonly scope. Go back to OAuth Playground and make sure you select the correct scope.';
     } else if (error.message && error.message.includes('404')) {
       errorMessage = 'Calendar not found';
       details = 'Please check your Google Calendar settings';

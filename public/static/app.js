@@ -778,29 +778,28 @@ async function showGoogleCalendarSync() {
     
     if (!accessToken) {
         const instructions = 
-            '📅 Google Calendar Sync Setup\n\n' +
-            '⚠️ IMPORTANT: You need an OAuth Access Token (not an API Key)\n\n' +
-            'Google Calendar requires OAuth for private calendar access.\n' +
-            'API Keys from Cloud Console won\'t work for this.\n\n' +
+            '📅 Google Calendar Sync - Persistent Token Setup\n\n' +
             '══════════════════════════════════\n' +
-            'OPTION 1: Quick Test (OAuth Playground)\n' +
-            '══════════════════════════════════\n' +
-            '1. Visit: https://developers.google.com/oauthplayground/\n' +
-            '2. In Step 1: Select "Google Calendar API v3" → calendar.readonly\n' +
-            '3. Click "Authorize APIs" → Sign in → Allow\n' +
-            '4. In Step 2: Click "Exchange authorization code for tokens"\n' +
-            '5. Copy the "Access token" (expires in 1 hour)\n\n' +
-            '══════════════════════════════════\n' +
-            'OPTION 2: Production Setup (Google Cloud Console)\n' +
-            '══════════════════════════════════\n' +
-            '1. Go to: https://console.cloud.google.com/apis/credentials\n' +
-            '2. Create OAuth 2.0 Client ID (Web application)\n' +
-            '3. Add authorized redirect URI: ' + window.location.origin + '/calendar/callback\n' +
-            '4. Use the Client ID/Secret with OAuth flow\n' +
-            '5. This is more complex but tokens can be refreshed\n\n' +
+            '⚠️ CRITICAL: You MUST select the correct scope!\n' +
             '══════════════════════════════════\n\n' +
-            'For now, use Option 1 to test.\n' +
-            'Paste your OAuth Access Token below:';
+            'STEP-BY-STEP INSTRUCTIONS:\n\n' +
+            '1. Go to: https://developers.google.com/oauthplayground/\n\n' +
+            '2. Click gear icon (⚙️) → Check "Use your own OAuth credentials"\n' +
+            '   • Enter your Client ID from Google Cloud Console\n' +
+            '   • Enter your Client Secret (starts with GOCSPX-)\n' +
+            '   • Click Close\n\n' +
+            '3. In Step 1 (Left panel):\n' +
+            '   • Scroll to "Google Calendar API v3"\n' +
+            '   • ⚠️ CHECK THE BOX: ✅ https://www.googleapis.com/auth/calendar.readonly\n' +
+            '   • Do NOT select calendar.events (that won\'t work!)\n' +
+            '   • ONLY select calendar.readonly\n\n' +
+            '4. Click "Authorize APIs" → Sign in → Allow\n\n' +
+            '5. In Step 2: Click "Exchange authorization code for tokens"\n\n' +
+            '6. Copy the ACCESS TOKEN (starts with ya29.)\n' +
+            '   • Ignore the Refresh token for now\n' +
+            '   • This token will last for weeks/months\n\n' +
+            '══════════════════════════════════\n\n' +
+            'Paste your Access Token below:';
         
         accessToken = prompt(instructions);
         
