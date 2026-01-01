@@ -12,6 +12,7 @@ The app includes daily affirmations, gratitude tracking, task management, daily 
 - **Dark Mode Support**: Full light/dark mode toggle with refined color palette
 - **No Distracting Icons**: Clean, text-focused interface for better concentration
 - **Professional Aesthetics**: Sophisticated gray tones instead of bright accent colors
+- **Responsive Layout**: Side-by-side sections on desktop for maximum above-the-fold visibility, stacked on mobile
 
 ## ✅ Currently Completed Features
 
@@ -45,6 +46,12 @@ The app includes daily affirmations, gratitude tracking, task management, daily 
 - **Custom Order**: Goals display in your preferred order within each category
 
 ### 📅 Daily Planner
+- **Optimized Desktop Layout**: On larger screens (desktop/laptop), sections are arranged side-by-side to maximize visible content above the fold:
+  - **Row 1**: Affirmations & Gratitude | Tasks
+  - **Row 2**: Schedule | Habits
+  - **Row 3**: Daily Reflection (Today's Wins & Tomorrow's Wins side-by-side)
+  - Full-width sections: Header, Stoic Quote
+- **Mobile-Friendly**: All sections stack vertically on smaller screens
 - **Daily Entry System**: One entry per day with automatic date selection
 - **Stoic Quote of the Day**: Curated collection of 14 authentic Stoic quotes from Marcus Aurelius, Seneca, and Epictetus
   - **Daily Rotation**: Quote changes every day based on date (consistent throughout the day)
