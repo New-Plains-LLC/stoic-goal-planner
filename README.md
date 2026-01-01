@@ -13,6 +13,7 @@ The app includes daily affirmations, gratitude tracking, task management, daily 
 - **No Distracting Icons**: Clean, text-focused interface for better concentration
 - **Professional Aesthetics**: Sophisticated gray tones instead of bright accent colors
 - **Responsive Layout**: Side-by-side sections on desktop for maximum above-the-fold visibility, stacked on mobile
+- **Scrollable Modals**: All modals adapt to screen size with scrolling for smaller screens (max-h-[90vh])
 
 ## ✅ Currently Completed Features
 
@@ -69,6 +70,10 @@ The app includes daily affirmations, gratitude tracking, task management, daily 
 - **Daily Schedule with Google Calendar**: 
   - View and manage your calendar events
   - **Google Calendar Sync**: Import events from Google Calendar with persistent token storage
+    - ⚠️ **Important**: OAuth Playground tokens expire after 1 hour
+    - Clear step-by-step instructions provided in the sync dialog
+    - Automatic token validation and helpful error messages
+    - Option to use stored token or enter a new one
   - **Add Events**: Create calendar events directly in the app
   - **Edit Events**: Update event details (title, time, location, description)
   - **Delete Events**: Remove events with confirmation
@@ -331,27 +336,32 @@ The app includes daily affirmations, gratitude tracking, task management, daily 
 ### Google Calendar Integration
 1. **Get Access Token**:
    - Go to [Google OAuth Playground](https://developers.google.com/oauthplayground/)
-   - Select "Google Calendar API v3"
-   - Select scope: `https://www.googleapis.com/auth/calendar.readonly`
-   - Click "Authorize APIs" and sign in
-   - Click "Exchange authorization code for tokens"
-   - Copy the "Access token" value
+   - Click the gear icon (⚙️) in top right
+   - Optionally check "Use your own OAuth credentials" (or leave unchecked to use default)
+   - In Step 1: Scroll to "Google Calendar API v3"
+   - Check the box for `calendar.readonly`
+   - Click "Authorize APIs" and sign in with your Google account
+   - Click "Allow" to grant permissions
+   - In Step 2: Click "Exchange authorization code for tokens"
+   - Copy the "Access token" value (NOT the refresh token)
 
 2. **Sync Calendar**:
    - Click "Sync Google" button on Daily page
-   - Paste your access token (first time only)
+   - Paste your access token when prompted
    - Events from the next 7 days will be imported
    - **Token is automatically saved** in localStorage for future syncs
-
-3. **Token Management**:
-   - Token persists between sessions
-   - If token expires (401 error), it's automatically cleared
-   - Simply sync again to enter a new token
    
-4. **Optional - Full OAuth Setup** (for production):
-   - Create OAuth credentials in Google Cloud Console
-   - Set `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` in `.dev.vars`
-   - Use `/api/calendar/oauth/start` endpoint for automatic flow
+3. **Token Management**:
+   - ⚠️ **Important**: OAuth Playground tokens expire after 1 hour
+   - When expired, the app will show a clear error message with instructions
+   - Click "Cancel" when asked to use stored token, then enter a new one
+   - Token persists between sessions until expiration
+   - If you see "Invalid or expired access token", follow the steps above to get a new token
+
+4. **Troubleshooting**:
+   - Make sure you authorized the `calendar.readonly` scope
+   - Tokens from OAuth Playground are for testing only (1 hour expiration)
+   - For production use, set up OAuth credentials in Google Cloud Console
 
 ## 🚀 Deployment
 
