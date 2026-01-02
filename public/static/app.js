@@ -360,22 +360,22 @@ async function showTaskSelector() {
             if (cat.tasks.length > 0) {
                 html += `
                     <div class="mb-4">
-                        <h4 class="text-sm font-bold text-${cat.color}-600 mb-2 flex items-center">
+                        <h4 class="text-sm font-bold text-${cat.color}-600 dark:text-${cat.color}-400 mb-2 flex items-center">
                             <i class="fas ${cat.icon} mr-2"></i>
                             ${cat.name}
                         </h4>
                         <div class="space-y-2">
                             ${cat.tasks.map(task => `
-                                <label class="flex items-center p-3 border rounded hover:bg-gray-50 cursor-pointer">
+                                <label class="flex items-center p-3 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 cursor-pointer">
                                     <input type="checkbox" class="task-checkbox w-5 h-5 text-indigo-600 rounded mr-3" data-task-id="${task.id}" />
                                     <div class="flex-1">
                                         <div class="flex items-center space-x-2">
-                                            <p class="font-semibold text-gray-800">${task.title}</p>
+                                            <p class="font-semibold text-gray-900 dark:text-white">${task.title}</p>
                                             <span class="px-2 py-0.5 text-xs font-semibold rounded-full ${getPriorityColor(task.priority)}">
                                                 ${task.priority}
                                             </span>
                                         </div>
-                                        ${task.description ? `<p class="text-sm text-gray-600 mt-1">${task.description}</p>` : ''}
+                                        ${task.description ? `<p class="text-sm text-gray-600 dark:text-gray-300 mt-1">${task.description}</p>` : ''}
                                     </div>
                                 </label>
                             `).join('')}
@@ -385,7 +385,7 @@ async function showTaskSelector() {
             }
         });
         
-        taskList.innerHTML = html || '<p class="text-gray-500">No tasks available.</p>';
+        taskList.innerHTML = html || '<p class="text-gray-500 dark:text-gray-400">No tasks available.</p>';
         modal.classList.remove('hidden');
         
     } catch (error) {
