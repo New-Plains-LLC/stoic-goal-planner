@@ -1187,6 +1187,96 @@ function getCalendarSubscriptions() {
     return JSON.parse(localStorage.getItem('calendar_subscriptions') || '[]');
 }
 
+async function showManageSubscriptionsModal() {
+    const modal = document.getElementById('manage-subscriptions-modal');
+    const list = document.getElementById('subscriptions-list');
+    const noSubs = document.getElementById('no-subscriptions');
+    
+    const subscriptions = getCalendarSubscriptions();
+    
+    if (subscriptions.length === 0) {
+        list.classList.add('hidden');
+        noSubs.classList.remove('hidden');
+    } else {
+        noSubs.classList.add('hidden');
+        list.classList.remove('hidden');
+        
+        list.innerHTML = subscriptions.map((sub, index) => `
+            <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-gray-50 dark:bg-gray-700">
+                <div class="flex items-start justify-between gap-4">
+                    <div class="flex-1 min-w-0">
+                        <h4 class="font-medium text-gray-900 dark:text-white mb-1">${sub.name}</h4>
+                        <p class="text-sm text-gray-600 dark:text-gray-400 break-all mb-2">${sub.url}</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-500">Added: ${new Date(sub.addedAt).toLocaleDateString()}</p>
+                    </div>
+                    <div class="flex gap-2 flex-shrink-0">
+                        <button onclick="resyncSubscription(${index})" class="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-sm font-medium">
+                            Sync Now
+                        </button>
+                        <button onclick="deleteSubscription(${index})" class="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 text-sm font-medium">
+                            Delete
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+    
+    modal.classList.remove('hidden');
+}
+
+function closeManageSubscriptionsModal() {
+    document.getElementById('manage-subscriptions-modal').classList.add('hidden');
+}
+
+async function resyncSubscription(index) {
+    const subscriptions = getCalendarSubscriptions();
+    const sub = subscriptions[index];
+    
+    if (!sub) {
+        alert('Subscription not found');
+        return;
+    }
+    
+    try {
+        const response = await axios.post('/api/calendar/sync/ical', {
+            icalUrl: sub.url,
+            calendarName: sub.name
+        });
+        
+        if (response.data.success) {
+            alert(`✅ ${response.data.message}`);
+            loadDailyData(currentDate);
+        }
+    } catch (error) {
+        console.error('Error resyncing subscription:', error);
+        alert('Failed to sync subscription: ' + (error.response?.data?.error || error.message));
+    }
+}
+
+async function deleteSubscription(index) {
+    const subscriptions = getCalendarSubscriptions();
+    const sub = subscriptions[index];
+    
+    if (!sub) {
+        alert('Subscription not found');
+        return;
+    }
+    
+    if (!confirm(`Delete calendar subscription "${sub.name}"?\n\nThis will remove the subscription but keep existing events.`)) {
+        return;
+    }
+    
+    // Remove from localStorage
+    subscriptions.splice(index, 1);
+    localStorage.setItem('calendar_subscriptions', JSON.stringify(subscriptions));
+    
+    alert('Subscription deleted successfully!');
+    
+    // Refresh the modal
+    showManageSubscriptionsModal();
+}
+
 // ========== CREATE TASK MODAL ==========
 
 async function showCreateTaskModal() {
