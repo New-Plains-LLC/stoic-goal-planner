@@ -1,6 +1,7 @@
 // Global state
 let currentGoalType = 'long_term';
-let currentDate = new Date().toISOString().split('T')[0];
+// Get current date in CST timezone
+let currentDate = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Chicago' }); // en-CA gives YYYY-MM-DD format
 
 // Dark mode
 function toggleDarkMode() {
@@ -429,20 +430,32 @@ function renderSchedule(events) {
     }
     
     container.innerHTML = events.map(event => {
-        const startTime = new Date(event.start_time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-        const endTime = new Date(event.end_time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+        // Convert to CST timezone
+        const startDate = new Date(event.start_time);
+        const endDate = new Date(event.end_time);
+        
+        const startTime = startDate.toLocaleTimeString('en-US', { 
+            hour: '2-digit', 
+            minute: '2-digit',
+            timeZone: 'America/Chicago'
+        });
+        const endTime = endDate.toLocaleTimeString('en-US', { 
+            hour: '2-digit', 
+            minute: '2-digit',
+            timeZone: 'America/Chicago'
+        });
         
         return `
-            <div class="p-4 border-l-4 border-gray-400 dark:border-gray-500 bg-gray-50 dark:bg-gray-750 rounded-lg">
+            <div class="p-4 border-l-4 border-gray-400 dark:border-gray-500 bg-gray-50 dark:bg-gray-700 rounded-lg">
                 <div class="flex items-center justify-between">
                     <div class="flex-1">
-                        <p class="font-medium text-gray-900 dark:text-gray-100">${event.title}</p>
-                        <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">${startTime} - ${endTime}</p>
+                        <p class="font-medium text-gray-900 dark:text-white">${event.title}</p>
+                        <p class="text-sm text-gray-600 dark:text-gray-300 mt-1">${startTime} - ${endTime}</p>
                         ${event.location ? `<p class="text-sm text-gray-500 dark:text-gray-400 mt-1">${event.location}</p>` : ''}
-                        ${event.description ? `<p class="text-sm text-gray-600 dark:text-gray-400 mt-1">${event.description}</p>` : ''}
+                        ${event.description ? `<p class="text-sm text-gray-600 dark:text-gray-300 mt-1">${event.description}</p>` : ''}
                     </div>
                     <div class="flex gap-2 ml-4">
-                        <button onclick="editScheduleEvent(${event.id})" class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 text-sm">
+                        <button onclick="editScheduleEvent(${event.id})" class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white text-sm">
                             Edit
                         </button>
                         <button onclick="deleteScheduleEvent(${event.id})" class="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 text-sm">
