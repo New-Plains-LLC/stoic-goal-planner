@@ -1084,6 +1084,96 @@ function getMicrosoftAccessToken() {
     return localStorage.getItem('microsoft_calendar_token');
 }
 
+// ========== ICAL SUBSCRIPTION ==========
+
+async function showICalSubscribeModal() {
+    const instructions = 
+        '📅 Calendar Subscription (iCal/ICS)\n\n' +
+        '✅ NO OAuth tokens needed!\n' +
+        '✅ Works with Google, Outlook, Apple Calendar, and any iCal feed\n\n' +
+        '══════════════════════════════════\n' +
+        'HOW TO GET YOUR CALENDAR URL:\n' +
+        '══════════════════════════════════\n\n' +
+        '📗 GOOGLE CALENDAR:\n' +
+        '1. Go to calendar.google.com\n' +
+        '2. Click the 3 dots next to your calendar → Settings\n' +
+        '3. Scroll to "Integrate calendar"\n' +
+        '4. Copy the "Secret address in iCal format" URL\n' +
+        '   (looks like: https://calendar.google.com/calendar/ical/...)\n\n' +
+        '📘 OUTLOOK/MICROSOFT:\n' +
+        '1. Go to outlook.com\n' +
+        '2. Click Settings (gear icon) → View all settings\n' +
+        '3. Go to Calendar → Shared calendars\n' +
+        '4. Under "Publish a calendar", select your calendar\n' +
+        '5. Copy the ICS link\n\n' +
+        '🍎 APPLE CALENDAR:\n' +
+        '1. Go to iCloud.com → Calendar\n' +
+        '2. Click the share icon next to calendar name\n' +
+        '3. Check "Public Calendar"\n' +
+        '4. Copy the webcal:// URL (change webcal to https)\n\n' +
+        '══════════════════════════════════\n\n' +
+        'Paste your calendar subscription URL below:';
+    
+    const icalUrl = prompt(instructions);
+    
+    if (!icalUrl) {
+        return;
+    }
+    
+    // Validate URL format
+    if (!icalUrl.startsWith('http://') && !icalUrl.startsWith('https://') && !icalUrl.startsWith('webcal://')) {
+        alert('Invalid URL format. Please enter a valid iCal/ICS URL starting with http://, https://, or webcal://');
+        return;
+    }
+    
+    // Convert webcal:// to https://
+    let cleanUrl = icalUrl;
+    if (icalUrl.startsWith('webcal://')) {
+        cleanUrl = icalUrl.replace('webcal://', 'https://');
+    }
+    
+    // Ask for calendar name
+    const calendarName = prompt('Give this calendar a name (optional):', 'My Calendar') || 'Subscribed Calendar';
+    
+    try {
+        const response = await axios.post('/api/calendar/sync/ical', {
+            icalUrl: cleanUrl,
+            calendarName: calendarName
+        });
+        
+        if (response.data.success) {
+            // Save the subscription URL for future syncs
+            saveCalendarSubscription(cleanUrl, calendarName);
+            alert(response.data.message + '\n\n✅ Calendar subscription saved!\nIt will auto-sync when you refresh the page.');
+            loadDailyData(currentDate);
+        }
+    } catch (error) {
+        console.error('Error syncing iCal subscription:', error);
+        
+        if (error.response && error.response.data) {
+            alert('Failed to sync calendar subscription\n\nError: ' + (error.response.data.error || 'Unknown error') + 
+                  '\n\nDetails: ' + (error.response.data.details || ''));
+        } else {
+            alert('Failed to sync calendar subscription: ' + (error.message || 'Unknown error'));
+        }
+    }
+}
+
+function saveCalendarSubscription(url, name) {
+    const subscriptions = JSON.parse(localStorage.getItem('calendar_subscriptions') || '[]');
+    
+    // Check if already exists
+    const exists = subscriptions.find(sub => sub.url === url);
+    if (!exists) {
+        subscriptions.push({ url, name, addedAt: new Date().toISOString() });
+        localStorage.setItem('calendar_subscriptions', JSON.stringify(subscriptions));
+    }
+}
+
+function getCalendarSubscriptions() {
+    return JSON.parse(localStorage.getItem('calendar_subscriptions') || '[]');
+}
+
 // ========== CREATE TASK MODAL ==========
 
 async function showCreateTaskModal() {

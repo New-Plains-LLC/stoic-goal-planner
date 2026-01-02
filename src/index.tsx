@@ -1213,6 +1213,170 @@ app.post('/api/calendar/sync/microsoft', async (c) => {
   }
 });
 
+// Sync events from iCal/ICS subscription URL (Google, Outlook, Apple, etc.)
+app.post('/api/calendar/sync/ical', async (c) => {
+  const { env } = c;
+  const body = await c.req.json();
+  
+  const { icalUrl, calendarName } = body;
+  
+  if (!icalUrl) {
+    return c.json({ error: 'iCal URL required' }, 400);
+  }
+  
+  try {
+    // Fetch the iCal data
+    const icalResponse = await fetch(icalUrl);
+    
+    if (!icalResponse.ok) {
+      throw new Error(`Failed to fetch calendar: ${icalResponse.status}`);
+    }
+    
+    const icalData = await icalResponse.text();
+    
+    // Parse iCal format (simple parser for VEVENT blocks)
+    const events = parseICalData(icalData);
+    
+    // Get current date and 7 days from now for filtering
+    const now = new Date();
+    const sevenDaysLater = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    
+    // Filter events within the next 7 days
+    const upcomingEvents = events.filter(event => {
+      const eventStart = new Date(event.start);
+      return eventStart >= now && eventStart <= sevenDaysLater;
+    });
+    
+    // Insert events into database
+    let syncedCount = 0;
+    const source = calendarName || 'ical_subscription';
+    
+    for (const event of upcomingEvents) {
+      // Check if event already exists
+      const { results } = await env.DB.prepare(
+        'SELECT * FROM schedule_events WHERE external_event_id = ? AND calendar_source = ?'
+      ).bind(event.uid, source).all();
+      
+      if (results && results.length > 0) {
+        // Update existing event
+        await env.DB.prepare(`
+          UPDATE schedule_events
+          SET title = ?, description = ?, start_time = ?, end_time = ?, location = ?, updated_at = CURRENT_TIMESTAMP
+          WHERE external_event_id = ? AND calendar_source = ?
+        `).bind(
+          event.summary || 'Untitled Event',
+          event.description || '',
+          event.start,
+          event.end,
+          event.location || '',
+          event.uid,
+          source
+        ).run();
+      } else {
+        // Insert new event
+        await env.DB.prepare(`
+          INSERT INTO schedule_events (title, description, start_time, end_time, location, calendar_source, external_event_id)
+          VALUES (?, ?, ?, ?, ?, ?, ?)
+        `).bind(
+          event.summary || 'Untitled Event',
+          event.description || '',
+          event.start,
+          event.end,
+          event.location || '',
+          source,
+          event.uid
+        ).run();
+      }
+      
+      syncedCount++;
+    }
+    
+    return c.json({ 
+      success: true, 
+      synced: syncedCount,
+      message: `Successfully synced ${syncedCount} events from calendar subscription`
+    });
+    
+  } catch (error) {
+    console.error('iCal sync error:', error);
+    return c.json({ 
+      error: 'Failed to sync calendar subscription',
+      details: error.message 
+    }, 500);
+  }
+});
+
+// Helper function to parse iCal data
+function parseICalData(icalText: string) {
+  const events = [];
+  const lines = icalText.split('\n').map(line => line.trim());
+  
+  let currentEvent: any = null;
+  let inEvent = false;
+  
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    
+    if (line === 'BEGIN:VEVENT') {
+      inEvent = true;
+      currentEvent = {};
+    } else if (line === 'END:VEVENT') {
+      inEvent = false;
+      if (currentEvent) {
+        events.push(currentEvent);
+        currentEvent = null;
+      }
+    } else if (inEvent && line.includes(':')) {
+      const colonIndex = line.indexOf(':');
+      const key = line.substring(0, colonIndex);
+      const value = line.substring(colonIndex + 1);
+      
+      // Parse different iCal fields
+      if (key.startsWith('DTSTART')) {
+        currentEvent.start = parseICalDate(value);
+      } else if (key.startsWith('DTEND')) {
+        currentEvent.end = parseICalDate(value);
+      } else if (key === 'SUMMARY') {
+        currentEvent.summary = value;
+      } else if (key === 'DESCRIPTION') {
+        currentEvent.description = value.replace(/\\n/g, '\n');
+      } else if (key === 'LOCATION') {
+        currentEvent.location = value;
+      } else if (key === 'UID') {
+        currentEvent.uid = value;
+      }
+    }
+  }
+  
+  return events;
+}
+
+// Helper function to parse iCal date format
+function parseICalDate(dateStr: string): string {
+  // iCal format: 20250102T120000Z or 20250102T120000
+  // Remove any timezone identifier at the end
+  dateStr = dateStr.split(';')[0];
+  
+  if (dateStr.includes('T')) {
+    // Format: YYYYMMDDTHHMMSS
+    const year = dateStr.substring(0, 4);
+    const month = dateStr.substring(4, 6);
+    const day = dateStr.substring(6, 8);
+    const hour = dateStr.substring(9, 11);
+    const minute = dateStr.substring(11, 13);
+    const second = dateStr.substring(13, 15);
+    
+    return `${year}-${month}-${day}T${hour}:${minute}:${second}Z`;
+  } else {
+    // Format: YYYYMMDD (all-day event)
+    const year = dateStr.substring(0, 4);
+    const month = dateStr.substring(4, 6);
+    const day = dateStr.substring(6, 8);
+    
+    return `${year}-${month}-${day}T00:00:00Z`;
+  }
+}
+
 // Get Google Calendar OAuth URL
 app.get('/api/calendar/auth-url', async (c) => {
   // This would normally use environment variables for client ID
@@ -1434,6 +1598,9 @@ app.get('/', (c) => {
                                 <div class="flex gap-2 flex-wrap">
                                     <button onclick="showAddEventModal()" class="bg-gray-800 dark:bg-gray-700 text-white px-4 py-2 rounded-lg hover:bg-gray-700 dark:hover:bg-gray-600 transition text-sm font-medium">
                                         Add Event
+                                    </button>
+                                    <button onclick="showICalSubscribeModal()" class="bg-blue-600 dark:bg-blue-700 text-white px-3 py-2 rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition text-sm font-medium">
+                                        Subscribe
                                     </button>
                                     <button onclick="showGoogleCalendarSync()" class="border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 px-3 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition text-sm font-medium">
                                         Google
