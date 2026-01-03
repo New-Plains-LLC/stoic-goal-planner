@@ -137,6 +137,19 @@ The app includes daily affirmations, gratitude tracking, task management, daily 
 - **Task Completion**: Mark tasks complete with timestamp
 - **Category Filtering**: Filter tasks by life category
 - **Link to Goals**: Optionally link tasks to specific goals
+- **Automatic Task Rollover** 🔄:
+  - **Smart Prompt**: When you open the app each day, automatically checks for incomplete tasks from yesterday
+  - **One-Click Rollover**: Click "🔄 Rollover" button to move all incomplete tasks from yesterday to today
+  - **Manual Rollover**: Works any time, not just for yesterday
+  - **No Duplicates**: Won't add tasks that already exist on the target date
+  - **Fresh Start**: Incomplete tasks carry forward, completed tasks stay archived
+  - **Automatic Prompt**: Opens once per day asking if you want to roll over yesterday's incomplete tasks
+- **Task Rescheduling** 📅:
+  - **Reschedule Button**: Click the 📅 icon on any task to move it to a different date
+  - **Date Picker**: Enter target date in YYYY-MM-DD format (e.g., 2026-01-10)
+  - **Future Planning**: Schedule tasks for any future date
+  - **Flexible Workflow**: Move tasks forward if you're not ready to tackle them today
+  - **One-Click Operation**: Reschedule with confirmation, task moves instantly
 
 ### 💾 Data Persistence
 - **Cloudflare D1 Database**: SQLite-based persistent storage
