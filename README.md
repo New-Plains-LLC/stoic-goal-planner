@@ -41,6 +41,13 @@ The app includes daily affirmations, gratitude tracking, task management, daily 
   - **Delete goals** - Remove goals with confirmation (at any level: long-term, annual, quarterly, weekly)
   - **Drag-and-drop reordering** - Grab the ⋮⋮ handle to reorder goals within each category
   - Works across all goal types: Long-term, Annual, Quarterly, Weekly
+- **Repeating Weekly Goals** 🔄:
+  - **Set as Repeating**: When creating/editing weekly goals, check "Repeat every week" to mark them as recurring
+  - **Visual Indicator**: Repeating goals show a 🔄 Repeating badge
+  - **One-Click Copy**: Use the "🔄 Copy Repeating Goals" button on the Weekly goals page to copy all repeating goals from last week to this week
+  - **Smart Duplication**: System prevents duplicates - won't copy if this week already has goals
+  - **Progress Reset**: Copied goals start with 0% progress for the new week
+  - **Perfect for Routines**: Ideal for recurring weekly objectives like "Meal prep Sunday", "Weekly team meeting", "Review finances", etc.
 - **Goal Relationships**: Link child goals to parent goals for clear progression tracking
 - **Progress Tracking**: Visual progress bars showing completion percentage for each goal
 - **Goal Status Management**: Track goals as active, completed, or archived
