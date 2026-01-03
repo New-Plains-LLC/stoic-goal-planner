@@ -23,6 +23,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Load today's data
     loadDailyData(currentDate);
     
+    // Check if we should prompt for task rollover
+    checkForTaskRollover();
+    
     // Event listeners
     document.getElementById('daily-date').addEventListener('change', (e) => {
         currentDate = e.target.value;
@@ -43,6 +46,40 @@ document.addEventListener('DOMContentLoaded', () => {
     // Load initial weekly data
     loadWeeklyData();
 });
+
+// Check if user wants to roll over tasks from previous day
+async function checkForTaskRollover() {
+    const lastCheckDate = localStorage.getItem('last_rollover_check');
+    const today = currentDate;
+    
+    // Only check once per day
+    if (lastCheckDate === today) {
+        return;
+    }
+    
+    try {
+        const yesterday = getPreviousDate(today);
+        
+        // Check if yesterday has incomplete tasks
+        const response = await axios.get(`/api/daily/${yesterday}`);
+        const incompleteTasks = response.data.selectedTasks?.filter(t => !t.completed) || [];
+        
+        if (incompleteTasks.length > 0) {
+            // Wait a bit for the page to load, then ask
+            setTimeout(() => {
+                if (confirm(`You have ${incompleteTasks.length} incomplete task(s) from yesterday.\n\nWould you like to roll them over to today?`)) {
+                    rolloverIncompleteTasks();
+                }
+            }, 1000);
+        }
+        
+        // Mark that we checked today
+        localStorage.setItem('last_rollover_check', today);
+    } catch (error) {
+        // Silently fail - yesterday might not exist
+        console.log('No previous day data found');
+    }
+}
 
 // Page navigation
 function showPage(page) {
@@ -229,7 +266,7 @@ function renderDailyTasks(tasks) {
     
     // Render task card
     const renderTaskCard = (task) => `
-        <div class="flex items-center justify-between p-4 border rounded-lg ${task.completed ? 'bg-green-50' : 'bg-white'}">
+        <div class="flex items-center justify-between p-4 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 ${task.completed ? 'bg-green-50 dark:bg-green-900/20' : ''}">
             <div class="flex items-center space-x-3">
                 <input type="checkbox" 
                        ${task.completed ? 'checked' : ''}
@@ -237,17 +274,20 @@ function renderDailyTasks(tasks) {
                        class="w-5 h-5 text-indigo-600 rounded">
                 <div>
                     <div class="flex items-center space-x-2">
-                        <p class="font-semibold ${task.completed ? 'line-through text-gray-500' : 'text-gray-800'}">${task.title}</p>
+                        <p class="font-semibold ${task.completed ? 'line-through text-gray-500 dark:text-gray-400' : 'text-gray-900 dark:text-white'}">${task.title}</p>
                         ${task.category ? `<span class="px-2 py-0.5 text-xs font-semibold rounded-full ${getCategoryBadgeColor(task.category)}">${getCategoryName(task.category)}</span>` : ''}
                     </div>
-                    ${task.description ? `<p class="text-sm text-gray-600">${task.description}</p>` : ''}
+                    ${task.description ? `<p class="text-sm text-gray-600 dark:text-gray-400">${task.description}</p>` : ''}
                 </div>
             </div>
             <div class="flex items-center space-x-2">
                 <span class="px-3 py-1 text-xs font-semibold rounded-full ${getPriorityColor(task.priority)}">
                     ${task.priority}
                 </span>
-                <button onclick="removeDailyTask(${task.id})" class="text-red-500 hover:text-red-700">
+                <button onclick="rescheduleTask(${task.id}, '${task.title}')" class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300" title="Reschedule to another day">
+                    📅
+                </button>
+                <button onclick="removeDailyTask(${task.id})" class="text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300" title="Remove from today">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
@@ -320,6 +360,72 @@ async function removeDailyTask(taskId) {
         console.error('Error removing task:', error);
         alert('Failed to remove task');
     }
+}
+
+// Reschedule a task to a different date
+async function rescheduleTask(taskId, taskTitle) {
+    const newDate = prompt(`Reschedule "${taskTitle}" to which date?\n\nEnter date in YYYY-MM-DD format (e.g., ${getNextDate(currentDate)}):`, getNextDate(currentDate));
+    
+    if (!newDate) return;
+    
+    // Validate date format
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(newDate)) {
+        alert('Invalid date format. Please use YYYY-MM-DD format.');
+        return;
+    }
+    
+    try {
+        // Remove from current date
+        await axios.delete(`/api/daily/${currentDate}/tasks/${taskId}`);
+        
+        // Add to new date
+        await axios.post(`/api/daily/${newDate}/tasks/${taskId}`);
+        
+        loadDailyData(currentDate);
+        alert(`Task rescheduled to ${newDate}!`);
+    } catch (error) {
+        console.error('Error rescheduling task:', error);
+        alert('Failed to reschedule task');
+    }
+}
+
+// Helper function to get next date
+function getNextDate(dateStr) {
+    const date = new Date(dateStr + 'T00:00:00');
+    date.setDate(date.getDate() + 1);
+    return date.toISOString().split('T')[0];
+}
+
+// Rollover incomplete tasks from previous day
+async function rolloverIncompleteTasks() {
+    const yesterday = getPreviousDate(currentDate);
+    
+    if (!confirm(`Roll over incomplete tasks from ${yesterday} to today?\n\nThis will move all uncompleted tasks from yesterday to today.`)) {
+        return;
+    }
+    
+    try {
+        const response = await axios.post(`/api/daily/${currentDate}/rollover`, {
+            fromDate: yesterday
+        });
+        
+        if (response.data.rolledOver > 0) {
+            alert(`✅ Successfully rolled over ${response.data.rolledOver} incomplete task(s) from yesterday!`);
+            loadDailyData(currentDate);
+        } else {
+            alert('No incomplete tasks to roll over from yesterday.');
+        }
+    } catch (error) {
+        console.error('Error rolling over tasks:', error);
+        alert('Failed to roll over tasks: ' + (error.response?.data?.details || error.message));
+    }
+}
+
+// Helper function to get previous date
+function getPreviousDate(dateStr) {
+    const date = new Date(dateStr + 'T00:00:00');
+    date.setDate(date.getDate() - 1);
+    return date.toISOString().split('T')[0];
 }
 
 async function showTaskSelector() {

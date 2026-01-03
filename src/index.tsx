@@ -498,6 +498,91 @@ app.put('/api/daily/:date/tasks/:taskId/complete', async (c) => {
   return c.json({ success: true });
 });
 
+// Rollover incomplete tasks from previous day
+app.post('/api/daily/:date/rollover', async (c) => {
+  const { env } = c;
+  const toDate = c.req.param('date');
+  const body = await c.req.json();
+  const fromDate = body.fromDate;
+  
+  if (!fromDate) {
+    return c.json({ error: 'fromDate is required' }, 400);
+  }
+  
+  try {
+    // Get the "from" date entry
+    const { results: fromEntries } = await env.DB.prepare(
+      'SELECT * FROM daily_entries WHERE entry_date = ?'
+    ).bind(fromDate).all();
+    
+    if (!fromEntries || fromEntries.length === 0) {
+      return c.json({ rolledOver: 0, message: 'No tasks found for the specified date' });
+    }
+    
+    const fromEntryId = fromEntries[0].id;
+    
+    // Get incomplete tasks from the "from" date
+    const { results: incompleteTasks } = await env.DB.prepare(`
+      SELECT task_id 
+      FROM daily_task_selections 
+      WHERE daily_entry_id = ? AND (completed = 0 OR completed IS NULL)
+    `).bind(fromEntryId).all();
+    
+    if (!incompleteTasks || incompleteTasks.length === 0) {
+      return c.json({ rolledOver: 0, message: 'No incomplete tasks to roll over' });
+    }
+    
+    // Get or create the "to" date entry
+    let { results: toEntries } = await env.DB.prepare(
+      'SELECT * FROM daily_entries WHERE entry_date = ?'
+    ).bind(toDate).all();
+    
+    let toEntryId;
+    if (!toEntries || toEntries.length === 0) {
+      const result = await env.DB.prepare(
+        'INSERT INTO daily_entries (entry_date) VALUES (?)'
+      ).bind(toDate).run();
+      toEntryId = result.meta.last_row_id;
+    } else {
+      toEntryId = toEntries[0].id;
+    }
+    
+    let rolledOverCount = 0;
+    
+    // Copy incomplete tasks to the new date
+    for (const task of incompleteTasks) {
+      // Check if task already exists on the target date
+      const { results: existing } = await env.DB.prepare(`
+        SELECT * FROM daily_task_selections 
+        WHERE daily_entry_id = ? AND task_id = ?
+      `).bind(toEntryId, task.task_id).all();
+      
+      if (!existing || existing.length === 0) {
+        // Add task to new date
+        await env.DB.prepare(`
+          INSERT INTO daily_task_selections (daily_entry_id, task_id, completed)
+          VALUES (?, ?, 0)
+        `).bind(toEntryId, task.task_id).run();
+        
+        rolledOverCount++;
+      }
+    }
+    
+    return c.json({ 
+      success: true, 
+      rolledOver: rolledOverCount,
+      message: `Rolled over ${rolledOverCount} incomplete task(s) to ${toDate}`
+    });
+    
+  } catch (error: any) {
+    console.error('Error rolling over tasks:', error);
+    return c.json({ 
+      error: 'Failed to roll over tasks', 
+      details: error.message 
+    }, 500);
+  }
+});
+
 // ============= WEEKLY EVALUATIONS API =============
 
 // Get weekly evaluation
@@ -1644,6 +1729,9 @@ app.get('/', (c) => {
                             <div class="flex justify-between items-center mb-6">
                                 <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Today's Tasks</h2>
                                 <div class="flex gap-2">
+                                    <button onclick="rolloverIncompleteTasks()" class="bg-blue-600 dark:bg-blue-700 text-white px-4 py-2 rounded-lg hover:bg-blue-700 dark:hover:bg-blue-800 transition text-sm font-medium" title="Move incomplete tasks from yesterday to today">
+                                        🔄 Rollover
+                                    </button>
                                     <button onclick="showCreateTaskModal()" class="bg-gray-800 dark:bg-gray-700 text-white px-4 py-2 rounded-lg hover:bg-gray-700 dark:hover:bg-gray-600 transition text-sm font-medium">
                                         New Task
                                     </button>
