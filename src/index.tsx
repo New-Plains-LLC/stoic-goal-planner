@@ -70,12 +70,22 @@ app.post('/api/goals', async (c) => {
   const { env } = c;
   const body = await c.req.json();
   
-  const { title, description, goal_type, category, parent_id, year, quarter, week_number } = body;
+  const { title, description, goal_type, category, parent_id, year, quarter, week_number, is_repeating } = body;
   
   const result = await env.DB.prepare(`
-    INSERT INTO goals (title, description, goal_type, category, parent_id, year, quarter, week_number)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-  `).bind(title, description, goal_type, category || 'other', parent_id || null, year || null, quarter || null, week_number || null).run();
+    INSERT INTO goals (title, description, goal_type, category, parent_id, year, quarter, week_number, is_repeating)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `).bind(
+    title, 
+    description, 
+    goal_type, 
+    category || 'other', 
+    parent_id || null, 
+    year || null, 
+    quarter || null, 
+    week_number || null,
+    is_repeating || 0
+  ).run();
   
   return c.json({ id: result.meta.last_row_id, ...body }, 201);
 });
@@ -86,13 +96,13 @@ app.put('/api/goals/:id', async (c) => {
   const id = c.req.param('id');
   const body = await c.req.json();
   
-  const { title, description, category, status, progress, completed_at } = body;
+  const { title, description, category, status, progress, completed_at, is_repeating } = body;
   
   await env.DB.prepare(`
     UPDATE goals 
-    SET title = ?, description = ?, category = ?, status = ?, progress = ?, completed_at = ?, updated_at = CURRENT_TIMESTAMP
+    SET title = ?, description = ?, category = ?, status = ?, progress = ?, completed_at = ?, is_repeating = ?, updated_at = CURRENT_TIMESTAMP
     WHERE id = ?
-  `).bind(title, description, category, status, progress, completed_at || null, id).run();
+  `).bind(title, description, category, status, progress, completed_at || null, is_repeating !== undefined ? is_repeating : 0, id).run();
   
   return c.json({ id: parseInt(id), ...body });
 });
@@ -537,6 +547,78 @@ app.put('/api/weekly/:year/:week', async (c) => {
   }
   
   return c.json({ success: true });
+});
+
+// Copy repeating weekly goals to next week
+app.post('/api/goals/copy-repeating/:year/:week', async (c) => {
+  const { env } = c;
+  const year = parseInt(c.req.param('year'));
+  const week = parseInt(c.req.param('week'));
+  
+  try {
+    // Get all repeating weekly goals from the previous week
+    const prevWeek = week === 1 ? 52 : week - 1;
+    const prevYear = week === 1 ? year - 1 : year;
+    
+    const { results: repeatingGoals } = await env.DB.prepare(`
+      SELECT * FROM goals 
+      WHERE goal_type = 'weekly' 
+      AND is_repeating = 1 
+      AND year = ? 
+      AND week_number = ?
+    `).bind(prevYear, prevWeek).all();
+    
+    // Check if goals already exist for this week
+    const { results: existingGoals } = await env.DB.prepare(`
+      SELECT id FROM goals 
+      WHERE goal_type = 'weekly' 
+      AND year = ? 
+      AND week_number = ?
+    `).bind(year, week).all();
+    
+    // If goals already exist for this week, don't copy
+    if (existingGoals && existingGoals.length > 0) {
+      return c.json({ 
+        success: true, 
+        copied: 0, 
+        message: 'Goals already exist for this week' 
+      });
+    }
+    
+    let copiedCount = 0;
+    
+    // Copy each repeating goal to the new week
+    for (const goal of repeatingGoals) {
+      await env.DB.prepare(`
+        INSERT INTO goals (title, description, goal_type, category, parent_id, year, week_number, is_repeating, status, progress)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'active', 0)
+      `).bind(
+        goal.title,
+        goal.description,
+        'weekly',
+        goal.category,
+        goal.parent_id || null,
+        year,
+        week,
+        1
+      ).run();
+      
+      copiedCount++;
+    }
+    
+    return c.json({ 
+      success: true, 
+      copied: copiedCount, 
+      message: `Copied ${copiedCount} repeating goals to week ${week}` 
+    });
+    
+  } catch (error: any) {
+    console.error('Error copying repeating goals:', error);
+    return c.json({ 
+      error: 'Failed to copy repeating goals', 
+      details: error.message 
+    }, 500);
+  }
 });
 
 // ============= SCHEDULE API =============
@@ -1687,10 +1769,15 @@ app.get('/', (c) => {
                             </button>
                         </div>
 
-                        <!-- Add Goal Button -->
-                        <button onclick="showAddGoalModal()" class="bg-gray-800 dark:bg-gray-700 text-white px-6 py-2.5 rounded-lg hover:bg-gray-700 dark:hover:bg-gray-600 transition font-medium mb-6">
-                            Add New Goal
-                        </button>
+                        <!-- Add Goal Button & Copy Repeating Goals Button -->
+                        <div class="flex gap-3 mb-6">
+                            <button onclick="showAddGoalModal()" class="flex-1 bg-gray-800 dark:bg-gray-700 text-white px-6 py-2.5 rounded-lg hover:bg-gray-700 dark:hover:bg-gray-600 transition font-medium">
+                                Add New Goal
+                            </button>
+                            <button id="copy-repeating-btn" onclick="copyRepeatingGoals()" class="hidden bg-blue-600 dark:bg-blue-700 text-white px-6 py-2.5 rounded-lg hover:bg-blue-700 dark:hover:bg-blue-800 transition font-medium whitespace-nowrap">
+                                🔄 Copy Repeating Goals
+                            </button>
+                        </div>
 
                         <!-- Goals List -->
                         <div id="goals-list" class="space-y-4">
@@ -1922,6 +2009,17 @@ app.get('/', (c) => {
                                 <option value="fun">Fun/Travel</option>
                                 <option value="other">Other</option>
                             </select>
+                        </div>
+                        
+                        <!-- Repeating Weekly Goals checkbox (only for weekly goals) -->
+                        <div id="repeating-goal-option" class="hidden">
+                            <label class="flex items-center space-x-3 p-3 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-700">
+                                <input type="checkbox" id="new-goal-repeating" class="w-5 h-5 text-gray-600 dark:text-gray-400 rounded focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500" />
+                                <div>
+                                    <span class="text-sm font-medium text-gray-900 dark:text-white">Repeat every week</span>
+                                    <p class="text-xs text-gray-600 dark:text-gray-400 mt-0.5">Automatically copy this goal to next week when creating weekly goals</p>
+                                </div>
+                            </label>
                         </div>
                     </div>
                 </div>

@@ -482,6 +482,19 @@ function showGoalType(type) {
     event.target.classList.remove('border-transparent', 'text-gray-600', 'dark:text-gray-400');
     event.target.classList.add('border-gray-700', 'dark:border-gray-400', 'text-gray-700', 'dark:text-gray-300', 'bg-gray-100', 'dark:bg-gray-700');
     
+    // Show/hide copy repeating button for weekly goals
+    const copyBtn = document.getElementById('copy-repeating-btn');
+    if (copyBtn) {
+        if (type === 'weekly') {
+            copyBtn.classList.remove('hidden');
+        } else {
+            copyBtn.classList.add('hidden');
+        }
+    }
+    
+    // Update repeating option visibility
+    updateRepeatingOptionVisibility();
+    
     loadGoals(type);
 }
 
@@ -551,6 +564,7 @@ function renderGoals(goals) {
                                                     ${goal.year ? `<span>📅 ${goal.year}</span>` : ''}
                                                     ${goal.quarter ? `<span>📊 Q${goal.quarter}</span>` : ''}
                                                     ${goal.week_number ? `<span>📆 Week ${goal.week_number}</span>` : ''}
+                                                    ${goal.is_repeating ? `<span class="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded-full">🔄 Repeating</span>` : ''}
                                                 </div>
                                             </div>
                                             <span class="px-3 py-1 text-xs font-semibold rounded-full ${getStatusColor(goal.status)}">
@@ -628,13 +642,22 @@ async function editGoal(id) {
         const progress = prompt('Progress (0-100):', goal.progress);
         const status = prompt('Status (active/completed/archived):', goal.status);
         
+        let is_repeating = goal.is_repeating;
+        
+        // For weekly goals, ask about repeating
+        if (goal.goal_type === 'weekly') {
+            const repeatChoice = confirm('Repeat this goal every week?\n\nClick OK to repeat, Cancel to keep this goal only for this week.');
+            is_repeating = repeatChoice ? 1 : 0;
+        }
+        
         await axios.put(`/api/goals/${id}`, {
             title,
             description,
             category,
             status,
             progress: parseInt(progress),
-            completed_at: status === 'completed' ? new Date().toISOString() : null
+            completed_at: status === 'completed' ? new Date().toISOString() : null,
+            is_repeating
         });
         
         loadGoals(currentGoalType);
@@ -1368,6 +1391,7 @@ async function createNewGoal() {
     const title = document.getElementById('new-goal-title').value.trim();
     const description = document.getElementById('new-goal-description').value.trim();
     const category = document.getElementById('new-goal-category').value;
+    const isRepeating = document.getElementById('new-goal-repeating')?.checked || false;
     
     if (!title) {
         alert('Please enter a goal title');
@@ -1392,6 +1416,7 @@ async function createNewGoal() {
     
     if (currentGoalType === 'weekly') {
         goalData.week_number = getWeekNumber(new Date());
+        goalData.is_repeating = isRepeating ? 1 : 0;
     }
     
     try {
@@ -1808,3 +1833,66 @@ async function saveGoalOrder() {
     }
 }
 
+// Show/hide repeating checkbox based on goal type
+function updateRepeatingOptionVisibility() {
+    const repeatingOption = document.getElementById('repeating-goal-option');
+    if (repeatingOption) {
+        if (currentGoalType === 'weekly') {
+            repeatingOption.classList.remove('hidden');
+        } else {
+            repeatingOption.classList.add('hidden');
+        }
+    }
+}
+
+// Copy repeating goals from previous week to current week
+async function copyRepeatingGoals() {
+    const now = new Date();
+    const year = now.getFullYear();
+    const week = getWeekNumber(now);
+    
+    if (!confirm(`Copy all repeating weekly goals to Week ${week} (${year})?\n\nThis will create copies of goals marked as "Repeat every week" from the previous week.`)) {
+        return;
+    }
+    
+    try {
+        const response = await axios.post(`/api/goals/copy-repeating/${year}/${week}`);
+        
+        if (response.data.copied > 0) {
+            alert(`✅ Successfully copied ${response.data.copied} repeating goal(s) to this week!`);
+            loadGoals('weekly');
+        } else {
+            alert(response.data.message || 'No repeating goals to copy.');
+        }
+    } catch (error) {
+        console.error('Error copying repeating goals:', error);
+        alert('Failed to copy repeating goals: ' + (error.response?.data?.details || error.message));
+    }
+}
+
+// Call this when goal type changes
+const originalSetGoalType = window.setGoalType;
+window.setGoalType = function(type) {
+    if (originalSetGoalType) {
+        originalSetGoalType(type);
+    }
+    updateRepeatingOptionVisibility();
+};
+
+// Also update when modal opens
+const originalCloseCreateGoalModal = window.closeCreateGoalModal;
+window.closeCreateGoalModal = function() {
+    if (originalCloseCreateGoalModal) {
+        originalCloseCreateGoalModal();
+    }
+    // Reset checkbox
+    const checkbox = document.getElementById('new-goal-repeating');
+    if (checkbox) {
+        checkbox.checked = false;
+    }
+};
+
+// Update visibility when page loads
+document.addEventListener('DOMContentLoaded', () => {
+    updateRepeatingOptionVisibility();
+});
