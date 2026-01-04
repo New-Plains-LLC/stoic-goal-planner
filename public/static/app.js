@@ -740,9 +740,9 @@ async function editGoal(id) {
         const description = prompt('Description:', goal.description || '');
         
         // Category selection
-        const categoryNames = ['spiritual', 'financial', 'health', 'family', 'learning', 'other'];
+        const categoryNames = ['spiritual', 'financial', 'health', 'family', 'learning', 'fun', 'other'];
         const currentCategoryIndex = categoryNames.indexOf(goal.category) + 1;
-        const categoryChoice = prompt(`Category:\n1. Spiritual/Faith\n2. Financial/Career\n3. Health/Fitness\n4. Family/Friends\n5. Learning\n6. Other\n\nEnter number (1-6):`, currentCategoryIndex);
+        const categoryChoice = prompt(`Category:\n1. Spiritual/Faith\n2. Financial/Career\n3. Health/Fitness\n4. Family/Friends\n5. Learning\n6. Fun/Travel\n7. Other\n\nEnter number (1-7):`, currentCategoryIndex);
         const category = categoryNames[parseInt(categoryChoice) - 1] || goal.category;
         
         const progress = prompt('Progress (0-100):', goal.progress);
