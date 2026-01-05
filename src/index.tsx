@@ -469,6 +469,68 @@ app.post('/api/daily/:date/tasks/:taskId', async (c) => {
   return c.json({ success: true });
 });
 
+// Add weekly goal as a daily task
+app.post('/api/daily/:date/goals/:goalId', async (c) => {
+  const { env } = c;
+  const date = c.req.param('date');
+  const goalId = c.req.param('goalId');
+  
+  // Get the goal details
+  const { results: goals } = await env.DB.prepare(
+    'SELECT * FROM goals WHERE id = ?'
+  ).bind(goalId).all();
+  
+  if (!goals || goals.length === 0) {
+    return c.json({ error: 'Goal not found' }, 404);
+  }
+  
+  const goal = goals[0];
+  
+  // Get or create daily entry
+  const { results: entries } = await env.DB.prepare(
+    'SELECT * FROM daily_entries WHERE entry_date = ?'
+  ).bind(date).all();
+  
+  let dailyEntryId;
+  
+  if (!entries || entries.length === 0) {
+    const result = await env.DB.prepare(`
+      INSERT INTO daily_entries (entry_date) VALUES (?)
+    `).bind(date).run();
+    dailyEntryId = result.meta.last_row_id;
+  } else {
+    dailyEntryId = entries[0].id;
+  }
+  
+  // Create a task from the goal and add it to daily selection
+  // Check if task already exists for this goal on this date
+  const { results: existingTasks } = await env.DB.prepare(`
+    SELECT dt.* FROM daily_task_selections dt
+    JOIN tasks t ON dt.task_id = t.id
+    WHERE dt.daily_entry_id = ? AND t.goal_id = ?
+  `).bind(dailyEntryId, goalId).all();
+  
+  if (existingTasks && existingTasks.length > 0) {
+    return c.json({ success: true, message: 'Goal already added to today' });
+  }
+  
+  // Create a task from the goal
+  const taskResult = await env.DB.prepare(`
+    INSERT INTO tasks (title, description, goal_id, category, priority, status)
+    VALUES (?, ?, ?, ?, 'medium', 'pending')
+  `).bind(goal.title, goal.description, goalId, goal.category).run();
+  
+  const taskId = taskResult.meta.last_row_id;
+  
+  // Add task to daily selection
+  await env.DB.prepare(`
+    INSERT INTO daily_task_selections (daily_entry_id, task_id)
+    VALUES (?, ?)
+  `).bind(dailyEntryId, taskId).run();
+  
+  return c.json({ success: true, taskId });
+});
+
 // Remove task from daily selection
 app.delete('/api/daily/:date/tasks/:taskId', async (c) => {
   const { env } = c;
@@ -2167,7 +2229,7 @@ app.get('/', (c) => {
             <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 max-w-2xl w-full max-h-[80vh] overflow-hidden">
                 <div class="p-6 border-b border-gray-200 dark:border-gray-700">
                     <div class="flex justify-between items-center">
-                        <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Select Tasks for Today</h3>
+                        <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Select from This Week's Goals</h3>
                         <button onclick="closeTaskSelectorModal()" class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 text-xl">
                             ×
                         </button>
@@ -2180,7 +2242,7 @@ app.get('/', (c) => {
                 </div>
                 <div class="p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
                     <button onclick="addSelectedTasks()" class="bg-gray-800 dark:bg-gray-700 text-white px-6 py-2.5 rounded-lg hover:bg-gray-700 dark:hover:bg-gray-600 transition w-full font-medium">
-                        Add Selected Tasks
+                        Add Selected Goals to Today
                     </button>
                 </div>
             </div>

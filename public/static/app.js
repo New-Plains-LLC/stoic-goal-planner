@@ -434,11 +434,16 @@ function getPreviousDate(dateStr) {
 
 async function showTaskSelector() {
     try {
-        const response = await axios.get('/api/tasks?status=pending');
-        const tasks = response.data;
+        // Get current week's goals
+        const now = new Date();
+        const year = now.getFullYear();
+        const week = getWeekNumber(now);
         
-        if (tasks.length === 0) {
-            alert('No pending tasks available. Create a new task using the "New Task" button!');
+        const response = await axios.get(`/api/goals?type=weekly&week=${week}&year=${year}`);
+        const weeklyGoals = response.data;
+        
+        if (!weeklyGoals || weeklyGoals.length === 0) {
+            alert('No weekly goals available for this week!\n\nGo to the Goals page and add some weekly goals first.');
             return;
         }
         
@@ -446,28 +451,29 @@ async function showTaskSelector() {
         const modal = document.getElementById('task-selector-modal');
         const taskList = document.getElementById('task-selector-list');
         
-        // Group tasks by category
+        // Group goals by category
         const categories = {
-            spiritual: { name: 'Spiritual/Faith', icon: 'fa-pray', color: 'purple', tasks: [] },
-            financial: { name: 'Financial/Career', icon: 'fa-dollar-sign', color: 'green', tasks: [] },
-            health: { name: 'Health/Fitness', icon: 'fa-heartbeat', color: 'red', tasks: [] },
-            family: { name: 'Family/Friends', icon: 'fa-users', color: 'blue', tasks: [] },
-            learning: { name: 'Learning', icon: 'fa-book', color: 'indigo', tasks: [] },
-            other: { name: 'Other', icon: 'fa-star', color: 'gray', tasks: [] }
+            spiritual: { name: 'Spiritual/Faith', icon: 'fa-pray', color: 'purple', goals: [] },
+            financial: { name: 'Financial/Career', icon: 'fa-dollar-sign', color: 'green', goals: [] },
+            health: { name: 'Health/Fitness', icon: 'fa-heartbeat', color: 'red', goals: [] },
+            family: { name: 'Family/Friends', icon: 'fa-users', color: 'blue', goals: [] },
+            learning: { name: 'Learning', icon: 'fa-book', color: 'indigo', goals: [] },
+            fun: { name: 'Fun/Travel', icon: 'fa-plane', color: 'orange', goals: [] },
+            other: { name: 'Other', icon: 'fa-star', color: 'gray', goals: [] }
         };
         
-        tasks.forEach(task => {
-            const category = task.category || 'other';
+        weeklyGoals.forEach(goal => {
+            const category = goal.category || 'other';
             if (categories[category]) {
-                categories[category].tasks.push(task);
+                categories[category].goals.push(goal);
             }
         });
         
-        // Render tasks grouped by category
+        // Render goals grouped by category
         let html = '';
         Object.keys(categories).forEach(catKey => {
             const cat = categories[catKey];
-            if (cat.tasks.length > 0) {
+            if (cat.goals.length > 0) {
                 html += `
                     <div class="mb-4">
                         <h4 class="text-sm font-bold text-${cat.color}-600 dark:text-${cat.color}-400 mb-2 flex items-center">
@@ -475,17 +481,18 @@ async function showTaskSelector() {
                             ${cat.name}
                         </h4>
                         <div class="space-y-2">
-                            ${cat.tasks.map(task => `
+                            ${cat.goals.map(goal => `
                                 <label class="flex items-center p-3 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 cursor-pointer">
-                                    <input type="checkbox" class="task-checkbox w-5 h-5 text-indigo-600 rounded mr-3" data-task-id="${task.id}" />
+                                    <input type="checkbox" class="task-checkbox w-5 h-5 text-indigo-600 rounded mr-3" data-goal-id="${goal.id}" />
                                     <div class="flex-1">
                                         <div class="flex items-center space-x-2">
-                                            <p class="font-semibold text-gray-900 dark:text-white">${task.title}</p>
-                                            <span class="px-2 py-0.5 text-xs font-semibold rounded-full ${getPriorityColor(task.priority)}">
-                                                ${task.priority}
+                                            <p class="font-semibold text-gray-900 dark:text-white">${goal.title}</p>
+                                            <span class="px-2 py-0.5 text-xs font-medium rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300">
+                                                ${goal.progress}%
                                             </span>
+                                            ${goal.is_repeating ? `<span class="px-2 py-0.5 text-xs font-medium rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300">🔄</span>` : ''}
                                         </div>
-                                        ${task.description ? `<p class="text-sm text-gray-600 dark:text-gray-300 mt-1">${task.description}</p>` : ''}
+                                        ${goal.description ? `<p class="text-sm text-gray-600 dark:text-gray-300 mt-1">${goal.description}</p>` : ''}
                                     </div>
                                 </label>
                             `).join('')}
@@ -495,12 +502,12 @@ async function showTaskSelector() {
             }
         });
         
-        taskList.innerHTML = html || '<p class="text-gray-500 dark:text-gray-400">No tasks available.</p>';
+        taskList.innerHTML = html || '<p class="text-gray-500 dark:text-gray-400">No weekly goals available.</p>';
         modal.classList.remove('hidden');
         
     } catch (error) {
         console.error('Error showing task selector:', error);
-        alert('Failed to load tasks');
+        alert('Failed to load weekly goals');
     }
 }
 
@@ -512,22 +519,23 @@ async function addSelectedTasks() {
     const checkboxes = document.querySelectorAll('.task-checkbox:checked');
     
     if (checkboxes.length === 0) {
-        alert('Please select at least one task');
+        alert('Please select at least one goal');
         return;
     }
     
     try {
         for (const checkbox of checkboxes) {
-            const taskId = checkbox.getAttribute('data-task-id');
-            await axios.post(`/api/daily/${currentDate}/tasks/${taskId}`);
+            const goalId = checkbox.getAttribute('data-goal-id');
+            await axios.post(`/api/daily/${currentDate}/goals/${goalId}`);
         }
         
         closeTaskSelectorModal();
         loadDailyData(currentDate);
+        alert(`Added ${checkboxes.length} goal(s) to today's tasks!`);
         
     } catch (error) {
-        console.error('Error adding tasks:', error);
-        alert('Failed to add some tasks');
+        console.error('Error adding goals:', error);
+        alert('Failed to add some goals');
     }
 }
 
