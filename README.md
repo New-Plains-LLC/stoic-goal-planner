@@ -44,9 +44,17 @@ The app includes daily affirmations, gratitude tracking, task management, daily 
 - **Repeating Weekly Goals** 🔄:
   - **Set as Repeating**: When creating/editing weekly goals, check "Repeat every week" to mark them as recurring
   - **Visual Indicator**: Repeating goals show a 🔄 Repeating badge
-  - **One-Click Copy**: Use the "🔄 Copy Repeating Goals" button on the Weekly goals page to copy all repeating goals from last week to this week
-  - **Smart Duplication**: System prevents duplicates - won't copy if this week already has goals
-  - **Progress Reset**: Copied goals start with 0% progress for the new week
+  - **Automatic Weekly Reset**: When you view the Weekly goals page each week, the system automatically:
+    - Archives all goals from the previous week (status changed to 'archived')
+    - Creates fresh copies of repeating goals at 0% progress for the new week
+    - Prompts you to carry forward incomplete non-repeating goals
+  - **Smart Carry-Forward**: For incomplete non-repeating goals, the system:
+    - Shows you a list of all incomplete goals from last week with their current progress
+    - Lets you choose which ones to carry forward to this week
+    - Preserves the progress percentage when carrying forward
+    - Archives goals you don't carry forward (you can still view them in archived status)
+  - **One-Click Manual Copy**: Use the "🔄 Copy Repeating Goals" button to manually trigger the copy if needed
+  - **Once Per Week**: Reset happens automatically once per week (tracked via localStorage)
   - **Perfect for Routines**: Ideal for recurring weekly objectives like "Meal prep Sunday", "Weekly team meeting", "Review finances", etc.
 - **Goal Relationships**: Link child goals to parent goals for clear progression tracking
 - **Progress Tracking**: Visual progress bars showing completion percentage for each goal
