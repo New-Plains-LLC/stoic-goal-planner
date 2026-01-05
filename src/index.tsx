@@ -706,6 +706,165 @@ app.post('/api/goals/copy-repeating/:year/:week', async (c) => {
   }
 });
 
+// Weekly goals reset - archive old, copy repeating, and handle incomplete goals
+app.post('/api/goals/weekly-reset/:year/:week', async (c) => {
+  const { env } = c;
+  const year = parseInt(c.req.param('year'));
+  const week = parseInt(c.req.param('week'));
+  
+  try {
+    // Calculate previous week
+    const prevWeek = week === 1 ? 52 : week - 1;
+    const prevYear = week === 1 ? year - 1 : year;
+    
+    // Get all goals from previous week
+    const { results: prevWeekGoals } = await env.DB.prepare(`
+      SELECT * FROM goals 
+      WHERE goal_type = 'weekly' 
+      AND year = ? 
+      AND week_number = ?
+      AND status != 'archived'
+    `).bind(prevYear, prevWeek).all();
+    
+    // Check if goals already exist for current week
+    const { results: existingGoals } = await env.DB.prepare(`
+      SELECT id FROM goals 
+      WHERE goal_type = 'weekly' 
+      AND year = ? 
+      AND week_number = ?
+    `).bind(year, week).all();
+    
+    // If goals already exist for this week, return
+    if (existingGoals && existingGoals.length > 0) {
+      return c.json({ 
+        success: true, 
+        alreadyReset: true,
+        message: 'Weekly goals already exist for this week' 
+      });
+    }
+    
+    let archivedCount = 0;
+    let repeatingCopied = 0;
+    let incompleteGoals: any[] = [];
+    
+    // Process each goal from previous week
+    for (const goal of prevWeekGoals) {
+      // Archive the old goal
+      await env.DB.prepare(`
+        UPDATE goals 
+        SET status = 'archived', updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+      `).bind(goal.id).run();
+      
+      archivedCount++;
+      
+      // If it's a repeating goal, create a new one for this week
+      if (goal.is_repeating === 1) {
+        await env.DB.prepare(`
+          INSERT INTO goals (title, description, goal_type, category, parent_id, year, week_number, is_repeating, status, progress)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'active', 0)
+        `).bind(
+          goal.title,
+          goal.description,
+          'weekly',
+          goal.category,
+          goal.parent_id || null,
+          year,
+          week,
+          1
+        ).run();
+        
+        repeatingCopied++;
+      }
+      // If it's incomplete and NOT repeating, track it for user decision
+      else if (goal.status === 'active' && goal.progress < 100) {
+        incompleteGoals.push({
+          id: goal.id,
+          title: goal.title,
+          description: goal.description,
+          category: goal.category,
+          progress: goal.progress,
+          parent_id: goal.parent_id
+        });
+      }
+    }
+    
+    return c.json({ 
+      success: true,
+      archived: archivedCount,
+      repeatingCopied: repeatingCopied,
+      incompleteGoals: incompleteGoals,
+      message: `Reset complete: ${archivedCount} archived, ${repeatingCopied} repeating goals copied, ${incompleteGoals.length} incomplete goals need review`
+    });
+    
+  } catch (error: any) {
+    console.error('Error resetting weekly goals:', error);
+    return c.json({ 
+      error: 'Failed to reset weekly goals', 
+      details: error.message 
+    }, 500);
+  }
+});
+
+// Carry forward selected incomplete goals to current week
+app.post('/api/goals/carry-forward/:year/:week', async (c) => {
+  const { env } = c;
+  const year = parseInt(c.req.param('year'));
+  const week = parseInt(c.req.param('week'));
+  const body = await c.req.json();
+  const goalIds = body.goalIds || [];
+  
+  if (goalIds.length === 0) {
+    return c.json({ success: true, carried: 0, message: 'No goals selected' });
+  }
+  
+  try {
+    let carriedCount = 0;
+    
+    for (const goalId of goalIds) {
+      // Get the original goal
+      const { results } = await env.DB.prepare(
+        'SELECT * FROM goals WHERE id = ?'
+      ).bind(goalId).all();
+      
+      if (results && results.length > 0) {
+        const goal = results[0];
+        
+        // Create a new goal for current week with same progress
+        await env.DB.prepare(`
+          INSERT INTO goals (title, description, goal_type, category, parent_id, year, week_number, is_repeating, status, progress)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'active', ?)
+        `).bind(
+          goal.title,
+          goal.description,
+          'weekly',
+          goal.category,
+          goal.parent_id || null,
+          year,
+          week,
+          0,
+          goal.progress || 0
+        ).run();
+        
+        carriedCount++;
+      }
+    }
+    
+    return c.json({ 
+      success: true,
+      carried: carriedCount,
+      message: `Carried forward ${carriedCount} goal(s) to week ${week}`
+    });
+    
+  } catch (error: any) {
+    console.error('Error carrying forward goals:', error);
+    return c.json({ 
+      error: 'Failed to carry forward goals', 
+      details: error.message 
+    }, 500);
+  }
+});
+
 // ============= SCHEDULE API =============
 
 // Get schedule events

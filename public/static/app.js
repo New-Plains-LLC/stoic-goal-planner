@@ -593,6 +593,8 @@ function showGoalType(type) {
     if (copyBtn) {
         if (type === 'weekly') {
             copyBtn.classList.remove('hidden');
+            // Check if weekly reset is needed
+            checkWeeklyReset();
         } else {
             copyBtn.classList.add('hidden');
         }
@@ -1974,6 +1976,114 @@ async function copyRepeatingGoals() {
         console.error('Error copying repeating goals:', error);
         alert('Failed to copy repeating goals: ' + (error.response?.data?.details || error.message));
     }
+}
+
+// Automatic weekly reset - archives old goals, copies repeating ones, prompts for incomplete
+async function performWeeklyReset() {
+    const now = new Date();
+    const year = now.getFullYear();
+    const week = getWeekNumber(now);
+    
+    try {
+        const response = await axios.post(`/api/goals/weekly-reset/${year}/${week}`);
+        
+        if (response.data.alreadyReset) {
+            console.log('Weekly goals already reset for this week');
+            return;
+        }
+        
+        const { archived, repeatingCopied, incompleteGoals } = response.data;
+        
+        // Show summary
+        let message = `📅 Weekly Reset Complete!\n\n`;
+        message += `✅ Archived ${archived} goal(s) from last week\n`;
+        message += `🔄 Copied ${repeatingCopied} repeating goal(s) to this week\n`;
+        
+        if (incompleteGoals && incompleteGoals.length > 0) {
+            message += `\n⚠️ ${incompleteGoals.length} incomplete goal(s) from last week need your attention.`;
+            alert(message);
+            
+            // Show incomplete goals and ask which to carry forward
+            await handleIncompleteGoals(incompleteGoals, year, week);
+        } else {
+            alert(message);
+        }
+        
+        // Reload goals
+        if (currentGoalType === 'weekly') {
+            loadGoals('weekly');
+        }
+        
+    } catch (error) {
+        console.error('Error performing weekly reset:', error);
+        alert('Failed to reset weekly goals: ' + (error.response?.data?.details || error.message));
+    }
+}
+
+// Handle incomplete goals - let user choose which to carry forward
+async function handleIncompleteGoals(incompleteGoals, year, week) {
+    let message = `You have ${incompleteGoals.length} incomplete goal(s) from last week:\n\n`;
+    
+    incompleteGoals.forEach((goal, index) => {
+        message += `${index + 1}. ${goal.title} (${goal.progress}% complete)\n`;
+    });
+    
+    message += `\nWould you like to carry these goals forward to this week?\n\n`;
+    message += `Click OK to SELECT which goals to carry forward, or Cancel to leave them archived.`;
+    
+    if (!confirm(message)) {
+        alert('Incomplete goals have been archived. You can still view them by changing the status filter.');
+        return;
+    }
+    
+    // Let user select which goals to carry forward
+    const selectedGoalIds = [];
+    
+    for (const goal of incompleteGoals) {
+        const carry = confirm(`Carry forward: "${goal.title}" (${goal.progress}% complete)?\n\nClick OK to carry forward, Cancel to skip.`);
+        if (carry) {
+            selectedGoalIds.push(goal.id);
+        }
+    }
+    
+    if (selectedGoalIds.length === 0) {
+        alert('No goals selected to carry forward.');
+        return;
+    }
+    
+    // Carry forward selected goals
+    try {
+        const response = await axios.post(`/api/goals/carry-forward/${year}/${week}`, {
+            goalIds: selectedGoalIds
+        });
+        
+        alert(`✅ Carried forward ${response.data.carried} goal(s) to this week!`);
+        
+        if (currentGoalType === 'weekly') {
+            loadGoals('weekly');
+        }
+    } catch (error) {
+        console.error('Error carrying forward goals:', error);
+        alert('Failed to carry forward goals: ' + (error.response?.data?.details || error.message));
+    }
+}
+
+// Check if weekly reset is needed when viewing weekly goals
+async function checkWeeklyReset() {
+    const lastResetWeek = localStorage.getItem('last_weekly_reset');
+    const now = new Date();
+    const currentWeekKey = `${now.getFullYear()}-W${getWeekNumber(now)}`;
+    
+    // Only check once per week
+    if (lastResetWeek === currentWeekKey) {
+        return;
+    }
+    
+    // Mark that we checked this week
+    localStorage.setItem('last_weekly_reset', currentWeekKey);
+    
+    // Perform the reset
+    await performWeeklyReset();
 }
 
 // Call this when goal type changes
