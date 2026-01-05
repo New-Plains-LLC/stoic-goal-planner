@@ -22,6 +22,8 @@ app.get('/api/goals', async (c) => {
   const goalType = c.req.query('type');
   const parentId = c.req.query('parent_id');
   const category = c.req.query('category');
+  const weekNumber = c.req.query('week');
+  const year = c.req.query('year');
   
   let query = 'SELECT * FROM goals WHERE status != "archived"';
   const params: any[] = [];
@@ -43,6 +45,17 @@ app.get('/api/goals', async (c) => {
       query += ' AND parent_id = ?';
       params.push(parseInt(parentId));
     }
+  }
+  
+  // Filter by week and year (for weekly goals)
+  if (weekNumber !== undefined && goalType === 'weekly') {
+    query += ' AND week_number = ?';
+    params.push(parseInt(weekNumber));
+  }
+  
+  if (year !== undefined && goalType === 'weekly') {
+    query += ' AND year = ?';
+    params.push(parseInt(year));
   }
   
   query += ' ORDER BY display_order, category, created_at DESC';
@@ -2013,6 +2026,20 @@ app.get('/', (c) => {
                             </button>
                             <button onclick="showGoalType('weekly')" class="goal-tab px-4 py-2 text-sm font-medium rounded-lg border-2 border-transparent text-gray-600 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-600 whitespace-nowrap">
                                 Weekly
+                            </button>
+                        </div>
+
+                        <!-- Week Navigation (only visible for Weekly goals) -->
+                        <div id="week-navigation" class="hidden mb-6 flex items-center justify-between bg-gray-50 dark:bg-gray-900/50 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+                            <button onclick="navigateWeek(-1)" class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                                ← Previous Week
+                            </button>
+                            <div class="text-center">
+                                <div id="current-week-display" class="text-lg font-semibold text-gray-900 dark:text-white"></div>
+                                <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">Week <span id="current-week-number"></span>, <span id="current-week-year"></span></div>
+                            </div>
+                            <button onclick="navigateWeek(1)" class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                                Next Week →
                             </button>
                         </div>
 

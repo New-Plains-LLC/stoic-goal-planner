@@ -3,6 +3,10 @@ let currentGoalType = 'long_term';
 // Get current date in CST timezone
 let currentDate = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Chicago' }); // en-CA gives YYYY-MM-DD format
 
+// Week tracking for weekly goals
+let currentViewWeek = null;
+let currentViewYear = null;
+
 // Dark mode
 function toggleDarkMode() {
     const html = document.documentElement;
@@ -588,15 +592,26 @@ function showGoalType(type) {
     event.target.classList.remove('border-transparent', 'text-gray-600', 'dark:text-gray-400');
     event.target.classList.add('border-gray-700', 'dark:border-gray-400', 'text-gray-700', 'dark:text-gray-300', 'bg-gray-100', 'dark:bg-gray-700');
     
-    // Show/hide copy repeating button for weekly goals
+    // Show/hide copy repeating button and week navigation for weekly goals
     const copyBtn = document.getElementById('copy-repeating-btn');
-    if (copyBtn) {
+    const weekNav = document.getElementById('week-navigation');
+    
+    if (copyBtn && weekNav) {
         if (type === 'weekly') {
             copyBtn.classList.remove('hidden');
+            weekNav.classList.remove('hidden');
+            
+            // Initialize to current week
+            const now = new Date();
+            currentViewYear = now.getFullYear();
+            currentViewWeek = getWeekNumber(now);
+            updateWeekDisplay();
+            
             // Check if weekly reset is needed
             checkWeeklyReset();
         } else {
             copyBtn.classList.add('hidden');
+            weekNav.classList.add('hidden');
         }
     }
     
@@ -608,7 +623,14 @@ function showGoalType(type) {
 
 async function loadGoals(type) {
     try {
-        const response = await axios.get(`/api/goals?type=${type}`);
+        let url = `/api/goals?type=${type}`;
+        
+        // Add week/year filters for weekly goals
+        if (type === 'weekly' && currentViewWeek !== null && currentViewYear !== null) {
+            url += `&week=${currentViewWeek}&year=${currentViewYear}`;
+        }
+        
+        const response = await axios.get(url);
         const goals = response.data;
         
         renderGoals(goals);
@@ -616,6 +638,55 @@ async function loadGoals(type) {
         console.error('Error loading goals:', error);
         alert('Failed to load goals');
     }
+}
+
+// Week navigation functions
+function navigateWeek(direction) {
+    // direction: -1 for previous, +1 for next
+    currentViewWeek += direction;
+    
+    // Handle year boundaries
+    if (currentViewWeek < 1) {
+        currentViewWeek = 52;
+        currentViewYear--;
+    } else if (currentViewWeek > 52) {
+        currentViewWeek = 1;
+        currentViewYear++;
+    }
+    
+    updateWeekDisplay();
+    loadGoals('weekly');
+}
+
+function updateWeekDisplay() {
+    // Calculate week date range
+    const weekStart = getDateOfISOWeek(currentViewWeek, currentViewYear);
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekEnd.getDate() + 6);
+    
+    const formatDate = (date) => {
+        const month = date.toLocaleDateString('en-US', { month: 'short' });
+        const day = date.getDate();
+        return `${month} ${day}`;
+    };
+    
+    const weekRange = `${formatDate(weekStart)} - ${formatDate(weekEnd)}`;
+    
+    document.getElementById('current-week-display').textContent = weekRange;
+    document.getElementById('current-week-number').textContent = currentViewWeek;
+    document.getElementById('current-week-year').textContent = currentViewYear;
+}
+
+// Helper function to get the Monday of an ISO week
+function getDateOfISOWeek(week, year) {
+    const simple = new Date(year, 0, 1 + (week - 1) * 7);
+    const dow = simple.getDay();
+    const ISOweekStart = simple;
+    if (dow <= 4)
+        ISOweekStart.setDate(simple.getDate() - simple.getDay() + 1);
+    else
+        ISOweekStart.setDate(simple.getDate() + 8 - simple.getDay());
+    return ISOweekStart;
 }
 
 function renderGoals(goals) {
@@ -1515,7 +1586,7 @@ async function createNewGoal() {
     
     // Add year/quarter/week based on type
     if (currentGoalType === 'annual' || currentGoalType === 'quarterly' || currentGoalType === 'weekly') {
-        goalData.year = new Date().getFullYear();
+        goalData.year = currentGoalType === 'weekly' && currentViewYear ? currentViewYear : new Date().getFullYear();
     }
     
     if (currentGoalType === 'quarterly') {
@@ -1523,7 +1594,9 @@ async function createNewGoal() {
     }
     
     if (currentGoalType === 'weekly') {
-        goalData.week_number = getWeekNumber(new Date());
+        // Use the currently viewed week, or current week if not set
+        goalData.week_number = currentViewWeek || getWeekNumber(new Date());
+        goalData.year = currentViewYear || new Date().getFullYear();
         goalData.is_repeating = isRepeating ? 1 : 0;
     }
     
