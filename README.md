@@ -44,7 +44,15 @@ The app includes daily affirmations, gratitude tracking, task management, daily 
 - **Repeating Weekly Goals** 🔄:
   - **Set as Repeating**: When creating/editing weekly goals, check "Repeat every week" to mark them as recurring
   - **Visual Indicator**: Repeating goals show a 🔄 Repeating badge
-  - **Automatic Weekly Reset**: When you view the Weekly goals page each week, the system automatically:
+  - **Week Navigation**: Navigate between weeks with Previous/Next Week buttons
+    - View date range for each week (e.g., "Jan 8 - Jan 14, Week 2, 2026")
+    - Navigate to next week on Sunday to start planning ahead
+    - Review past weeks to see completed goals
+  - **Sunday Planning Workflow**:
+    - On Sunday, click "Next Week →" to view upcoming week
+    - Add goals for the week ahead
+    - System won't trigger reset until you return on Monday
+  - **Automatic Weekly Reset** (Happens Monday when viewing Weekly goals):
     - Archives all goals from the previous week (status changed to 'archived')
     - Creates fresh copies of repeating goals at 0% progress for the new week
     - Prompts you to carry forward incomplete non-repeating goals
