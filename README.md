@@ -102,9 +102,12 @@ The app includes daily affirmations, gratitude tracking, task management, daily 
     - NO OAuth tokens needed for subscription
     - Events sync automatically when you refresh the page
     - **Manage Subscriptions**: View, sync, and delete calendar subscriptions
-      - ✅ **Fixed**: Now shows all subscriptions correctly (both from localStorage and database)
-      - Shows sync status badge (✓ Synced / Not Synced) for each calendar
-      - Clear "Sync Now" and "Delete" buttons for each subscription
+      - ✅ **Fixed (2026-01-06)**: Now correctly displays all calendars with events, even if subscription info is not saved
+      - Shows "✓ Has Events" badge for calendars with synced events
+      - Shows calendar name, URL (when available), and subscription date
+      - "Sync Now" button for saved subscriptions to re-fetch latest events
+      - "Clear Events" button to remove all events from a calendar source
+      - Console logging for debugging subscription management
     - **Duplicate Prevention**: Unique constraint ensures no duplicate events (by external_event_id)
     - **Source Tracking**: Shows calendar name for each event (e.g., "Outlook Calendar")
   - **Add Events**: Create calendar events directly in the app
