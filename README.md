@@ -90,7 +90,7 @@ The app includes daily affirmations, gratitude tracking, task management, daily 
   - **Task Selector Modal**: Checkbox-based selection grouped by category
   - **Automatic Addition**: Newly created tasks automatically added to today
 - **Task Completion Tracking**: Check off tasks as you complete them with category badges
-- **Daily Schedule with Google Calendar**: 
+- **Daily Schedule with Calendar Integration**: 
   - View and manage your calendar events
   - **Google Calendar Sync**: Import events from Google Calendar with persistent token storage
     - ⚠️ **Important**: OAuth Playground tokens expire after 1 hour
@@ -102,8 +102,11 @@ The app includes daily affirmations, gratitude tracking, task management, daily 
     - NO OAuth tokens needed for subscription
     - Events sync automatically when you refresh the page
     - **Manage Subscriptions**: View, sync, and delete calendar subscriptions
-    - **Duplicate Prevention**: System prevents duplicate events from same calendar
-    - **Source Tracking**: Shows all synced calendars from both localStorage and database
+      - ✅ **Fixed**: Now shows all subscriptions correctly (both from localStorage and database)
+      - Shows sync status badge (✓ Synced / Not Synced) for each calendar
+      - Clear "Sync Now" and "Delete" buttons for each subscription
+    - **Duplicate Prevention**: Unique constraint ensures no duplicate events (by external_event_id)
+    - **Source Tracking**: Shows calendar name for each event (e.g., "Outlook Calendar")
   - **Add Events**: Create calendar events directly in the app
   - **Edit Events**: Update event details (title, time, location, description)
   - **Delete Events**: Remove events with confirmation
