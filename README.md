@@ -100,6 +100,7 @@ The app includes daily affirmations, gratitude tracking, task management, daily 
   - **iCal/ICS Calendar Subscription**:
     - Subscribe to any iCal calendar (Google, Outlook, Apple Calendar, etc.)
     - NO OAuth tokens needed for subscription
+    - **CST Timezone Support**: Properly handles Central Standard Time timezone conversion
     - Events sync automatically when you refresh the page
     - **Manage Subscriptions**: View, sync, and delete calendar subscriptions
       - ✅ **Fixed (2026-01-06)**: Now correctly displays all calendars with events, even if subscription info is not saved
@@ -110,9 +111,14 @@ The app includes daily affirmations, gratitude tracking, task management, daily 
       - Console logging for debugging subscription management
     - **Duplicate Prevention**: Unique constraint ensures no duplicate events (by external_event_id)
     - **Source Tracking**: Shows calendar name for each event (e.g., "Outlook Calendar")
-  - **Add Events**: Create calendar events directly in the app
-  - **Edit Events**: Update event details (title, time, location, description)
+  - **Add Events**: Create calendar events directly in the app (times in CST)
+  - **Edit Events**: Update event details (times displayed and edited in CST)
   - **Delete Events**: Remove events with confirmation
+  - **CST Timezone**: ✅ **Fixed (2026-01-06)**: All calendar times displayed and edited in Central Standard Time
+    - Event creation: Enter times in CST format (YYYY-MM-DD HH:MM [CST])
+    - Event editing: Existing times shown in CST for easy editing
+    - Display: All event times shown in CST (12-hour format with AM/PM)
+    - iCal parsing: Respects timezone information (TZID) from calendar feeds
   - **Auto Token Storage**: Access token saved in localStorage for convenience
   - Schedule integration with real-time updates
 - **Daily Wins Reflection**: 
