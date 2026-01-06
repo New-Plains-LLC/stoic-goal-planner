@@ -7,6 +7,12 @@ The app includes daily affirmations, gratitude tracking, task management, daily 
 
 **Live Application**: https://3000-it4k2jghikjq8k7pi5xo6-2e1b9533.sandbox.novita.ai
 
+## 🕐 Timezone Support
+- **CST/CDT Timezone**: All times displayed and entered in Central Standard Time (America/Chicago)
+- **Automatic Conversion**: Times stored in UTC, displayed in CST
+- **Calendar Integration**: Properly handles timezone information from Google Calendar, Microsoft Calendar, and iCal feeds
+- **Time Entry**: When creating/editing events, enter times in CST format (clearly labeled with [CST])
+
 ## 🎨 Design Philosophy
 - **Elegant & Subdued**: Minimalist design with carefully chosen neutral colors
 - **Dark Mode Support**: Full light/dark mode toggle with refined color palette
