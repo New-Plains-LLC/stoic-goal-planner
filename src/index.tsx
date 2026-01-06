@@ -967,6 +967,40 @@ app.get('/api/schedule', async (c) => {
   return c.json(results);
 });
 
+// Get distinct calendar sources
+app.get('/api/schedule/sources', async (c) => {
+  const { env } = c;
+  
+  try {
+    const { results } = await env.DB.prepare(
+      'SELECT DISTINCT calendar_source FROM schedule_events WHERE calendar_source IS NOT NULL ORDER BY calendar_source'
+    ).all();
+    
+    const sources = results.map((row: any) => row.calendar_source);
+    return c.json({ sources });
+  } catch (error) {
+    console.error('Error fetching calendar sources:', error);
+    return c.json({ error: 'Failed to fetch calendar sources', sources: [] }, 500);
+  }
+});
+
+// Delete events by calendar source
+app.delete('/api/schedule/source/:source', async (c) => {
+  const { env } = c;
+  const source = c.req.param('source');
+  
+  try {
+    await env.DB.prepare(
+      'DELETE FROM schedule_events WHERE calendar_source = ?'
+    ).bind(source).run();
+    
+    return c.json({ success: true, message: `Deleted all events from ${source}` });
+  } catch (error) {
+    console.error('Error deleting calendar events:', error);
+    return c.json({ error: 'Failed to delete events', details: error.message }, 500);
+  }
+});
+
 // Create schedule event
 app.post('/api/schedule', async (c) => {
   const { env } = c;
@@ -1653,25 +1687,25 @@ app.post('/api/calendar/sync/ical', async (c) => {
     const source = calendarName || 'ical_subscription';
     
     for (const event of upcomingEvents) {
-      // Check if event already exists
+      // Check if event already exists by external_event_id only (regardless of source)
       const { results } = await env.DB.prepare(
-        'SELECT * FROM schedule_events WHERE external_event_id = ? AND calendar_source = ?'
-      ).bind(event.uid, source).all();
+        'SELECT * FROM schedule_events WHERE external_event_id = ?'
+      ).bind(event.uid).all();
       
       if (results && results.length > 0) {
         // Update existing event
         await env.DB.prepare(`
           UPDATE schedule_events
-          SET title = ?, description = ?, start_time = ?, end_time = ?, location = ?, updated_at = CURRENT_TIMESTAMP
-          WHERE external_event_id = ? AND calendar_source = ?
+          SET title = ?, description = ?, start_time = ?, end_time = ?, location = ?, calendar_source = ?, updated_at = CURRENT_TIMESTAMP
+          WHERE external_event_id = ?
         `).bind(
           event.summary || 'Untitled Event',
           event.description || '',
           event.start,
           event.end,
           event.location || '',
-          event.uid,
-          source
+          source,
+          event.uid
         ).run();
       } else {
         // Insert new event

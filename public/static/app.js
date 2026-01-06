@@ -1404,32 +1404,97 @@ async function showManageSubscriptionsModal() {
     
     const subscriptions = getCalendarSubscriptions();
     
-    if (subscriptions.length === 0) {
-        list.classList.add('hidden');
-        noSubs.classList.remove('hidden');
-    } else {
-        noSubs.classList.add('hidden');
-        list.classList.remove('hidden');
+    // Also fetch calendar sources from database to show what's actually synced
+    try {
+        const response = await axios.get('/api/schedule/sources');
+        const dbSources = response.data.sources || [];
         
-        list.innerHTML = subscriptions.map((sub, index) => `
-            <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-gray-50 dark:bg-gray-700">
-                <div class="flex items-start justify-between gap-4">
-                    <div class="flex-1 min-w-0">
-                        <h4 class="font-medium text-gray-900 dark:text-white mb-1">${sub.name}</h4>
-                        <p class="text-sm text-gray-600 dark:text-gray-400 break-all mb-2">${sub.url}</p>
-                        <p class="text-xs text-gray-500 dark:text-gray-500">Added: ${new Date(sub.addedAt).toLocaleDateString()}</p>
-                    </div>
-                    <div class="flex gap-2 flex-shrink-0">
-                        <button onclick="resyncSubscription(${index})" class="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-sm font-medium">
-                            Sync Now
-                        </button>
-                        <button onclick="deleteSubscription(${index})" class="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 text-sm font-medium">
-                            Delete
-                        </button>
+        // Merge localStorage subscriptions with database sources
+        const allSubs = [...subscriptions];
+        
+        // Add any database sources not in localStorage (with a note that they need to be re-registered)
+        for (const source of dbSources) {
+            const existsInStorage = allSubs.find(sub => 
+                sub.name.toLowerCase() === source.toLowerCase()
+            );
+            
+            if (!existsInStorage && source !== 'manual') {
+                // This is a calendar that was synced but not in localStorage
+                // We can't re-sync it without the URL, so just show it as informational
+                allSubs.push({
+                    name: source,
+                    url: '(URL not saved - please re-subscribe to manage)',
+                    addedAt: null,
+                    readOnly: true
+                });
+            }
+        }
+        
+        if (allSubs.length === 0) {
+            list.classList.add('hidden');
+            noSubs.classList.remove('hidden');
+        } else {
+            noSubs.classList.add('hidden');
+            list.classList.remove('hidden');
+            
+            list.innerHTML = allSubs.map((sub, index) => `
+                <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-gray-50 dark:bg-gray-700">
+                    <div class="flex items-start justify-between gap-4">
+                        <div class="flex-1 min-w-0">
+                            <h4 class="font-medium text-gray-900 dark:text-white mb-1">${sub.name}</h4>
+                            <p class="text-sm text-gray-600 dark:text-gray-400 break-all mb-2">${sub.url}</p>
+                            ${sub.addedAt ? `<p class="text-xs text-gray-500 dark:text-gray-500">Added: ${new Date(sub.addedAt).toLocaleDateString()}</p>` : ''}
+                            ${sub.readOnly ? `<p class="text-xs text-orange-600 dark:text-orange-400">⚠️ Re-subscribe to enable sync</p>` : ''}
+                        </div>
+                        <div class="flex gap-2 flex-shrink-0">
+                            ${!sub.readOnly ? `
+                                <button onclick="resyncSubscription(${index})" class="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-sm font-medium">
+                                    Sync Now
+                                </button>
+                                <button onclick="deleteSubscription(${index})" class="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 text-sm font-medium">
+                                    Delete
+                                </button>
+                            ` : `
+                                <button onclick="deleteCalendarEvents('${sub.name}')" class="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 text-sm font-medium">
+                                    Clear Events
+                                </button>
+                            `}
+                        </div>
                     </div>
                 </div>
-            </div>
-        `).join('');
+            `).join('');
+        }
+    } catch (error) {
+        console.error('Error loading calendar sources:', error);
+        
+        // Fall back to just showing localStorage subscriptions
+        if (subscriptions.length === 0) {
+            list.classList.add('hidden');
+            noSubs.classList.remove('hidden');
+        } else {
+            noSubs.classList.add('hidden');
+            list.classList.remove('hidden');
+            
+            list.innerHTML = subscriptions.map((sub, index) => `
+                <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-gray-50 dark:bg-gray-700">
+                    <div class="flex items-start justify-between gap-4">
+                        <div class="flex-1 min-w-0">
+                            <h4 class="font-medium text-gray-900 dark:text-white mb-1">${sub.name}</h4>
+                            <p class="text-sm text-gray-600 dark:text-gray-400 break-all mb-2">${sub.url}</p>
+                            <p class="text-xs text-gray-500 dark:text-gray-500">Added: ${new Date(sub.addedAt).toLocaleDateString()}</p>
+                        </div>
+                        <div class="flex gap-2 flex-shrink-0">
+                            <button onclick="resyncSubscription(${index})" class="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-sm font-medium">
+                                Sync Now
+                            </button>
+                            <button onclick="deleteSubscription(${index})" class="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 text-sm font-medium">
+                                Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
     }
     
     modal.classList.remove('hidden');
@@ -1485,6 +1550,20 @@ async function deleteSubscription(index) {
     
     // Refresh the modal
     showManageSubscriptionsModal();
+}
+
+async function deleteCalendarEvents(calendarSource) {
+    if (confirm(`Delete all events from "${calendarSource}"?\n\nThis will permanently remove all synced events from this calendar.`)) {
+        try {
+            await axios.delete(`/api/schedule/source/${encodeURIComponent(calendarSource)}`);
+            alert('✅ Calendar events deleted');
+            loadDailyData(currentDate);
+            showManageSubscriptionsModal();
+        } catch (error) {
+            console.error('Error deleting calendar events:', error);
+            alert('❌ Failed to delete calendar events');
+        }
+    }
 }
 
 // ========== CREATE TASK MODAL ==========
