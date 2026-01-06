@@ -1409,25 +1409,35 @@ async function showManageSubscriptionsModal() {
         const response = await axios.get('/api/schedule/sources');
         const dbSources = response.data.sources || [];
         
-        // Merge localStorage subscriptions with database sources
-        const allSubs = [...subscriptions];
-        
-        // Add any database sources not in localStorage (with a note that they need to be re-registered)
+        // Create a map of database sources for matching
+        const sourceMap = new Map();
         for (const source of dbSources) {
-            const existsInStorage = allSubs.find(sub => 
-                sub.name.toLowerCase() === source.toLowerCase()
-            );
-            
-            if (!existsInStorage && source !== 'manual') {
-                // This is a calendar that was synced but not in localStorage
-                // We can't re-sync it without the URL, so just show it as informational
-                allSubs.push({
-                    name: source,
-                    url: '(URL not saved - please re-subscribe to manage)',
-                    addedAt: null,
-                    readOnly: true
-                });
+            if (source !== 'manual') {
+                sourceMap.set(source.toLowerCase(), source);
             }
+        }
+        
+        // First, add all localStorage subscriptions and mark if they're in database
+        const allSubs = subscriptions.map(sub => {
+            const inDatabase = sourceMap.has(sub.name.toLowerCase());
+            if (inDatabase) {
+                sourceMap.delete(sub.name.toLowerCase()); // Remove from map so we don't add duplicate
+            }
+            return {
+                ...sub,
+                inDatabase: inDatabase
+            };
+        });
+        
+        // Then add any remaining database sources that weren't matched
+        for (const [lowerName, originalName] of sourceMap.entries()) {
+            allSubs.push({
+                name: originalName,
+                url: '(Synced calendar - re-subscribe to enable manual sync)',
+                addedAt: null,
+                inDatabase: true,
+                readOnly: true
+            });
         }
         
         if (allSubs.length === 0) {
@@ -1441,10 +1451,13 @@ async function showManageSubscriptionsModal() {
                 <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-gray-50 dark:bg-gray-700">
                     <div class="flex items-start justify-between gap-4">
                         <div class="flex-1 min-w-0">
-                            <h4 class="font-medium text-gray-900 dark:text-white mb-1">${sub.name}</h4>
+                            <h4 class="font-medium text-gray-900 dark:text-white mb-1">
+                                ${sub.name}
+                                ${sub.inDatabase ? '<span class="ml-2 text-xs bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-2 py-1 rounded">✓ Synced</span>' : '<span class="ml-2 text-xs bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300 px-2 py-1 rounded">Not Synced</span>'}
+                            </h4>
                             <p class="text-sm text-gray-600 dark:text-gray-400 break-all mb-2">${sub.url}</p>
                             ${sub.addedAt ? `<p class="text-xs text-gray-500 dark:text-gray-500">Added: ${new Date(sub.addedAt).toLocaleDateString()}</p>` : ''}
-                            ${sub.readOnly ? `<p class="text-xs text-orange-600 dark:text-orange-400">⚠️ Re-subscribe to enable sync</p>` : ''}
+                            ${sub.readOnly ? `<p class="text-xs text-orange-600 dark:text-orange-400 mt-1">⚠️ Re-subscribe to enable manual sync</p>` : ''}
                         </div>
                         <div class="flex gap-2 flex-shrink-0">
                             ${!sub.readOnly ? `

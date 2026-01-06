@@ -1,9 +1,9 @@
--- Clean up duplicate events and add unique constraint
--- First, delete duplicate events keeping only the most recent one
+-- Add unique constraint on external_event_id to prevent duplicate calendar events
+-- First, clean up any potential duplicates (keeping the most recent one)
 
 DELETE FROM schedule_events 
-WHERE id NOT IN (
-  SELECT MAX(id) 
+WHERE rowid NOT IN (
+  SELECT MAX(rowid) 
   FROM schedule_events 
   WHERE external_event_id IS NOT NULL
   GROUP BY external_event_id
