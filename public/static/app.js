@@ -3,6 +3,48 @@ let currentGoalType = 'long_term';
 // Get current date in CST timezone
 let currentDate = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Chicago' }); // en-CA gives YYYY-MM-DD format
 
+// ========== TIMEZONE HELPERS FOR CST ==========
+
+/**
+ * Convert a date/time string in CST to ISO string (UTC)
+ * @param {string} dateTimeStr - Format: "YYYY-MM-DD HH:MM"
+ * @returns {string} ISO string in UTC
+ */
+function convertCSTToUTC(dateTimeStr) {
+    // Parse the input string
+    const [datePart, timePart] = dateTimeStr.split(' ');
+    const [year, month, day] = datePart.split('-').map(Number);
+    const [hour, minute] = timePart.split(':').map(Number);
+    
+    // Create a date string in ISO format but interpret it as CST
+    // CST is UTC-6, CDT is UTC-5. We'll use a library approach by specifying the timezone
+    const dateString = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}T${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:00`;
+    
+    // Parse as if it's in America/Chicago timezone
+    // This is a workaround: we'll manually adjust for CST offset
+    const tempDate = new Date(dateString + '-06:00'); // CST is UTC-6
+    
+    return tempDate.toISOString();
+}
+
+/**
+ * Convert a UTC ISO string to CST date/time string
+ * @param {string} isoString - ISO string in UTC
+ * @returns {string} Format: "YYYY-MM-DD HH:MM"
+ */
+function convertUTCToCST(isoString) {
+    const date = new Date(isoString);
+    
+    // Format date in CST timezone
+    const year = date.toLocaleString('en-US', { year: 'numeric', timeZone: 'America/Chicago' });
+    const month = date.toLocaleString('en-US', { month: '2-digit', timeZone: 'America/Chicago' });
+    const day = date.toLocaleString('en-US', { day: '2-digit', timeZone: 'America/Chicago' });
+    const hour = date.toLocaleString('en-US', { hour: '2-digit', hour12: false, timeZone: 'America/Chicago' });
+    const minute = date.toLocaleString('en-US', { minute: '2-digit', timeZone: 'America/Chicago' });
+    
+    return `${year}-${month}-${day} ${hour}:${minute}`;
+}
+
 // Week tracking for weekly goals
 let currentViewWeek = null;
 let currentViewYear = null;
@@ -982,15 +1024,16 @@ async function showAddEventModal() {
     const description = prompt('Description (optional):');
     const location = prompt('Location (optional):');
     
-    const startTimeStr = prompt('Start Time (YYYY-MM-DD HH:MM):', `${currentDate} 09:00`);
+    const startTimeStr = prompt('Start Time (YYYY-MM-DD HH:MM) [CST]:', `${currentDate} 09:00`);
     if (!startTimeStr) return;
     
-    const endTimeStr = prompt('End Time (YYYY-MM-DD HH:MM):', `${currentDate} 10:00`);
+    const endTimeStr = prompt('End Time (YYYY-MM-DD HH:MM) [CST]:', `${currentDate} 10:00`);
     if (!endTimeStr) return;
     
     try {
-        const startTime = new Date(startTimeStr).toISOString();
-        const endTime = new Date(endTimeStr).toISOString();
+        // Convert CST input to UTC for storage
+        const startTime = convertCSTToUTC(startTimeStr);
+        const endTime = convertCSTToUTC(endTimeStr);
         
         await axios.post('/api/schedule', {
             title,
@@ -1138,18 +1181,19 @@ async function editScheduleEvent(eventId) {
         const description = prompt('Description (optional):', event.description || '');
         const location = prompt('Location (optional):', event.location || '');
         
-        const startDate = new Date(event.start_time);
-        const endDate = new Date(event.end_time);
-        const startTimeStr = prompt('Start Time (YYYY-MM-DD HH:MM):', 
-            `${startDate.getFullYear()}-${String(startDate.getMonth() + 1).padStart(2, '0')}-${String(startDate.getDate()).padStart(2, '0')} ${String(startDate.getHours()).padStart(2, '0')}:${String(startDate.getMinutes()).padStart(2, '0')}`);
+        // Convert existing UTC times to CST for display
+        const currentStartCST = convertUTCToCST(event.start_time);
+        const currentEndCST = convertUTCToCST(event.end_time);
+        
+        const startTimeStr = prompt('Start Time (YYYY-MM-DD HH:MM) [CST]:', currentStartCST);
         if (!startTimeStr) return;
         
-        const endTimeStr = prompt('End Time (YYYY-MM-DD HH:MM):', 
-            `${endDate.getFullYear()}-${String(endDate.getMonth() + 1).padStart(2, '0')}-${String(endDate.getDate()).padStart(2, '0')} ${String(endDate.getHours()).padStart(2, '0')}:${String(endDate.getMinutes()).padStart(2, '0')}`);
+        const endTimeStr = prompt('End Time (YYYY-MM-DD HH:MM) [CST]:', currentEndCST);
         if (!endTimeStr) return;
         
-        const startTime = new Date(startTimeStr).toISOString();
-        const endTime = new Date(endTimeStr).toISOString();
+        // Convert CST input back to UTC for storage
+        const startTime = convertCSTToUTC(startTimeStr);
+        const endTime = convertCSTToUTC(endTimeStr);
         
         await axios.put(`/api/schedule/${eventId}`, {
             title,

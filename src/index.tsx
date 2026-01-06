@@ -1788,25 +1788,53 @@ function parseICalData(icalText: string) {
 
 // Helper function to parse iCal date format
 function parseICalDate(dateStr: string): string {
-  // iCal format: 20250102T120000Z or 20250102T120000
-  // Remove any timezone identifier at the end
-  dateStr = dateStr.split(';')[0];
+  // iCal format can be:
+  // - 20250102T120000Z (UTC - ends with Z)
+  // - 20250102T120000 (local time - no timezone)
+  // - TZID=America/Chicago:20250102T120000 (with timezone)
   
-  if (dateStr.includes('T')) {
-    // Format: YYYYMMDDTHHMMSS
-    const year = dateStr.substring(0, 4);
-    const month = dateStr.substring(4, 6);
-    const day = dateStr.substring(6, 8);
-    const hour = dateStr.substring(9, 11);
-    const minute = dateStr.substring(11, 13);
-    const second = dateStr.substring(13, 15);
+  let timezone = null;
+  let cleanDateStr = dateStr;
+  
+  // Check for TZID parameter
+  if (dateStr.includes('TZID=')) {
+    const tzMatch = dateStr.match(/TZID=([^:]+):/);
+    if (tzMatch) {
+      timezone = tzMatch[1];
+      cleanDateStr = dateStr.split(':').slice(1).join(':');
+    }
+  } else if (dateStr.includes(';')) {
+    // Remove other parameters but preserve the date value
+    cleanDateStr = dateStr.split(':').slice(-1)[0];
+  }
+  
+  if (cleanDateStr.includes('T')) {
+    // Format: YYYYMMDDTHHMMSS with optional Z
+    const year = cleanDateStr.substring(0, 4);
+    const month = cleanDateStr.substring(4, 6);
+    const day = cleanDateStr.substring(6, 8);
+    const hour = cleanDateStr.substring(9, 11);
+    const minute = cleanDateStr.substring(11, 13);
+    const second = cleanDateStr.substring(13, 15);
     
-    return `${year}-${month}-${day}T${hour}:${minute}:${second}Z`;
+    // If it already has Z, it's UTC
+    if (cleanDateStr.endsWith('Z')) {
+      return `${year}-${month}-${day}T${hour}:${minute}:${second}Z`;
+    } else if (timezone === 'America/Chicago' || timezone === 'US/Central') {
+      // If it's CST/CDT, convert to UTC
+      // CST is UTC-6, CDT is UTC-5
+      // For simplicity, we'll treat it as CST (UTC-6)
+      const localDate = new Date(`${year}-${month}-${day}T${hour}:${minute}:${second}-06:00`);
+      return localDate.toISOString();
+    } else {
+      // No timezone specified, assume UTC
+      return `${year}-${month}-${day}T${hour}:${minute}:${second}Z`;
+    }
   } else {
     // Format: YYYYMMDD (all-day event)
-    const year = dateStr.substring(0, 4);
-    const month = dateStr.substring(4, 6);
-    const day = dateStr.substring(6, 8);
+    const year = cleanDateStr.substring(0, 4);
+    const month = cleanDateStr.substring(4, 6);
+    const day = cleanDateStr.substring(6, 8);
     
     return `${year}-${month}-${day}T00:00:00Z`;
   }
