@@ -5,7 +5,7 @@ A comprehensive goal planning and tracking application that helps you manage you
 
 The app includes daily affirmations, gratitude tracking, task management, daily wins reflection, and weekly reviews.
 
-**Live Application**: https://3000-it4k2jghikjq8k7pi5xo6-0e616f0a.sandbox.novita.ai
+**Live Application**: https://3000-it4k2jghikjq8k7pi5xo6-2e1b9533.sandbox.novita.ai
 
 ## 🎨 Design Philosophy
 - **Elegant & Subdued**: Minimalist design with carefully chosen neutral colors
@@ -97,6 +97,13 @@ The app includes daily affirmations, gratitude tracking, task management, daily 
     - Clear step-by-step instructions provided in the sync dialog
     - Automatic token validation and helpful error messages
     - Option to use stored token or enter a new one
+  - **iCal/ICS Calendar Subscription**:
+    - Subscribe to any iCal calendar (Google, Outlook, Apple Calendar, etc.)
+    - NO OAuth tokens needed for subscription
+    - Events sync automatically when you refresh the page
+    - **Manage Subscriptions**: View, sync, and delete calendar subscriptions
+    - **Duplicate Prevention**: System prevents duplicate events from same calendar
+    - **Source Tracking**: Shows all synced calendars from both localStorage and database
   - **Add Events**: Create calendar events directly in the app
   - **Edit Events**: Update event details (title, time, location, description)
   - **Delete Events**: Remove events with confirmation
