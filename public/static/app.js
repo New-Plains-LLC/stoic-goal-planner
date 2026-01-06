@@ -1411,6 +1411,7 @@ async function showManageSubscriptionsModal() {
         
         console.log('Database sources:', dbSources);
         console.log('LocalStorage subscriptions:', subscriptions);
+        console.log('Response data:', response.data);
         
         // Create a map of database sources for matching
         const sourceMap = new Map();
@@ -1419,6 +1420,8 @@ async function showManageSubscriptionsModal() {
                 sourceMap.set(source.toLowerCase(), source);
             }
         }
+        
+        console.log('Source map:', sourceMap);
         
         // First, add all localStorage subscriptions and mark if they're in database
         const allSubs = subscriptions.map(sub => {
@@ -1432,8 +1435,12 @@ async function showManageSubscriptionsModal() {
             };
         });
         
+        console.log('All subs after localStorage:', allSubs);
+        console.log('Remaining source map:', sourceMap);
+        
         // Then add any remaining database sources that weren't matched (calendars that were synced but not in localStorage)
         for (const [lowerName, originalName] of sourceMap.entries()) {
+            console.log('Adding database-only source:', originalName);
             allSubs.push({
                 name: originalName,
                 url: '(Calendar has events but no saved subscription)',
@@ -1442,6 +1449,8 @@ async function showManageSubscriptionsModal() {
                 readOnly: true
             });
         }
+        
+        console.log('Final allSubs:', allSubs);
         
         if (allSubs.length === 0) {
             list.classList.add('hidden');
