@@ -9,9 +9,17 @@ The app includes daily affirmations, gratitude tracking, task management, daily 
 
 ## 🕐 Timezone Support
 - **CST/CDT Timezone**: All times displayed and entered in Central Standard Time (America/Chicago)
+- **User-Friendly Time Format**: Enter times in standard 12-hour format with AM/PM (e.g., "2:30 PM" instead of "14:30")
 - **Automatic Conversion**: Times stored in UTC, displayed in CST
 - **Calendar Integration**: Properly handles timezone information from Google Calendar, Microsoft Calendar, and iCal feeds
-- **Time Entry**: When creating/editing events, enter times in CST format (clearly labeled with [CST])
+- **Time Entry Format**: `MM/DD/YYYY h:MM AM/PM` - Example: `01/06/2026 2:30 PM`
+
+## 📅 Auto-Sync Calendar Subscriptions
+- **Automatic Background Sync**: Calendar subscriptions auto-sync every 4 hours
+- **Runs on Page Load**: Checks and syncs if needed when you open the app
+- **Silent Operation**: Syncs in background without interrupting your workflow
+- **Manual Sync**: Use "Sync Now" button in Manage Subscriptions for immediate refresh
+- **Console Logging**: Check browser console for sync status and next sync time
 
 ## 🎨 Design Philosophy
 - **Elegant & Subdued**: Minimalist design with carefully chosen neutral colors
