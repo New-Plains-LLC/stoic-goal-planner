@@ -45,6 +45,71 @@ function convertUTCToCST(isoString) {
     return `${year}-${month}-${day} ${hour}:${minute}`;
 }
 
+/**
+ * Convert a UTC ISO string to user-friendly CST format with AM/PM
+ * @param {string} isoString - ISO string in UTC
+ * @returns {string} Format: "MM/DD/YYYY h:MM AM/PM"
+ */
+function convertUTCToCSTUserFriendly(isoString) {
+    const date = new Date(isoString);
+    
+    // Format date in CST timezone with 12-hour format
+    const month = date.toLocaleString('en-US', { month: '2-digit', timeZone: 'America/Chicago' });
+    const day = date.toLocaleString('en-US', { day: '2-digit', timeZone: 'America/Chicago' });
+    const year = date.toLocaleString('en-US', { year: 'numeric', timeZone: 'America/Chicago' });
+    const time = date.toLocaleString('en-US', { 
+        hour: 'numeric', 
+        minute: '2-digit',
+        hour12: true,
+        timeZone: 'America/Chicago' 
+    });
+    
+    return `${month}/${day}/${year} ${time}`;
+}
+
+/**
+ * Convert user-friendly format to 24-hour format
+ * @param {string} userInput - Format: "MM/DD/YYYY h:MM AM/PM" or "MM/DD/YYYY HH:MM"
+ * @returns {string} Format: "YYYY-MM-DD HH:MM"
+ */
+function convertTo24Hour(userInput) {
+    // Handle both "01/06/2026 2:30 PM" and "2026-01-06 14:30" formats
+    userInput = userInput.trim();
+    
+    // Check if it's already in 24-hour format (YYYY-MM-DD HH:MM)
+    if (/^\d{4}-\d{2}-\d{2}\s+\d{1,2}:\d{2}$/.test(userInput)) {
+        return userInput;
+    }
+    
+    // Parse MM/DD/YYYY h:MM AM/PM format
+    const match = userInput.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+    if (!match) {
+        throw new Error('Invalid time format. Use: MM/DD/YYYY h:MM AM/PM');
+    }
+    
+    const [, month, day, year, hour, minute, ampm] = match;
+    let hour24 = parseInt(hour);
+    
+    // Convert to 24-hour format
+    if (ampm.toUpperCase() === 'PM' && hour24 !== 12) {
+        hour24 += 12;
+    } else if (ampm.toUpperCase() === 'AM' && hour24 === 12) {
+        hour24 = 0;
+    }
+    
+    return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')} ${String(hour24).padStart(2, '0')}:${minute}`;
+}
+
+/**
+ * Format a date string for user input (MM/DD/YYYY)
+ * @param {string} dateStr - Format: "YYYY-MM-DD"
+ * @returns {string} Format: "MM/DD/YYYY"
+ */
+function formatDateForInput(dateStr) {
+    const [year, month, day] = dateStr.split('-');
+    return `${month}/${day}/${year}`;
+}
+
 // Week tracking for weekly goals
 let currentViewWeek = null;
 let currentViewYear = null;
@@ -71,6 +136,9 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Check if we should prompt for task rollover
     checkForTaskRollover();
+    
+    // Auto-sync calendar subscriptions if needed
+    autoSyncCalendarSubscriptions();
     
     // Event listeners
     document.getElementById('daily-date').addEventListener('change', (e) => {
@@ -1024,16 +1092,19 @@ async function showAddEventModal() {
     const description = prompt('Description (optional):');
     const location = prompt('Location (optional):');
     
-    const startTimeStr = prompt('Start Time (YYYY-MM-DD HH:MM) [CST]:', `${currentDate} 09:00`);
+    const startTimeStr = prompt('Start Time (MM/DD/YYYY h:MM AM/PM) [CST]:\nExample: 01/06/2026 2:30 PM', `${formatDateForInput(currentDate)} 9:00 AM`);
     if (!startTimeStr) return;
     
-    const endTimeStr = prompt('End Time (YYYY-MM-DD HH:MM) [CST]:', `${currentDate} 10:00`);
+    const endTimeStr = prompt('End Time (MM/DD/YYYY h:MM AM/PM) [CST]:\nExample: 01/06/2026 3:30 PM', `${formatDateForInput(currentDate)} 10:00 AM`);
     if (!endTimeStr) return;
     
     try {
-        // Convert CST input to UTC for storage
-        const startTime = convertCSTToUTC(startTimeStr);
-        const endTime = convertCSTToUTC(endTimeStr);
+        // Convert user-friendly format to CST 24-hour format, then to UTC
+        const startTime24 = convertTo24Hour(startTimeStr);
+        const endTime24 = convertTo24Hour(endTimeStr);
+        
+        const startTime = convertCSTToUTC(startTime24);
+        const endTime = convertCSTToUTC(endTime24);
         
         await axios.post('/api/schedule', {
             title,
@@ -1181,19 +1252,22 @@ async function editScheduleEvent(eventId) {
         const description = prompt('Description (optional):', event.description || '');
         const location = prompt('Location (optional):', event.location || '');
         
-        // Convert existing UTC times to CST for display
-        const currentStartCST = convertUTCToCST(event.start_time);
-        const currentEndCST = convertUTCToCST(event.end_time);
+        // Convert existing UTC times to user-friendly CST format
+        const currentStartCST = convertUTCToCSTUserFriendly(event.start_time);
+        const currentEndCST = convertUTCToCSTUserFriendly(event.end_time);
         
-        const startTimeStr = prompt('Start Time (YYYY-MM-DD HH:MM) [CST]:', currentStartCST);
+        const startTimeStr = prompt('Start Time (MM/DD/YYYY h:MM AM/PM) [CST]:\nExample: 01/06/2026 2:30 PM', currentStartCST);
         if (!startTimeStr) return;
         
-        const endTimeStr = prompt('End Time (YYYY-MM-DD HH:MM) [CST]:', currentEndCST);
+        const endTimeStr = prompt('End Time (MM/DD/YYYY h:MM AM/PM) [CST]:\nExample: 01/06/2026 3:30 PM', currentEndCST);
         if (!endTimeStr) return;
         
-        // Convert CST input back to UTC for storage
-        const startTime = convertCSTToUTC(startTimeStr);
-        const endTime = convertCSTToUTC(endTimeStr);
+        // Convert user-friendly format to 24-hour format, then to UTC
+        const startTime24 = convertTo24Hour(startTimeStr);
+        const endTime24 = convertTo24Hour(endTimeStr);
+        
+        const startTime = convertCSTToUTC(startTime24);
+        const endTime = convertCSTToUTC(endTime24);
         
         await axios.put(`/api/schedule/${eventId}`, {
             title,
@@ -1439,6 +1513,52 @@ function saveCalendarSubscription(url, name) {
 
 function getCalendarSubscriptions() {
     return JSON.parse(localStorage.getItem('calendar_subscriptions') || '[]');
+}
+
+/**
+ * Auto-sync calendar subscriptions if they haven't been synced recently
+ * Syncs every 4 hours automatically in the background
+ */
+async function autoSyncCalendarSubscriptions() {
+    const subscriptions = getCalendarSubscriptions();
+    if (subscriptions.length === 0) {
+        return; // No subscriptions to sync
+    }
+    
+    const lastSyncTime = localStorage.getItem('last_calendar_auto_sync');
+    const now = Date.now();
+    const fourHours = 4 * 60 * 60 * 1000; // 4 hours in milliseconds
+    
+    // Check if we need to sync (first time or more than 4 hours ago)
+    if (!lastSyncTime || (now - parseInt(lastSyncTime)) > fourHours) {
+        console.log('Auto-syncing calendar subscriptions...');
+        
+        // Sync each subscription silently in the background
+        for (const sub of subscriptions) {
+            try {
+                await axios.post('/api/calendar/sync/ical', {
+                    icalUrl: sub.url,
+                    calendarName: sub.name
+                });
+                console.log(`✓ Auto-synced: ${sub.name}`);
+            } catch (error) {
+                console.error(`✗ Failed to auto-sync: ${sub.name}`, error);
+                // Continue with next subscription even if one fails
+            }
+        }
+        
+        // Update last sync time
+        localStorage.setItem('last_calendar_auto_sync', now.toString());
+        console.log('Calendar auto-sync complete');
+        
+        // Reload daily data to show updated events
+        loadDailyData(currentDate);
+    } else {
+        const timeUntilNextSync = fourHours - (now - parseInt(lastSyncTime));
+        const hoursRemaining = Math.floor(timeUntilNextSync / (60 * 60 * 1000));
+        const minutesRemaining = Math.floor((timeUntilNextSync % (60 * 60 * 1000)) / (60 * 1000));
+        console.log(`Next calendar auto-sync in ${hoursRemaining}h ${minutesRemaining}m`);
+    }
 }
 
 async function showManageSubscriptionsModal() {
