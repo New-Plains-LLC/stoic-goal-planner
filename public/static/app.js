@@ -937,7 +937,12 @@ async function editGoal(id) {
         const category = categoryNames[parseInt(categoryChoice) - 1] || goal.category;
         
         const progress = prompt('Progress (0-100):', goal.progress);
-        const status = prompt('Status (active/completed/archived):', goal.status);
+        
+        // Status selection with dropdown-style prompt
+        const statusOptions = ['active', 'completed', 'archived'];
+        const currentStatusIndex = statusOptions.indexOf(goal.status) + 1;
+        const statusChoice = prompt(`Status:\n1. Active\n2. Completed\n3. Archived\n\nEnter number (1-3):`, currentStatusIndex);
+        const status = statusOptions[parseInt(statusChoice) - 1] || goal.status;
         
         let is_repeating = goal.is_repeating;
         
