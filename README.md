@@ -145,6 +145,9 @@ The app includes daily affirmations, gratitude tracking, task management, daily 
 - **Task Completion Tracking**: Check off tasks as you complete them with category badges
 - **Daily Schedule with Calendar Integration**: 
   - View and manage your calendar events
+  - **Sync Date Range**: ✅ **Expanded (2026-01-11)**: Syncs 30 days in the past + 90 days in the future (was 7 days future only)
+    - Now pulls in existing/historical appointments, not just newly created ones
+    - Total 120-day window ensures comprehensive calendar coverage
   - **Google Calendar Sync**: Import events from Google Calendar with persistent token storage
     - ⚠️ **Important**: OAuth Playground tokens expire after 1 hour
     - Clear step-by-step instructions provided in the sync dialog
@@ -154,7 +157,7 @@ The app includes daily affirmations, gratitude tracking, task management, daily 
     - Subscribe to any iCal calendar (Google, Outlook, Apple Calendar, etc.)
     - NO OAuth tokens needed for subscription
     - **CST Timezone Support**: Properly handles Central Standard Time timezone conversion
-    - Events sync automatically when you refresh the page
+    - **Auto-Sync Every 4 Hours**: ✅ Added (2026-01-06): Automatically refreshes calendar subscriptions
     - **Manage Subscriptions**: View, sync, and delete calendar subscriptions
       - ✅ **Fixed (2026-01-06)**: Now correctly displays all calendars with events, even if subscription info is not saved
       - Shows "✓ Has Events" badge for calendars with synced events
