@@ -1830,14 +1830,15 @@ app.post('/api/calendar/sync/ical', async (c) => {
     // Parse iCal format (simple parser for VEVENT blocks)
     const events = parseICalData(icalData);
     
-    // Get current date and 7 days from now for filtering
+    // Get date range: 30 days in the past to 90 days in the future
     const now = new Date();
-    const sevenDaysLater = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const ninetyDaysLater = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000);
     
-    // Filter events within the next 7 days
+    // Filter events within the date range (past 30 days to next 90 days)
     const upcomingEvents = events.filter(event => {
       const eventStart = new Date(event.start);
-      return eventStart >= now && eventStart <= sevenDaysLater;
+      return eventStart >= thirtyDaysAgo && eventStart <= ninetyDaysLater;
     });
     
     // Insert events into database

@@ -1187,9 +1187,9 @@ async function showGoogleCalendarSync() {
     }
     
     try {
-        // Sync events for next 7 days
-        const startDate = new Date().toISOString();
-        const endDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+        // Sync events: 30 days in the past to 90 days in the future
+        const startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+        const endDate = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString();
         
         const response = await axios.post('/api/calendar/sync', {
             accessToken,
