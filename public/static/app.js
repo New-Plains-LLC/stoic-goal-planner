@@ -1039,12 +1039,20 @@ async function loadWeeklyData() {
             document.getElementById('weekly-achievements').value = data.achievements || '';
             document.getElementById('weekly-challenges').value = data.challenges || '';
             document.getElementById('weekly-next-plan').value = data.next_week_plan || '';
+            document.getElementById('weekly-decision-bottleneck').value = data.decision_bottleneck || '';
+            document.getElementById('weekly-process-gaps').value = data.process_gaps || '';
+            document.getElementById('weekly-motion-vs-progress').value = data.motion_vs_progress || '';
+            document.getElementById('weekly-quiet-comfort').value = data.quiet_comfort || '';
         } else {
             // Clear form for new entry
             document.getElementById('weekly-evaluation').value = '';
             document.getElementById('weekly-achievements').value = '';
             document.getElementById('weekly-challenges').value = '';
             document.getElementById('weekly-next-plan').value = '';
+            document.getElementById('weekly-decision-bottleneck').value = '';
+            document.getElementById('weekly-process-gaps').value = '';
+            document.getElementById('weekly-motion-vs-progress').value = '';
+            document.getElementById('weekly-quiet-comfort').value = '';
         }
     } catch (error) {
         console.error('Error loading weekly data:', error);
@@ -1066,7 +1074,11 @@ async function saveWeeklyReview() {
         evaluation_text: document.getElementById('weekly-evaluation').value,
         achievements: document.getElementById('weekly-achievements').value,
         challenges: document.getElementById('weekly-challenges').value,
-        next_week_plan: document.getElementById('weekly-next-plan').value
+        next_week_plan: document.getElementById('weekly-next-plan').value,
+        decision_bottleneck: document.getElementById('weekly-decision-bottleneck').value,
+        process_gaps: document.getElementById('weekly-process-gaps').value,
+        motion_vs_progress: document.getElementById('weekly-motion-vs-progress').value,
+        quiet_comfort: document.getElementById('weekly-quiet-comfort').value
     };
     
     try {

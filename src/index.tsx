@@ -684,7 +684,16 @@ app.put('/api/weekly/:year/:week', async (c) => {
   const week = c.req.param('week');
   const body = await c.req.json();
   
-  const { evaluation_text, achievements, challenges, next_week_plan } = body;
+  const { 
+    evaluation_text, 
+    achievements, 
+    challenges, 
+    next_week_plan,
+    decision_bottleneck,
+    process_gaps,
+    motion_vs_progress,
+    quiet_comfort
+  } = body;
   
   // Check if exists
   const { results } = await env.DB.prepare(
@@ -695,15 +704,27 @@ app.put('/api/weekly/:year/:week', async (c) => {
     // Update
     await env.DB.prepare(`
       UPDATE weekly_evaluations 
-      SET evaluation_text = ?, achievements = ?, challenges = ?, next_week_plan = ?, updated_at = CURRENT_TIMESTAMP
+      SET evaluation_text = ?, achievements = ?, challenges = ?, next_week_plan = ?,
+          decision_bottleneck = ?, process_gaps = ?, motion_vs_progress = ?, quiet_comfort = ?,
+          updated_at = CURRENT_TIMESTAMP
       WHERE year = ? AND week_number = ?
-    `).bind(evaluation_text, achievements, challenges, next_week_plan, year, week).run();
+    `).bind(
+      evaluation_text, achievements, challenges, next_week_plan,
+      decision_bottleneck, process_gaps, motion_vs_progress, quiet_comfort,
+      year, week
+    ).run();
   } else {
     // Insert
     await env.DB.prepare(`
-      INSERT INTO weekly_evaluations (year, week_number, evaluation_text, achievements, challenges, next_week_plan)
-      VALUES (?, ?, ?, ?, ?, ?)
-    `).bind(year, week, evaluation_text, achievements, challenges, next_week_plan).run();
+      INSERT INTO weekly_evaluations (
+        year, week_number, evaluation_text, achievements, challenges, next_week_plan,
+        decision_bottleneck, process_gaps, motion_vs_progress, quiet_comfort
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).bind(
+      year, week, evaluation_text, achievements, challenges, next_week_plan,
+      decision_bottleneck, process_gaps, motion_vs_progress, quiet_comfort
+    ).run();
   }
   
   return c.json({ success: true });
@@ -2487,6 +2508,31 @@ app.get('/', (c) => {
                         <div class="mb-6">
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Next Week Plan</label>
                             <textarea id="weekly-next-plan" rows="4" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 focus:border-transparent" placeholder="What are your plans for next week?"></textarea>
+                        </div>
+
+                        <!-- Leadership & Business Reflection -->
+                        <div class="mb-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Leadership & Business Reflection</h2>
+                            
+                            <div class="mb-6">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">How many decisions still bottleneck through me?</label>
+                                <textarea id="weekly-decision-bottleneck" rows="3" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 focus:border-transparent" placeholder="List decision types that still require your approval..."></textarea>
+                            </div>
+
+                            <div class="mb-6">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">What processes will break if I step back for 30 days?</label>
+                                <textarea id="weekly-process-gaps" rows="3" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 focus:border-transparent" placeholder="Identify critical dependencies on you..."></textarea>
+                            </div>
+
+                            <div class="mb-6">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Where am I spending time that generates motion but isn't compounding?</label>
+                                <textarea id="weekly-motion-vs-progress" rows="3" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 focus:border-transparent" placeholder="Activities that keep you busy but don't build assets or systems..."></textarea>
+                            </div>
+
+                            <div class="mb-6">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">How comfortable am I when the business hums quietly?</label>
+                                <textarea id="weekly-quiet-comfort" rows="3" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 focus:border-transparent" placeholder="Reflect on your comfort with delegation and autonomous operations..."></textarea>
+                            </div>
                         </div>
 
                         <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
