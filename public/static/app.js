@@ -2499,7 +2499,7 @@ async function initializeWeeklyPlanner() {
     currentPlannerWeek = getWeekNumber(now);
     
     await loadWeeklyPlannerData();
-    initializeWeeklyPlannerDragDrop();
+    // Note: initializeWeeklyPlannerDragDrop() is now called in renderWeeklyPlanner()
 }
 
 /**
@@ -2539,6 +2539,12 @@ async function loadWeeklyPlannerData() {
  * Render the weekly planner view
  */
 function renderWeeklyPlanner() {
+    // Safety check
+    if (!weeklyPlannerData) {
+        console.log('weeklyPlannerData not loaded yet');
+        return;
+    }
+    
     // Update week display
     const weekDates = getWeekDates(currentPlannerYear, currentPlannerWeek);
     document.getElementById('planner-week-display').textContent = 
@@ -2565,6 +2571,9 @@ function renderWeeklyPlanner() {
     
     // Render unscheduled items
     renderUnscheduledItems();
+    
+    // Re-attach drag-drop event listeners after rendering
+    initializeWeeklyPlannerDragDrop();
 }
 
 /**
@@ -2748,7 +2757,10 @@ async function handlePlannerDrop(e) {
     // Remove visual feedback
     e.currentTarget.classList.remove('bg-blue-50', 'dark:bg-blue-900/20', 'border-blue-300', 'dark:border-blue-600');
     
-    if (!draggedPlannerItem) return;
+    if (!draggedPlannerItem) {
+        console.log('No dragged item');
+        return;
+    }
     
     const scheduleId = draggedPlannerItem.dataset.scheduleId;
     const itemId = draggedPlannerItem.dataset.itemId;
@@ -2756,38 +2768,54 @@ async function handlePlannerDrop(e) {
     const fromDay = draggedPlannerItem.dataset.day;
     const toDay = e.currentTarget.dataset.day || 'unscheduled';
     
+    console.log('Drop event:', { scheduleId, itemId, itemType, fromDay, toDay, year: currentPlannerYear, week: currentPlannerWeek });
+    
     // Don't do anything if dropped in same place
-    if (fromDay === toDay) return;
+    if (fromDay === toDay) {
+        console.log('Dropped in same place, ignoring');
+        return;
+    }
     
     try {
         if (toDay === 'unscheduled') {
             // Remove from schedule
             if (scheduleId) {
+                console.log('Removing from schedule:', scheduleId);
                 await axios.delete(`/api/week-schedule/${scheduleId}`);
+                console.log('Successfully removed from schedule');
             }
         } else if (fromDay === 'unscheduled') {
             // Add to schedule
-            await axios.post('/api/week-schedule', {
+            const postData = {
                 goalId: itemType === 'goal' ? parseInt(itemId) : null,
                 taskId: itemType === 'task' ? parseInt(itemId) : null,
                 year: currentPlannerYear,
                 weekNumber: currentPlannerWeek,
                 dayOfWeek: toDay,
                 displayOrder: 0
-            });
+            };
+            console.log('Adding to schedule:', postData);
+            const response = await axios.post('/api/week-schedule', postData);
+            console.log('Successfully added to schedule:', response.data);
         } else {
             // Move between days
-            await axios.put(`/api/week-schedule/${scheduleId}`, {
+            const putData = {
                 dayOfWeek: toDay,
                 displayOrder: 0
-            });
+            };
+            console.log('Moving between days:', scheduleId, putData);
+            await axios.put(`/api/week-schedule/${scheduleId}`, putData);
+            console.log('Successfully moved between days');
         }
         
         // Reload data to reflect changes
+        console.log('Reloading weekly planner data...');
         await loadWeeklyPlannerData();
+        console.log('Data reloaded successfully');
     } catch (error) {
         console.error('Error updating schedule:', error);
-        alert('Failed to update schedule');
+        console.error('Error details:', error.response?.data);
+        alert('Failed to update schedule: ' + (error.response?.data?.error || error.message));
     }
     
     draggedPlannerItem = null;
