@@ -1954,8 +1954,14 @@ app.get('/', (c) => {
                         <a href="#" onclick="showPage('goals')" class="nav-link text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white text-sm font-medium">
                             Goals
                         </a>
+                        <a href="#" onclick="showPage('weekly-planner')" class="nav-link text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white text-sm font-medium">
+                            Weekly Planner
+                        </a>
                         <a href="#" onclick="showPage('weekly')" class="nav-link text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white text-sm font-medium">
-                            Weekly
+                            Weekly Review
+                        </a>
+                        <a href="#" onclick="showPage('habits')" class="nav-link text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white text-sm font-medium">
+                            Habits
                         </a>
                         <button onclick="toggleDarkMode()" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300">
                             <span class="dark-mode-icon hidden dark:inline">☀️</span>
@@ -2180,6 +2186,136 @@ app.get('/', (c) => {
                         <!-- Goals List -->
                         <div id="goals-list" class="space-y-4">
                             <!-- Goals will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Weekly Planner Page -->
+            <div id="weekly-planner-page" class="page hidden">
+                <div class="max-w-7xl mx-auto mt-8">
+                    <h1 class="text-2xl font-semibold text-gray-900 dark:text-white mb-6">Weekly Planner</h1>
+
+                    <!-- Week Navigation -->
+                    <div class="mb-6 flex items-center justify-between bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700">
+                        <button onclick="navigateWeekPlanner(-1)" class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition">
+                            ← Previous Week
+                        </button>
+                        <div class="text-center">
+                            <div id="planner-week-display" class="text-lg font-semibold text-gray-900 dark:text-white"></div>
+                            <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">Week <span id="planner-week-number"></span>, <span id="planner-week-year"></span></div>
+                        </div>
+                        <button onclick="navigateWeekPlanner(1)" class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition">
+                            Next Week →
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                        <!-- Left Sidebar: Goals & Tasks Pool -->
+                        <div class="lg:col-span-3">
+                            <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 sticky top-4">
+                                <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Weekly Goals & Tasks</h2>
+                                
+                                <div class="mb-4">
+                                    <button onclick="showAddGoalModal()" class="w-full bg-blue-600 dark:bg-blue-700 text-white px-4 py-2 rounded-lg hover:bg-blue-700 dark:hover:bg-blue-800 transition text-sm font-medium">
+                                        + Add Goal
+                                    </button>
+                                </div>
+
+                                <!-- Unscheduled Goals & Tasks -->
+                                <div class="space-y-2">
+                                    <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Unscheduled Items</h3>
+                                    <div id="unscheduled-items" class="space-y-2 min-h-[200px] border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-2">
+                                        <!-- Unscheduled goals/tasks will be loaded here -->
+                                        <p class="text-xs text-gray-500 dark:text-gray-400 text-center py-8">Drag goals/tasks here to unschedule them</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Main Content: Week View -->
+                        <div class="lg:col-span-9">
+                            <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+                                <!-- Days of the Week Grid -->
+                                <div class="grid grid-cols-7 gap-2">
+                                    <!-- Monday -->
+                                    <div class="border border-gray-200 dark:border-gray-700 rounded-lg">
+                                        <div class="bg-gray-100 dark:bg-gray-700 p-3 border-b border-gray-200 dark:border-gray-600">
+                                            <h3 class="font-semibold text-sm text-gray-900 dark:text-white">Monday</h3>
+                                            <p id="monday-date" class="text-xs text-gray-500 dark:text-gray-400"></p>
+                                        </div>
+                                        <div id="monday-items" class="day-column p-2 min-h-[400px] space-y-2" data-day="monday">
+                                            <!-- Goals/tasks for Monday will be dropped here -->
+                                        </div>
+                                    </div>
+
+                                    <!-- Tuesday -->
+                                    <div class="border border-gray-200 dark:border-gray-700 rounded-lg">
+                                        <div class="bg-gray-100 dark:bg-gray-700 p-3 border-b border-gray-200 dark:border-gray-600">
+                                            <h3 class="font-semibold text-sm text-gray-900 dark:text-white">Tuesday</h3>
+                                            <p id="tuesday-date" class="text-xs text-gray-500 dark:text-gray-400"></p>
+                                        </div>
+                                        <div id="tuesday-items" class="day-column p-2 min-h-[400px] space-y-2" data-day="tuesday">
+                                            <!-- Goals/tasks for Tuesday will be dropped here -->
+                                        </div>
+                                    </div>
+
+                                    <!-- Wednesday -->
+                                    <div class="border border-gray-200 dark:border-gray-700 rounded-lg">
+                                        <div class="bg-gray-100 dark:bg-gray-700 p-3 border-b border-gray-200 dark:border-gray-600">
+                                            <h3 class="font-semibold text-sm text-gray-900 dark:text-white">Wednesday</h3>
+                                            <p id="wednesday-date" class="text-xs text-gray-500 dark:text-gray-400"></p>
+                                        </div>
+                                        <div id="wednesday-items" class="day-column p-2 min-h-[400px] space-y-2" data-day="wednesday">
+                                            <!-- Goals/tasks for Wednesday will be dropped here -->
+                                        </div>
+                                    </div>
+
+                                    <!-- Thursday -->
+                                    <div class="border border-gray-200 dark:border-gray-700 rounded-lg">
+                                        <div class="bg-gray-100 dark:bg-gray-700 p-3 border-b border-gray-200 dark:border-gray-600">
+                                            <h3 class="font-semibold text-sm text-gray-900 dark:text-white">Thursday</h3>
+                                            <p id="thursday-date" class="text-xs text-gray-500 dark:text-gray-400"></p>
+                                        </div>
+                                        <div id="thursday-items" class="day-column p-2 min-h-[400px] space-y-2" data-day="thursday">
+                                            <!-- Goals/tasks for Thursday will be dropped here -->
+                                        </div>
+                                    </div>
+
+                                    <!-- Friday -->
+                                    <div class="border border-gray-200 dark:border-gray-700 rounded-lg">
+                                        <div class="bg-gray-100 dark:bg-gray-700 p-3 border-b border-gray-200 dark:border-gray-600">
+                                            <h3 class="font-semibold text-sm text-gray-900 dark:text-white">Friday</h3>
+                                            <p id="friday-date" class="text-xs text-gray-500 dark:text-gray-400"></p>
+                                        </div>
+                                        <div id="friday-items" class="day-column p-2 min-h-[400px] space-y-2" data-day="friday">
+                                            <!-- Goals/tasks for Friday will be dropped here -->
+                                        </div>
+                                    </div>
+
+                                    <!-- Saturday -->
+                                    <div class="border border-gray-200 dark:border-gray-700 rounded-lg">
+                                        <div class="bg-gray-100 dark:bg-gray-700 p-3 border-b border-gray-200 dark:border-gray-600">
+                                            <h3 class="font-semibold text-sm text-gray-900 dark:text-white">Saturday</h3>
+                                            <p id="saturday-date" class="text-xs text-gray-500 dark:text-gray-400"></p>
+                                        </div>
+                                        <div id="saturday-items" class="day-column p-2 min-h-[400px] space-y-2" data-day="saturday">
+                                            <!-- Goals/tasks for Saturday will be dropped here -->
+                                        </div>
+                                    </div>
+
+                                    <!-- Sunday -->
+                                    <div class="border border-gray-200 dark:border-gray-700 rounded-lg">
+                                        <div class="bg-gray-100 dark:bg-gray-700 p-3 border-b border-gray-200 dark:border-gray-600">
+                                            <h3 class="font-semibold text-sm text-gray-900 dark:text-white">Sunday</h3>
+                                            <p id="sunday-date" class="text-xs text-gray-500 dark:text-gray-400"></p>
+                                        </div>
+                                        <div id="sunday-items" class="day-column p-2 min-h-[400px] space-y-2" data-day="sunday">
+                                            <!-- Goals/tasks for Sunday will be dropped here -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
