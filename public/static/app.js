@@ -1901,7 +1901,17 @@ async function createNewGoal() {
     try {
         await axios.post('/api/goals', goalData);
         closeCreateGoalModal();
-        loadGoals(currentGoalType);
+        
+        // Reload appropriate view based on current page
+        const currentPage = [...document.querySelectorAll('.page')].find(p => !p.classList.contains('hidden'));
+        if (currentPage && currentPage.id === 'weekly-planner-page') {
+            // Reload weekly planner data
+            await loadWeeklyPlannerData();
+        } else {
+            // Reload goals list (for Goals page)
+            loadGoals(currentGoalType);
+        }
+        
         alert('Goal created successfully!');
     } catch (error) {
         console.error('Error creating goal:', error);
@@ -2517,6 +2527,10 @@ function navigateWeekPlanner(direction) {
         currentPlannerYear--;
     }
     
+    // Update goal creation context
+    currentViewWeek = currentPlannerWeek;
+    currentViewYear = currentPlannerYear;
+    
     loadWeeklyPlannerData();
 }
 
@@ -2885,6 +2899,11 @@ window.showPage = function(pageName) {
     
     // Initialize weekly planner when page is shown
     if (pageName === 'weekly-planner') {
+        // Set goal context to weekly for the modal
+        currentGoalType = 'weekly';
+        currentViewWeek = currentPlannerWeek;
+        currentViewYear = currentPlannerYear;
+        
         initializeWeeklyPlanner();
     }
 };
