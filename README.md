@@ -7,6 +7,45 @@ The app includes daily affirmations, gratitude tracking, task management, daily 
 
 **Live Application**: https://3000-it4k2jghikjq8k7pi5xo6-2e1b9533.sandbox.novita.ai
 
+## ✨ NEW: Weekly Planner - Week-at-a-Glance View
+
+**Full weekly planning system with drag-and-drop scheduling:**
+
+### Features:
+- **📅 7-Day Grid View**: See Monday through Sunday at a glance
+- **🎯 Drag-and-Drop Scheduling**: 
+  - Drag goals/tasks from the unscheduled pool to any day
+  - Move items between days by dragging
+  - Drag back to unscheduled area to remove from schedule
+- **📊 Visual Feedback**:
+  - Goals show progress bars
+  - Tasks show priority badges
+  - Category color-coding throughout
+  - Blue highlight on drop zones while dragging
+- **🗓️ Week Navigation**: Navigate between weeks with Previous/Next buttons
+- **💾 Persistent Storage**: All scheduling saved to database
+- **🔄 Real-time Updates**: Changes save immediately via API
+
+### How to Use:
+1. **Go to Weekly Planner** page (navigation menu)
+2. **View Your Week**: See current week's Monday-Sunday grid
+3. **Add Weekly Goals**: Click "+ Add Goal" to create goals for this week
+4. **Schedule Items**: Drag goals/tasks from "Unscheduled Items" to any day
+5. **Reschedule**: Drag items between days to reorganize your week
+6. **Unschedule**: Drag items back to "Unscheduled Items" to remove from schedule
+7. **Navigate**: Use Previous/Next Week buttons to plan future weeks
+
+### What You See:
+- **Left Sidebar**: Unscheduled weekly goals & tasks waiting to be scheduled
+- **Main Grid**: 7 columns (Mon-Sun) showing scheduled items with dates
+- **Each Item Shows**:
+  - Category badge (color-coded)
+  - Title
+  - Progress bar (for goals) or Priority (for tasks)
+  - Drag handle (⋮⋮) for moving
+
+
+
 ## 🕐 Timezone Support
 - **CST/CDT Timezone**: All times displayed and entered in Central Standard Time (America/Chicago)
 - **User-Friendly Time Format**: Enter times in standard 12-hour format with AM/PM (e.g., "2:30 PM" instead of "14:30")
