@@ -206,6 +206,11 @@ The app includes daily affirmations, gratitude tracking, task management, daily 
   - Achievement documentation
   - Challenges faced
   - Next week planning
+  - **Leadership & Business Reflection** (4 strategic questions):
+    - How many decisions still bottleneck through me?
+    - What processes will break if I step back for 30 days?
+    - Where am I spending time that generates motion but isn't compounding?
+    - How comfortable am I when the business hums quietly?
 - **Historical Reviews**: Access past weekly evaluations
 
 ### 🔄 Task Management
