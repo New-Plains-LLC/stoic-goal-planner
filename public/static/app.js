@@ -2471,3 +2471,381 @@ window.closeCreateGoalModal = function() {
 document.addEventListener('DOMContentLoaded', () => {
     updateRepeatingOptionVisibility();
 });
+// ========== WEEKLY PLANNER FUNCTIONS ==========
+
+// Weekly Planner state
+let currentPlannerWeek = null;
+let currentPlannerYear = null;
+let weeklyPlannerData = null;
+
+/**
+ * Initialize Weekly Planner when page is shown
+ */
+async function initializeWeeklyPlanner() {
+    const now = new Date();
+    currentPlannerYear = now.getFullYear();
+    currentPlannerWeek = getWeekNumber(now);
+    
+    await loadWeeklyPlannerData();
+    initializeWeeklyPlannerDragDrop();
+}
+
+/**
+ * Navigate to next/previous week
+ */
+function navigateWeekPlanner(direction) {
+    currentPlannerWeek += direction;
+    
+    // Handle year boundaries
+    if (currentPlannerWeek > 52) {
+        currentPlannerWeek = 1;
+        currentPlannerYear++;
+    } else if (currentPlannerWeek < 1) {
+        currentPlannerWeek = 52;
+        currentPlannerYear--;
+    }
+    
+    loadWeeklyPlannerData();
+}
+
+/**
+ * Load all weekly planner data for current week
+ */
+async function loadWeeklyPlannerData() {
+    try {
+        const response = await axios.get(`/api/week-schedule/${currentPlannerYear}/${currentPlannerWeek}`);
+        weeklyPlannerData = response.data;
+        
+        renderWeeklyPlanner();
+    } catch (error) {
+        console.error('Error loading weekly planner:', error);
+        alert('Failed to load weekly planner data');
+    }
+}
+
+/**
+ * Render the weekly planner view
+ */
+function renderWeeklyPlanner() {
+    // Update week display
+    const weekDates = getWeekDates(currentPlannerYear, currentPlannerWeek);
+    document.getElementById('planner-week-display').textContent = 
+        `${weekDates.start} - ${weekDates.end}`;
+    document.getElementById('planner-week-number').textContent = currentPlannerWeek;
+    document.getElementById('planner-week-year').textContent = currentPlannerYear;
+    
+    // Render each day's date
+    const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+    const dates = getWeekDatesByDay(currentPlannerYear, currentPlannerWeek);
+    
+    days.forEach(day => {
+        const dateElement = document.getElementById(`${day}-date`);
+        if (dateElement) {
+            dateElement.textContent = dates[day];
+        }
+    });
+    
+    // Render scheduled items by day
+    days.forEach(day => {
+        const dayItems = weeklyPlannerData.schedules.filter(s => s.day_of_week === day);
+        renderDayItems(day, dayItems);
+    });
+    
+    // Render unscheduled items
+    renderUnscheduledItems();
+}
+
+/**
+ * Render items for a specific day
+ */
+function renderDayItems(day, items) {
+    const container = document.getElementById(`${day}-items`);
+    if (!container) return;
+    
+    if (items.length === 0) {
+        container.innerHTML = '<p class="text-xs text-gray-400 dark:text-gray-500 text-center py-4">Drop items here</p>';
+        return;
+    }
+    
+    container.innerHTML = items.map(item => {
+        const isGoal = item.goal_id !== null;
+        const title = isGoal ? item.goal_title : item.task_title;
+        const category = isGoal ? item.goal_category : item.task_category;
+        const progress = isGoal ? item.goal_progress : null;
+        const priority = isGoal ? null : item.task_priority;
+        
+        return `
+            <div class="planner-item border border-gray-300 dark:border-gray-600 rounded-lg p-2 bg-white dark:bg-gray-700 cursor-move hover:shadow-md transition"
+                 draggable="true"
+                 data-schedule-id="${item.id}"
+                 data-item-id="${isGoal ? item.goal_id : item.task_id}"
+                 data-item-type="${isGoal ? 'goal' : 'task'}"
+                 data-day="${day}">
+                <div class="flex items-start gap-2">
+                    <span class="text-gray-400 dark:text-gray-500 cursor-move">⋮⋮</span>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="text-xs px-2 py-0.5 rounded ${getCategoryBadgeColor(category)}">
+                                ${getCategoryName(category)}
+                            </span>
+                            ${priority ? `<span class="text-xs px-2 py-0.5 rounded ${getPriorityColor(priority)}">${priority}</span>` : ''}
+                        </div>
+                        <p class="text-sm font-medium text-gray-900 dark:text-white truncate">${title}</p>
+                        ${progress !== null ? `
+                            <div class="mt-1 flex items-center gap-2">
+                                <div class="flex-1 bg-gray-200 dark:bg-gray-600 rounded-full h-1">
+                                    <div class="bg-blue-600 h-1 rounded-full" style="width: ${progress}%"></div>
+                                </div>
+                                <span class="text-xs text-gray-500 dark:text-gray-400">${progress}%</span>
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+/**
+ * Render unscheduled items (goals and tasks)
+ */
+function renderUnscheduledItems() {
+    const container = document.getElementById('unscheduled-items');
+    if (!container) return;
+    
+    const goals = weeklyPlannerData.unscheduledGoals || [];
+    const tasks = weeklyPlannerData.unscheduledTasks || [];
+    
+    if (goals.length === 0 && tasks.length === 0) {
+        container.innerHTML = '<p class="text-xs text-gray-500 dark:text-gray-400 text-center py-8">All items are scheduled!<br>Drag items here to unschedule them</p>';
+        return;
+    }
+    
+    const goalsHTML = goals.map(goal => `
+        <div class="planner-item border border-gray-300 dark:border-gray-600 rounded-lg p-2 bg-white dark:bg-gray-700 cursor-move hover:shadow-md transition"
+             draggable="true"
+             data-item-id="${goal.id}"
+             data-item-type="goal"
+             data-day="unscheduled">
+            <div class="flex items-start gap-2">
+                <span class="text-gray-400 dark:text-gray-500 cursor-move">⋮⋮</span>
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="text-xs px-2 py-0.5 rounded ${getCategoryBadgeColor(goal.category)}">
+                            ${getCategoryName(goal.category)}
+                        </span>
+                        <span class="text-xs text-blue-600 dark:text-blue-400">Goal</span>
+                    </div>
+                    <p class="text-sm font-medium text-gray-900 dark:text-white truncate">${goal.title}</p>
+                    <div class="mt-1 flex items-center gap-2">
+                        <div class="flex-1 bg-gray-200 dark:bg-gray-600 rounded-full h-1">
+                            <div class="bg-blue-600 h-1 rounded-full" style="width: ${goal.progress}%"></div>
+                        </div>
+                        <span class="text-xs text-gray-500 dark:text-gray-400">${goal.progress}%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `).join('');
+    
+    const tasksHTML = tasks.map(task => `
+        <div class="planner-item border border-gray-300 dark:border-gray-600 rounded-lg p-2 bg-white dark:bg-gray-700 cursor-move hover:shadow-md transition"
+             draggable="true"
+             data-item-id="${task.id}"
+             data-item-type="task"
+             data-day="unscheduled">
+            <div class="flex items-start gap-2">
+                <span class="text-gray-400 dark:text-gray-500 cursor-move">⋮⋮</span>
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="text-xs px-2 py-0.5 rounded ${getCategoryBadgeColor(task.category)}">
+                            ${getCategoryName(task.category)}
+                        </span>
+                        <span class="text-xs px-2 py-0.5 rounded ${getPriorityColor(task.priority)}">${task.priority}</span>
+                    </div>
+                    <p class="text-sm font-medium text-gray-900 dark:text-white truncate">${task.title}</p>
+                </div>
+            </div>
+        </div>
+    `).join('');
+    
+    container.innerHTML = goalsHTML + tasksHTML;
+}
+
+
+/**
+ * Initialize drag and drop for weekly planner
+ */
+function initializeWeeklyPlannerDragDrop() {
+    // Get all draggable items
+    const items = document.querySelectorAll('.planner-item[draggable="true"]');
+    
+    items.forEach(item => {
+        item.addEventListener('dragstart', handlePlannerDragStart);
+        item.addEventListener('dragend', handlePlannerDragEnd);
+    });
+    
+    // Get all drop zones (day columns and unscheduled area)
+    const dropZones = document.querySelectorAll('.day-column, #unscheduled-items');
+    
+    dropZones.forEach(zone => {
+        zone.addEventListener('dragover', handlePlannerDragOver);
+        zone.addEventListener('drop', handlePlannerDrop);
+        zone.addEventListener('dragleave', handlePlannerDragLeave);
+    });
+}
+
+let draggedPlannerItem = null;
+
+function handlePlannerDragStart(e) {
+    draggedPlannerItem = e.target;
+    e.target.style.opacity = '0.5';
+    e.dataTransfer.effectAllowed = 'move';
+}
+
+function handlePlannerDragEnd(e) {
+    e.target.style.opacity = '1';
+    // Remove all drag-over effects
+    document.querySelectorAll('.day-column, #unscheduled-items').forEach(zone => {
+        zone.classList.remove('bg-blue-50', 'dark:bg-blue-900/20', 'border-blue-300', 'dark:border-blue-600');
+    });
+}
+
+function handlePlannerDragOver(e) {
+    if (e.preventDefault) {
+        e.preventDefault();
+    }
+    e.dataTransfer.dropEffect = 'move';
+    
+    // Add visual feedback
+    e.currentTarget.classList.add('bg-blue-50', 'dark:bg-blue-900/20', 'border-blue-300', 'dark:border-blue-600');
+    
+    return false;
+}
+
+function handlePlannerDragLeave(e) {
+    e.currentTarget.classList.remove('bg-blue-50', 'dark:bg-blue-900/20', 'border-blue-300', 'dark:border-blue-600');
+}
+
+async function handlePlannerDrop(e) {
+    if (e.stopPropagation) {
+        e.stopPropagation();
+    }
+    e.preventDefault();
+    
+    // Remove visual feedback
+    e.currentTarget.classList.remove('bg-blue-50', 'dark:bg-blue-900/20', 'border-blue-300', 'dark:border-blue-600');
+    
+    if (!draggedPlannerItem) return;
+    
+    const scheduleId = draggedPlannerItem.dataset.scheduleId;
+    const itemId = draggedPlannerItem.dataset.itemId;
+    const itemType = draggedPlannerItem.dataset.itemType;
+    const fromDay = draggedPlannerItem.dataset.day;
+    const toDay = e.currentTarget.dataset.day || 'unscheduled';
+    
+    // Don't do anything if dropped in same place
+    if (fromDay === toDay) return;
+    
+    try {
+        if (toDay === 'unscheduled') {
+            // Remove from schedule
+            if (scheduleId) {
+                await axios.delete(`/api/week-schedule/${scheduleId}`);
+            }
+        } else if (fromDay === 'unscheduled') {
+            // Add to schedule
+            await axios.post('/api/week-schedule', {
+                goalId: itemType === 'goal' ? parseInt(itemId) : null,
+                taskId: itemType === 'task' ? parseInt(itemId) : null,
+                year: currentPlannerYear,
+                weekNumber: currentPlannerWeek,
+                dayOfWeek: toDay,
+                displayOrder: 0
+            });
+        } else {
+            // Move between days
+            await axios.put(`/api/week-schedule/${scheduleId}`, {
+                dayOfWeek: toDay,
+                displayOrder: 0
+            });
+        }
+        
+        // Reload data to reflect changes
+        await loadWeeklyPlannerData();
+    } catch (error) {
+        console.error('Error updating schedule:', error);
+        alert('Failed to update schedule');
+    }
+    
+    draggedPlannerItem = null;
+    return false;
+}
+
+/**
+ * Get week dates for display
+ */
+function getWeekDates(year, week) {
+    const simple = new Date(year, 0, 1 + (week - 1) * 7);
+    const dow = simple.getDay();
+    const ISOweekStart = simple;
+    if (dow <= 4)
+        ISOweekStart.setDate(simple.getDate() - simple.getDay() + 1);
+    else
+        ISOweekStart.setDate(simple.getDate() + 8 - simple.getDay());
+    
+    const weekStart = new Date(ISOweekStart);
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekEnd.getDate() + 6);
+    
+    const formatDate = (date) => {
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const day = date.getDate().toString().padStart(2, '0');
+        return `${month}/${day}`;
+    };
+    
+    return {
+        start: formatDate(weekStart),
+        end: formatDate(weekEnd)
+    };
+}
+
+/**
+ * Get dates for each day of the week
+ */
+function getWeekDatesByDay(year, week) {
+    const simple = new Date(year, 0, 1 + (week - 1) * 7);
+    const dow = simple.getDay();
+    const ISOweekStart = simple;
+    if (dow <= 4)
+        ISOweekStart.setDate(simple.getDate() - simple.getDay() + 1);
+    else
+        ISOweekStart.setDate(simple.getDate() + 8 - simple.getDay());
+    
+    const dates = {};
+    const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+    
+    days.forEach((day, index) => {
+        const date = new Date(ISOweekStart);
+        date.setDate(date.getDate() + index);
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const dayNum = date.getDate().toString().padStart(2, '0');
+        dates[day] = `${month}/${dayNum}`;
+    });
+    
+    return dates;
+}
+
+// Update showPage function to initialize weekly planner
+const originalShowPage = window.showPage;
+window.showPage = function(pageName) {
+    if (originalShowPage) {
+        originalShowPage(pageName);
+    }
+    
+    // Initialize weekly planner when page is shown
+    if (pageName === 'weekly-planner') {
+        initializeWeeklyPlanner();
+    }
+};
+

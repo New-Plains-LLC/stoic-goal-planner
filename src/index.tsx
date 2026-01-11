@@ -1043,6 +1043,143 @@ app.delete('/api/schedule/:id', async (c) => {
   return c.json({ success: true });
 });
 
+// ========== WEEKLY PLANNER API ENDPOINTS ==========
+
+// Get weekly planner schedule for a specific week
+app.get('/api/week-schedule/:year/:week', async (c) => {
+  const { env } = c;
+  const year = parseInt(c.req.param('year'));
+  const week = parseInt(c.req.param('week'));
+  
+  try {
+    // Get all scheduled items for this week with their associated goals/tasks
+    const { results: schedules } = await env.DB.prepare(`
+      SELECT ws.*, 
+             g.id as goal_id, g.title as goal_title, g.description as goal_description, 
+             g.category as goal_category, g.progress as goal_progress, g.status as goal_status,
+             t.id as task_id, t.title as task_title, t.description as task_description,
+             t.category as task_category, t.priority as task_priority, t.status as task_status
+      FROM week_schedule ws
+      LEFT JOIN goals g ON ws.goal_id = g.id
+      LEFT JOIN tasks t ON ws.task_id = t.id
+      WHERE ws.year = ? AND ws.week_number = ?
+      ORDER BY ws.day_of_week, ws.display_order
+    `).bind(year, week).all();
+    
+    // Get all weekly goals that are NOT scheduled yet
+    const { results: unscheduledGoals } = await env.DB.prepare(`
+      SELECT g.*
+      FROM goals g
+      WHERE g.goal_type = 'weekly' 
+        AND g.year = ? 
+        AND g.week_number = ?
+        AND g.status != 'archived'
+        AND g.id NOT IN (
+          SELECT goal_id FROM week_schedule 
+          WHERE year = ? AND week_number = ? AND goal_id IS NOT NULL
+        )
+      ORDER BY g.display_order, g.created_at DESC
+    `).bind(year, week, year, week).all();
+    
+    // Get all tasks from weekly goals that are NOT scheduled yet
+    const { results: unscheduledTasks } = await env.DB.prepare(`
+      SELECT t.*
+      FROM tasks t
+      WHERE t.goal_id IN (
+        SELECT id FROM goals 
+        WHERE goal_type = 'weekly' AND year = ? AND week_number = ?
+      )
+      AND t.status NOT IN ('completed', 'cancelled')
+      AND t.id NOT IN (
+        SELECT task_id FROM week_schedule 
+        WHERE year = ? AND week_number = ? AND task_id IS NOT NULL
+      )
+      ORDER BY t.priority DESC, t.created_at DESC
+    `).bind(year, week, year, week).all();
+    
+    return c.json({
+      schedules,
+      unscheduledGoals,
+      unscheduledTasks
+    });
+  } catch (error) {
+    console.error('Error fetching week schedule:', error);
+    return c.json({ error: 'Failed to fetch week schedule' }, 500);
+  }
+});
+
+// Add item to weekly schedule
+app.post('/api/week-schedule', async (c) => {
+  const { env } = c;
+  const body = await c.req.json();
+  
+  const { goalId, taskId, year, weekNumber, dayOfWeek, displayOrder } = body;
+  
+  if (!year || !weekNumber || !dayOfWeek) {
+    return c.json({ error: 'Year, week number, and day of week are required' }, 400);
+  }
+  
+  if (!goalId && !taskId) {
+    return c.json({ error: 'Either goal_id or task_id must be provided' }, 400);
+  }
+  
+  try {
+    const result = await env.DB.prepare(`
+      INSERT INTO week_schedule (goal_id, task_id, year, week_number, day_of_week, display_order)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `).bind(goalId || null, taskId || null, year, weekNumber, dayOfWeek, displayOrder || 0).run();
+    
+    return c.json({ 
+      id: result.meta.last_row_id,
+      success: true 
+    }, 201);
+  } catch (error) {
+    console.error('Error adding to week schedule:', error);
+    return c.json({ error: 'Failed to add to week schedule' }, 500);
+  }
+});
+
+// Update weekly schedule item (change day or order)
+app.put('/api/week-schedule/:id', async (c) => {
+  const { env } = c;
+  const id = parseInt(c.req.param('id'));
+  const body = await c.req.json();
+  
+  const { dayOfWeek, displayOrder } = body;
+  
+  try {
+    await env.DB.prepare(`
+      UPDATE week_schedule
+      SET day_of_week = ?, display_order = ?, updated_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+    `).bind(dayOfWeek, displayOrder || 0, id).run();
+    
+    return c.json({ success: true });
+  } catch (error) {
+    console.error('Error updating week schedule:', error);
+    return c.json({ error: 'Failed to update week schedule' }, 500);
+  }
+});
+
+// Remove item from weekly schedule
+app.delete('/api/week-schedule/:id', async (c) => {
+  const { env } = c;
+  const id = parseInt(c.req.param('id'));
+  
+  try {
+    await env.DB.prepare(`
+      DELETE FROM week_schedule WHERE id = ?
+    `).bind(id).run();
+    
+    return c.json({ success: true });
+  } catch (error) {
+    console.error('Error removing from week schedule:', error);
+    return c.json({ error: 'Failed to remove from week schedule' }, 500);
+  }
+});
+
+// ========== END WEEKLY PLANNER API ENDPOINTS ==========
+
 // ============= HABIT TRACKER API =============
 
 // Get all habits
