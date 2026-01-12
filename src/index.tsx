@@ -2756,11 +2756,52 @@ app.get('/', (c) => {
         <div id="manage-subscriptions-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 dark:bg-opacity-70 z-50 flex items-center justify-center p-4">
             <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
                 <div class="p-6 border-b border-gray-200 dark:border-gray-700">
-                    <div class="flex justify-between items-center">
+                    <div class="flex justify-between items-center mb-4">
                         <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Manage Calendar Subscriptions</h3>
                         <button onclick="closeManageSubscriptionsModal()" class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 text-xl">
                             ×
                         </button>
+                    </div>
+                    
+                    <!-- Timezone Selector -->
+                    <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            🌍 Display Timezone
+                        </label>
+                        <select id="timezone-selector" onchange="updateTimezone()" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <optgroup label="US Timezones">
+                                <option value="America/New_York">Eastern Time (ET)</option>
+                                <option value="America/Chicago" selected>Central Time (CT)</option>
+                                <option value="America/Denver">Mountain Time (MT)</option>
+                                <option value="America/Los_Angeles">Pacific Time (PT)</option>
+                                <option value="America/Anchorage">Alaska Time (AKT)</option>
+                                <option value="America/Adak">Hawaii-Aleutian Time (HT)</option>
+                            </optgroup>
+                            <optgroup label="Other US Territories">
+                                <option value="America/Phoenix">Arizona (No DST)</option>
+                                <option value="Pacific/Honolulu">Hawaii</option>
+                            </optgroup>
+                            <optgroup label="Major World Cities">
+                                <option value="Europe/London">London (GMT/BST)</option>
+                                <option value="Europe/Paris">Paris (CET/CEST)</option>
+                                <option value="Europe/Berlin">Berlin (CET/CEST)</option>
+                                <option value="Asia/Dubai">Dubai (GST)</option>
+                                <option value="Asia/Shanghai">Shanghai (CST)</option>
+                                <option value="Asia/Tokyo">Tokyo (JST)</option>
+                                <option value="Asia/Singapore">Singapore (SGT)</option>
+                                <option value="Asia/Kolkata">India (IST)</option>
+                                <option value="Australia/Sydney">Sydney (AEDT/AEST)</option>
+                            </optgroup>
+                            <optgroup label="Americas">
+                                <option value="America/Toronto">Toronto</option>
+                                <option value="America/Mexico_City">Mexico City</option>
+                                <option value="America/Sao_Paulo">São Paulo</option>
+                                <option value="America/Argentina/Buenos_Aires">Buenos Aires</option>
+                            </optgroup>
+                        </select>
+                        <p class="text-xs text-gray-600 dark:text-gray-400 mt-2">
+                            All calendar times will be displayed in this timezone
+                        </p>
                     </div>
                 </div>
                 <div class="p-6">

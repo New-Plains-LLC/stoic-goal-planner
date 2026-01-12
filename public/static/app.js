@@ -1,49 +1,128 @@
 // Global state
 let currentGoalType = 'long_term';
-// Get current date in CST timezone
-let currentDate = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Chicago' }); // en-CA gives YYYY-MM-DD format
 
-// ========== TIMEZONE HELPERS FOR CST ==========
+// Timezone management
+let userTimezone = localStorage.getItem('user_timezone') || userTimezone;
+
+// Get current date in user's timezone
+let currentDate = new Date().toLocaleDateString('en-CA', { timeZone: userTimezone }); // en-CA gives YYYY-MM-DD format
+
+// ========== TIMEZONE MANAGEMENT ==========
+
+/**
+ * Get user's selected timezone
+ */
+function getUserTimezone() {
+    return localStorage.getItem('user_timezone') || userTimezone;
+}
+
+/**
+ * Set user's timezone preference
+ */
+function setUserTimezone(timezone) {
+    localStorage.setItem('user_timezone', timezone);
+    userTimezone = timezone;
+    // Update current date with new timezone
+    currentDate = new Date().toLocaleDateString('en-CA', { timeZone: userTimezone });
+}
+
+/**
+ * Get timezone abbreviation for display
+ */
+function getTimezoneAbbr() {
+    const tz = getUserTimezone();
+    const abbrs = {
+        'America/New_York': 'ET',
+        'America/Chicago': 'CT',
+        'America/Denver': 'MT',
+        'America/Los_Angeles': 'PT',
+        'America/Anchorage': 'AKT',
+        'America/Phoenix': 'MST',
+        'Pacific/Honolulu': 'HST',
+        'Europe/London': 'GMT',
+        'Europe/Paris': 'CET',
+        'Asia/Tokyo': 'JST',
+        'Asia/Shanghai': 'CST',
+        'Australia/Sydney': 'AEDT'
+    };
+    return abbrs[tz] || tz.split('/').pop();
+}
+
+/**
+ * Update timezone from selector
+ */
+function updateTimezone() {
+    const selector = document.getElementById('timezone-selector');
+    if (selector) {
+        const newTimezone = selector.value;
+        setUserTimezone(newTimezone);
+        
+        // Reload current page to apply new timezone
+        loadDailyData(currentDate);
+        
+        alert(`Timezone updated to ${newTimezone}\n\nAll times will now display in this timezone.`);
+    }
+}
+
+// ========== TIMEZONE HELPERS ==========
 
 /**
  * Convert a date/time string in CST to ISO string (UTC)
  * @param {string} dateTimeStr - Format: "YYYY-MM-DD HH:MM"
  * @returns {string} ISO string in UTC
  */
-function convertCSTToUTC(dateTimeStr) {
+/**
+ * Convert a date/time string in user's timezone to ISO string (UTC)
+ * @param {string} dateTimeStr - Format: "YYYY-MM-DD HH:MM"
+ * @returns {string} ISO string in UTC
+ */
+function convertLocalToUTC(dateTimeStr) {
     // Parse the input string
     const [datePart, timePart] = dateTimeStr.split(' ');
     const [year, month, day] = datePart.split('-').map(Number);
     const [hour, minute] = timePart.split(':').map(Number);
     
-    // Create a date string in ISO format but interpret it as CST
-    // CST is UTC-6, CDT is UTC-5. We'll use a library approach by specifying the timezone
+    // Create a date string that represents the local time in the user's timezone
     const dateString = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}T${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:00`;
     
-    // Parse as if it's in America/Chicago timezone
-    // This is a workaround: we'll manually adjust for CST offset
-    const tempDate = new Date(dateString + '-06:00'); // CST is UTC-6
+    // Create a date as if it's in the user's timezone
+    // We'll create it in UTC first, then adjust
+    const utcDate = new Date(dateString + 'Z');
     
-    return tempDate.toISOString();
+    // Get what time it would be in the user's timezone
+    const tzDate = new Date(utcDate.toLocaleString('en-US', { timeZone: getUserTimezone() }));
+    const localDate = new Date(dateString);
+    
+    // Calculate the difference and adjust
+    const diff = localDate - tzDate;
+    const adjustedDate = new Date(utcDate.getTime() - diff);
+    
+    return adjustedDate.toISOString();
 }
 
+// Alias for backward compatibility
+const convertCSTToUTC = convertLocalToUTC;
+
 /**
- * Convert a UTC ISO string to CST date/time string
+ * Convert a UTC ISO string to user's timezone date/time string
  * @param {string} isoString - ISO string in UTC
  * @returns {string} Format: "YYYY-MM-DD HH:MM"
  */
-function convertUTCToCST(isoString) {
+function convertUTCToLocal(isoString) {
     const date = new Date(isoString);
     
-    // Format date in CST timezone
-    const year = date.toLocaleString('en-US', { year: 'numeric', timeZone: 'America/Chicago' });
-    const month = date.toLocaleString('en-US', { month: '2-digit', timeZone: 'America/Chicago' });
-    const day = date.toLocaleString('en-US', { day: '2-digit', timeZone: 'America/Chicago' });
-    const hour = date.toLocaleString('en-US', { hour: '2-digit', hour12: false, timeZone: 'America/Chicago' });
-    const minute = date.toLocaleString('en-US', { minute: '2-digit', timeZone: 'America/Chicago' });
+    // Format date in user's timezone
+    const year = date.toLocaleString('en-US', { year: 'numeric', timeZone: userTimezone });
+    const month = date.toLocaleString('en-US', { month: '2-digit', timeZone: userTimezone });
+    const day = date.toLocaleString('en-US', { day: '2-digit', timeZone: userTimezone });
+    const hour = date.toLocaleString('en-US', { hour: '2-digit', hour12: false, timeZone: userTimezone });
+    const minute = date.toLocaleString('en-US', { minute: '2-digit', timeZone: userTimezone });
     
     return `${year}-${month}-${day} ${hour}:${minute}`;
 }
+
+// Alias for backward compatibility
+const convertUTCToCST = convertUTCToLocal;
 
 /**
  * Convert a UTC ISO string to user-friendly CST format with AM/PM
@@ -54,14 +133,14 @@ function convertUTCToCSTUserFriendly(isoString) {
     const date = new Date(isoString);
     
     // Format date in CST timezone with 12-hour format
-    const month = date.toLocaleString('en-US', { month: '2-digit', timeZone: 'America/Chicago' });
-    const day = date.toLocaleString('en-US', { day: '2-digit', timeZone: 'America/Chicago' });
-    const year = date.toLocaleString('en-US', { year: 'numeric', timeZone: 'America/Chicago' });
+    const month = date.toLocaleString('en-US', { month: '2-digit', timeZone: userTimezone });
+    const day = date.toLocaleString('en-US', { day: '2-digit', timeZone: userTimezone });
+    const year = date.toLocaleString('en-US', { year: 'numeric', timeZone: userTimezone });
     const time = date.toLocaleString('en-US', { 
         hour: 'numeric', 
         minute: '2-digit',
         hour12: true,
-        timeZone: 'America/Chicago' 
+        timeZone: userTimezone 
     });
     
     return `${month}/${day}/${year} ${time}`;
@@ -665,12 +744,12 @@ function renderSchedule(events) {
         const startTime = startDate.toLocaleTimeString('en-US', { 
             hour: '2-digit', 
             minute: '2-digit',
-            timeZone: 'America/Chicago'
+            timeZone: userTimezone
         });
         const endTime = endDate.toLocaleTimeString('en-US', { 
             hour: '2-digit', 
             minute: '2-digit',
-            timeZone: 'America/Chicago'
+            timeZone: userTimezone
         });
         
         return `
@@ -1109,10 +1188,10 @@ async function showAddEventModal() {
     const description = prompt('Description (optional):');
     const location = prompt('Location (optional):');
     
-    const startTimeStr = prompt('Start Time (MM/DD/YYYY h:MM AM/PM) [CST]:\nExample: 01/06/2026 2:30 PM', `${formatDateForInput(currentDate)} 9:00 AM`);
+    const startTimeStr = prompt('Start Time (MM/DD/YYYY h:MM AM/PM) [' + getTimezoneAbbr() + ']:\nExample: 01/06/2026 2:30 PM', `${formatDateForInput(currentDate)} 9:00 AM`);
     if (!startTimeStr) return;
     
-    const endTimeStr = prompt('End Time (MM/DD/YYYY h:MM AM/PM) [CST]:\nExample: 01/06/2026 3:30 PM', `${formatDateForInput(currentDate)} 10:00 AM`);
+    const endTimeStr = prompt('End Time (MM/DD/YYYY h:MM AM/PM) [' + getTimezoneAbbr() + ']:\nExample: 01/06/2026 3:30 PM', `${formatDateForInput(currentDate)} 10:00 AM`);
     if (!endTimeStr) return;
     
     try {
@@ -1273,10 +1352,10 @@ async function editScheduleEvent(eventId) {
         const currentStartCST = convertUTCToCSTUserFriendly(event.start_time);
         const currentEndCST = convertUTCToCSTUserFriendly(event.end_time);
         
-        const startTimeStr = prompt('Start Time (MM/DD/YYYY h:MM AM/PM) [CST]:\nExample: 01/06/2026 2:30 PM', currentStartCST);
+        const startTimeStr = prompt('Start Time (MM/DD/YYYY h:MM AM/PM) [' + getTimezoneAbbr() + ']:\nExample: 01/06/2026 2:30 PM', currentStartCST);
         if (!startTimeStr) return;
         
-        const endTimeStr = prompt('End Time (MM/DD/YYYY h:MM AM/PM) [CST]:\nExample: 01/06/2026 3:30 PM', currentEndCST);
+        const endTimeStr = prompt('End Time (MM/DD/YYYY h:MM AM/PM) [' + getTimezoneAbbr() + ']:\nExample: 01/06/2026 3:30 PM', currentEndCST);
         if (!endTimeStr) return;
         
         // Convert user-friendly format to 24-hour format, then to UTC
@@ -1582,6 +1661,12 @@ async function showManageSubscriptionsModal() {
     const modal = document.getElementById('manage-subscriptions-modal');
     const list = document.getElementById('subscriptions-list');
     const noSubs = document.getElementById('no-subscriptions');
+    
+    // Initialize timezone selector
+    const timezoneSelector = document.getElementById('timezone-selector');
+    if (timezoneSelector) {
+        timezoneSelector.value = getUserTimezone();
+    }
     
     const subscriptions = getCalendarSubscriptions();
     
