@@ -64,6 +64,75 @@ function updateTimezone() {
     }
 }
 
+/**
+ * Update timezone from settings page
+ */
+function updateTimezoneFromSettings() {
+    const selector = document.getElementById('settings-timezone-selector');
+    if (selector) {
+        const newTimezone = selector.value;
+        setUserTimezone(newTimezone);
+        
+        // Update the display
+        updateCurrentTimezoneDisplay();
+        
+        // Show success message
+        const display = document.getElementById('current-timezone-display');
+        const originalText = display.textContent;
+        display.textContent = '✓ Timezone updated successfully!';
+        display.classList.add('text-green-600', 'dark:text-green-400', 'font-medium');
+        
+        setTimeout(() => {
+            updateCurrentTimezoneDisplay();
+            display.classList.remove('text-green-600', 'dark:text-green-400', 'font-medium');
+        }, 2000);
+    }
+}
+
+/**
+ * Update the current timezone display
+ */
+function updateCurrentTimezoneDisplay() {
+    const display = document.getElementById('current-timezone-display');
+    if (display) {
+        const tz = getUserTimezone();
+        const tzName = getTimezoneName(tz);
+        display.textContent = `${tz} (${tzName})`;
+    }
+}
+
+/**
+ * Get friendly timezone name
+ */
+function getTimezoneName(tz) {
+    const names = {
+        'America/New_York': 'Eastern Time',
+        'America/Chicago': 'Central Time',
+        'America/Denver': 'Mountain Time',
+        'America/Los_Angeles': 'Pacific Time',
+        'America/Anchorage': 'Alaska Time',
+        'America/Phoenix': 'Mountain Standard Time (No DST)',
+        'Pacific/Honolulu': 'Hawaii Standard Time',
+        'Europe/London': 'Greenwich Mean Time',
+        'Europe/Paris': 'Central European Time',
+        'Asia/Tokyo': 'Japan Standard Time',
+        'Asia/Shanghai': 'China Standard Time',
+        'Australia/Sydney': 'Australian Eastern Time'
+    };
+    return names[tz] || tz.split('/').pop().replace(/_/g, ' ');
+}
+
+/**
+ * Initialize settings page
+ */
+function initializeSettingsPage() {
+    const selector = document.getElementById('settings-timezone-selector');
+    if (selector) {
+        selector.value = getUserTimezone();
+    }
+    updateCurrentTimezoneDisplay();
+}
+
 // ========== TIMEZONE HELPERS ==========
 
 /**
@@ -281,6 +350,8 @@ function showPage(page) {
     
     if (page === 'goals') {
         loadGoals(currentGoalType);
+    } else if (page === 'settings') {
+        initializeSettingsPage();
     }
 }
 
@@ -1661,12 +1732,6 @@ async function showManageSubscriptionsModal() {
     const modal = document.getElementById('manage-subscriptions-modal');
     const list = document.getElementById('subscriptions-list');
     const noSubs = document.getElementById('no-subscriptions');
-    
-    // Initialize timezone selector
-    const timezoneSelector = document.getElementById('timezone-selector');
-    if (timezoneSelector) {
-        timezoneSelector.value = getUserTimezone();
-    }
     
     const subscriptions = getCalendarSubscriptions();
     

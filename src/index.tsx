@@ -2122,6 +2122,9 @@ app.get('/', (c) => {
                         <a href="#" onclick="showPage('habits')" class="nav-link text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white text-sm font-medium">
                             Habits
                         </a>
+                        <button onclick="showPage('settings')" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 transition" title="Settings">
+                            ⚙️
+                        </button>
                         <button onclick="toggleDarkMode()" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300">
                             <span class="dark-mode-icon hidden dark:inline">☀️</span>
                             <span class="light-mode-icon dark:hidden">🌙</span>
@@ -2480,6 +2483,131 @@ app.get('/', (c) => {
                 </div>
             </div>
 
+            <!-- Settings Page -->
+            <div id="settings-page" class="page hidden">
+                <div class="max-w-4xl mx-auto mt-8">
+                    <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 mb-6">
+                        <div class="flex items-center gap-3 mb-6">
+                            <span class="text-3xl">⚙️</span>
+                            <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">Settings</h1>
+                        </div>
+                        
+                        <!-- Timezone Settings Section -->
+                        <div class="mb-8">
+                            <div class="border-b border-gray-200 dark:border-gray-700 pb-4 mb-6">
+                                <h2 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                                    🌍 Timezone
+                                </h2>
+                                <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                                    Set your timezone for calendar events and scheduling
+                                </p>
+                            </div>
+                            
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        Display Timezone
+                                    </label>
+                                    <select id="settings-timezone-selector" onchange="updateTimezoneFromSettings()" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                        <optgroup label="US Timezones">
+                                            <option value="America/New_York">Eastern Time (ET)</option>
+                                            <option value="America/Chicago" selected>Central Time (CT)</option>
+                                            <option value="America/Denver">Mountain Time (MT)</option>
+                                            <option value="America/Los_Angeles">Pacific Time (PT)</option>
+                                            <option value="America/Anchorage">Alaska Time (AKT)</option>
+                                            <option value="America/Adak">Hawaii-Aleutian Time (HT)</option>
+                                        </optgroup>
+                                        <optgroup label="Other US Territories">
+                                            <option value="America/Phoenix">Arizona (No DST)</option>
+                                            <option value="Pacific/Honolulu">Hawaii</option>
+                                        </optgroup>
+                                        <optgroup label="Major World Cities">
+                                            <option value="Europe/London">London (GMT/BST)</option>
+                                            <option value="Europe/Paris">Paris (CET/CEST)</option>
+                                            <option value="Europe/Berlin">Berlin (CET/CEST)</option>
+                                            <option value="Asia/Dubai">Dubai (GST)</option>
+                                            <option value="Asia/Shanghai">Shanghai (CST)</option>
+                                            <option value="Asia/Tokyo">Tokyo (JST)</option>
+                                            <option value="Asia/Singapore">Singapore (SGT)</option>
+                                            <option value="Asia/Kolkata">India (IST)</option>
+                                            <option value="Australia/Sydney">Sydney (AEDT/AEST)</option>
+                                        </optgroup>
+                                        <optgroup label="Americas">
+                                            <option value="America/Toronto">Toronto</option>
+                                            <option value="America/Mexico_City">Mexico City</option>
+                                            <option value="America/Sao_Paulo">São Paulo</option>
+                                            <option value="America/Argentina/Buenos_Aires">Buenos Aires</option>
+                                        </optgroup>
+                                    </select>
+                                    <p class="text-xs text-gray-600 dark:text-gray-400 mt-2">
+                                        All calendar times will be displayed in this timezone. Changes take effect immediately.
+                                    </p>
+                                </div>
+                                
+                                <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                                    <div class="flex items-start gap-3">
+                                        <span class="text-blue-600 dark:text-blue-400 text-xl">ℹ️</span>
+                                        <div>
+                                            <p class="text-sm font-medium text-gray-900 dark:text-white mb-1">Current Timezone</p>
+                                            <p id="current-timezone-display" class="text-sm text-gray-600 dark:text-gray-400">
+                                                America/Chicago (Central Time)
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Appearance Settings Section -->
+                        <div class="mb-8">
+                            <div class="border-b border-gray-200 dark:border-gray-700 pb-4 mb-6">
+                                <h2 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                                    🎨 Appearance
+                                </h2>
+                                <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                                    Customize the look and feel of your planner
+                                </p>
+                            </div>
+                            
+                            <div class="space-y-4">
+                                <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg">
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-900 dark:text-white">Dark Mode</p>
+                                        <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                                            Switch between light and dark theme
+                                        </p>
+                                    </div>
+                                    <button onclick="toggleDarkMode()" class="px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition text-gray-900 dark:text-white font-medium text-sm">
+                                        <span class="dark-mode-icon hidden dark:inline">☀️ Light</span>
+                                        <span class="light-mode-icon dark:hidden">🌙 Dark</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- About Section -->
+                        <div>
+                            <div class="border-b border-gray-200 dark:border-gray-700 pb-4 mb-6">
+                                <h2 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                                    📋 About
+                                </h2>
+                            </div>
+                            
+                            <div class="space-y-3 text-sm text-gray-600 dark:text-gray-400">
+                                <div class="flex justify-between">
+                                    <span>Version</span>
+                                    <span class="font-medium text-gray-900 dark:text-white">1.0.0</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>Last Updated</span>
+                                    <span class="font-medium text-gray-900 dark:text-white">January 2026</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Weekly Review Page -->
             <div id="weekly-page" class="page hidden">
                 <div class="max-w-4xl mx-auto mt-8">
@@ -2756,52 +2884,11 @@ app.get('/', (c) => {
         <div id="manage-subscriptions-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 dark:bg-opacity-70 z-50 flex items-center justify-center p-4">
             <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
                 <div class="p-6 border-b border-gray-200 dark:border-gray-700">
-                    <div class="flex justify-between items-center mb-4">
+                    <div class="flex justify-between items-center">
                         <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Manage Calendar Subscriptions</h3>
                         <button onclick="closeManageSubscriptionsModal()" class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 text-xl">
                             ×
                         </button>
-                    </div>
-                    
-                    <!-- Timezone Selector -->
-                    <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            🌍 Display Timezone
-                        </label>
-                        <select id="timezone-selector" onchange="updateTimezone()" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                            <optgroup label="US Timezones">
-                                <option value="America/New_York">Eastern Time (ET)</option>
-                                <option value="America/Chicago" selected>Central Time (CT)</option>
-                                <option value="America/Denver">Mountain Time (MT)</option>
-                                <option value="America/Los_Angeles">Pacific Time (PT)</option>
-                                <option value="America/Anchorage">Alaska Time (AKT)</option>
-                                <option value="America/Adak">Hawaii-Aleutian Time (HT)</option>
-                            </optgroup>
-                            <optgroup label="Other US Territories">
-                                <option value="America/Phoenix">Arizona (No DST)</option>
-                                <option value="Pacific/Honolulu">Hawaii</option>
-                            </optgroup>
-                            <optgroup label="Major World Cities">
-                                <option value="Europe/London">London (GMT/BST)</option>
-                                <option value="Europe/Paris">Paris (CET/CEST)</option>
-                                <option value="Europe/Berlin">Berlin (CET/CEST)</option>
-                                <option value="Asia/Dubai">Dubai (GST)</option>
-                                <option value="Asia/Shanghai">Shanghai (CST)</option>
-                                <option value="Asia/Tokyo">Tokyo (JST)</option>
-                                <option value="Asia/Singapore">Singapore (SGT)</option>
-                                <option value="Asia/Kolkata">India (IST)</option>
-                                <option value="Australia/Sydney">Sydney (AEDT/AEST)</option>
-                            </optgroup>
-                            <optgroup label="Americas">
-                                <option value="America/Toronto">Toronto</option>
-                                <option value="America/Mexico_City">Mexico City</option>
-                                <option value="America/Sao_Paulo">São Paulo</option>
-                                <option value="America/Argentina/Buenos_Aires">Buenos Aires</option>
-                            </optgroup>
-                        </select>
-                        <p class="text-xs text-gray-600 dark:text-gray-400 mt-2">
-                            All calendar times will be displayed in this timezone
-                        </p>
                     </div>
                 </div>
                 <div class="p-6">
