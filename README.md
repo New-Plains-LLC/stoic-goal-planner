@@ -46,12 +46,25 @@ The app includes daily affirmations, gratitude tracking, task management, daily 
 
 
 
+## ⚙️ Settings Page
+- **Centralized Settings**: All app preferences in one place, accessible via gear icon (⚙️) in navigation
+- **Timezone Configuration**: 
+  - Select from 40+ timezones (US and worldwide)
+  - Live preview of current timezone
+  - Visual feedback when settings updated
+  - All calendar times automatically adjust
+- **Appearance Settings**:
+  - Dark mode toggle
+  - Theme preferences saved automatically
+- **About Information**: Version and update info
+
 ## 🕐 Timezone Support
-- **CST/CDT Timezone**: All times displayed and entered in Central Standard Time (America/Chicago)
+- **User-Selectable Timezone**: Choose your timezone in Settings (⚙️ gear icon)
 - **User-Friendly Time Format**: Enter times in standard 12-hour format with AM/PM (e.g., "2:30 PM" instead of "14:30")
-- **Automatic Conversion**: Times stored in UTC, displayed in CST
+- **Automatic Conversion**: Times stored in UTC, displayed in your selected timezone
 - **Calendar Integration**: Properly handles timezone information from Google Calendar, Microsoft Calendar, and iCal feeds
 - **Time Entry Format**: `MM/DD/YYYY h:MM AM/PM` - Example: `01/06/2026 2:30 PM`
+- **Dynamic Labels**: Time prompts show your timezone (e.g., [CT], [ET], [PT])
 
 ## 📅 Auto-Sync Calendar Subscriptions
 - **Automatic Background Sync**: Calendar subscriptions auto-sync every 4 hours
