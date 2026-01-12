@@ -2,7 +2,7 @@
 let currentGoalType = 'long_term';
 
 // Timezone management
-let userTimezone = localStorage.getItem('user_timezone') || userTimezone;
+let userTimezone = localStorage.getItem('user_timezone') || 'America/Chicago';
 
 // Get current date in user's timezone
 let currentDate = new Date().toLocaleDateString('en-CA', { timeZone: userTimezone }); // en-CA gives YYYY-MM-DD format
