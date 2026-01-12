@@ -156,7 +156,13 @@ The app includes daily affirmations, gratitude tracking, task management, daily 
   - **iCal/ICS Calendar Subscription**:
     - Subscribe to any iCal calendar (Google, Outlook, Apple Calendar, etc.)
     - NO OAuth tokens needed for subscription
-    - **CST Timezone Support**: Properly handles Central Standard Time timezone conversion
+    - **Timezone Support**: ✅ **Enhanced (2026-01-11)**: User-selectable timezone for all calendar times
+      - Timezone selector in Calendar Management UI
+      - Supports all US timezones (ET, CT, MT, PT, AKT, HST)
+      - Supports major world cities (London, Paris, Tokyo, Sydney, etc.)
+      - Preference saved in localStorage
+      - Defaults to Central Time (CT) for existing users
+      - All times automatically adjust to selected timezone
     - **Auto-Sync Every 4 Hours**: ✅ Added (2026-01-06): Automatically refreshes calendar subscriptions
     - **Manage Subscriptions**: View, sync, and delete calendar subscriptions
       - ✅ **Fixed (2026-01-06)**: Now correctly displays all calendars with events, even if subscription info is not saved
@@ -170,11 +176,13 @@ The app includes daily affirmations, gratitude tracking, task management, daily 
   - **Add Events**: Create calendar events directly in the app (times in CST)
   - **Edit Events**: Update event details (times displayed and edited in CST)
   - **Delete Events**: Remove events with confirmation
-  - **CST Timezone**: ✅ **Fixed (2026-01-06)**: All calendar times displayed and edited in Central Standard Time
-    - Event creation: Enter times in CST format (YYYY-MM-DD HH:MM [CST])
-    - Event editing: Existing times shown in CST for easy editing
-    - Display: All event times shown in CST (12-hour format with AM/PM)
+  - **User Timezone Selection**: ✅ **Added (2026-01-11)**: All calendar times respect user's selected timezone
+    - Timezone selector in "Manage Calendar Subscriptions" modal
+    - Event creation: Enter times in your selected timezone (with automatic conversion)
+    - Event editing: Existing times shown in your timezone for easy editing
+    - Display: All event times shown in your timezone (12-hour format with AM/PM)
     - iCal parsing: Respects timezone information (TZID) from calendar feeds
+    - Dynamic timezone labels: Shows [CT], [ET], [PT], etc. in prompts
   - **Auto Token Storage**: Access token saved in localStorage for convenience
   - Schedule integration with real-time updates
 - **Daily Wins Reflection**: 
