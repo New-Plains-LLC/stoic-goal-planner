@@ -812,13 +812,19 @@ function renderSchedule(events) {
         const endDate = new Date(event.end_time);
         
         // Check if this is an all-day event
-        // All-day events typically have times at midnight and span multiple days or same day
+        // All-day events typically have times at midnight
+        // Check if start time is midnight (all-day event indicator)
         const startHour = startDate.getUTCHours();
         const startMinute = startDate.getUTCMinutes();
         const endHour = endDate.getUTCHours();
         const endMinute = endDate.getUTCMinutes();
         
-        const isAllDay = (startHour === 0 && startMinute === 0 && endHour === 0 && endMinute === 0);
+        // Calculate duration in hours
+        const durationHours = (endDate - startDate) / (1000 * 60 * 60);
+        
+        // All-day if: start at midnight AND (end at midnight OR duration is 24 hours)
+        const isAllDay = (startHour === 0 && startMinute === 0) && 
+                        ((endHour === 0 && endMinute === 0) || durationHours === 24);
         
         let timeDisplay;
         if (isAllDay) {
