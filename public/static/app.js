@@ -808,29 +808,64 @@ function renderSchedule(events) {
     }
     
     container.innerHTML = events.map(event => {
-        // Convert to CST timezone
         const startDate = new Date(event.start_time);
         const endDate = new Date(event.end_time);
         
-        const startTime = startDate.toLocaleTimeString('en-US', { 
-            hour: '2-digit', 
-            minute: '2-digit',
-            timeZone: userTimezone
-        });
-        const endTime = endDate.toLocaleTimeString('en-US', { 
-            hour: '2-digit', 
-            minute: '2-digit',
-            timeZone: userTimezone
-        });
+        // Check if this is an all-day event
+        // All-day events typically have times at midnight and span multiple days or same day
+        const startHour = startDate.getUTCHours();
+        const startMinute = startDate.getUTCMinutes();
+        const endHour = endDate.getUTCHours();
+        const endMinute = endDate.getUTCMinutes();
+        
+        const isAllDay = (startHour === 0 && startMinute === 0 && endHour === 0 && endMinute === 0);
+        
+        let timeDisplay;
+        if (isAllDay) {
+            // For all-day events, just show the date(s)
+            const startDateStr = startDate.toLocaleDateString('en-US', { 
+                month: 'short', 
+                day: 'numeric',
+                timeZone: 'UTC'  // Use UTC for all-day events
+            });
+            const endDateStr = endDate.toLocaleDateString('en-US', { 
+                month: 'short', 
+                day: 'numeric',
+                timeZone: 'UTC'
+            });
+            
+            if (startDateStr === endDateStr) {
+                timeDisplay = `All day - ${startDateStr}`;
+            } else {
+                timeDisplay = `${startDateStr} - ${endDateStr}`;
+            }
+        } else {
+            // Regular timed events - convert to user's timezone
+            const startTime = startDate.toLocaleTimeString('en-US', { 
+                hour: 'numeric', 
+                minute: '2-digit',
+                hour12: true,
+                timeZone: userTimezone
+            });
+            const endTime = endDate.toLocaleTimeString('en-US', { 
+                hour: 'numeric', 
+                minute: '2-digit',
+                hour12: true,
+                timeZone: userTimezone
+            });
+            
+            timeDisplay = `${startTime} - ${endTime}`;
+        }
         
         return `
             <div class="p-4 border-l-4 border-gray-400 dark:border-gray-500 bg-gray-50 dark:bg-gray-700 rounded-lg">
                 <div class="flex items-center justify-between">
                     <div class="flex-1">
                         <p class="font-medium text-gray-900 dark:text-white">${event.title}</p>
-                        <p class="text-sm text-gray-600 dark:text-gray-300 mt-1">${startTime} - ${endTime}</p>
-                        ${event.location ? `<p class="text-sm text-gray-500 dark:text-gray-400 mt-1">${event.location}</p>` : ''}
+                        <p class="text-sm text-gray-600 dark:text-gray-300 mt-1">${timeDisplay}</p>
+                        ${event.location ? `<p class="text-sm text-gray-500 dark:text-gray-400 mt-1">📍 ${event.location}</p>` : ''}
                         ${event.description ? `<p class="text-sm text-gray-600 dark:text-gray-300 mt-1">${event.description}</p>` : ''}
+                        ${event.calendar_source && event.calendar_source !== 'manual' ? `<p class="text-xs text-gray-500 dark:text-gray-400 mt-1">📅 ${event.calendar_source}</p>` : ''}
                     </div>
                     <div class="flex gap-2 ml-4">
                         <button onclick="editScheduleEvent(${event.id})" class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white text-sm">
