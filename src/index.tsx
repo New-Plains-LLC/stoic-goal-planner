@@ -2608,6 +2608,25 @@ app.get('/', (c) => {
                 </div>
             </div>
 
+            <!-- Habits Page -->
+            <div id="habits-page" class="page hidden">
+                <div class="max-w-4xl mx-auto mt-8">
+                    <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+                        <div class="flex justify-between items-center mb-6">
+                            <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">Habit Tracker</h1>
+                            <button onclick="showCreateHabitModal()" class="bg-gray-800 dark:bg-gray-700 text-white px-4 py-2 rounded-lg hover:bg-gray-700 dark:hover:bg-gray-600 transition text-sm font-medium">
+                                New Habit
+                            </button>
+                        </div>
+
+                        <!-- All Habits List -->
+                        <div id="all-habits-list" class="space-y-3">
+                            <!-- All habits will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Weekly Review Page -->
             <div id="weekly-page" class="page hidden">
                 <div class="max-w-4xl mx-auto mt-8">

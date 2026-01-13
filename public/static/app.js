@@ -352,6 +352,8 @@ function showPage(page) {
         loadGoals(currentGoalType);
     } else if (page === 'settings') {
         initializeSettingsPage();
+    } else if (page === 'habits') {
+        loadAllHabits();
     }
 }
 
@@ -2112,6 +2114,16 @@ async function createNewGoal() {
 
 // ========== HABIT TRACKER ==========
 
+async function loadAllHabits() {
+    try {
+        const response = await axios.get('/api/habits');
+        renderAllHabits(response.data);
+    } catch (error) {
+        console.error('Error loading all habits:', error);
+        alert('Failed to load habits');
+    }
+}
+
 async function loadHabits(date) {
     try {
         const response = await axios.get(`/api/habits/date/${date}`);
@@ -2175,6 +2187,64 @@ function renderHabits(habits) {
     initializeHabitDragDrop();
 }
 
+function renderAllHabits(habits) {
+    const container = document.getElementById('all-habits-list');
+    
+    if (!habits || habits.length === 0) {
+        container.innerHTML = '<p class="text-gray-500 dark:text-gray-400">No habits yet. Click "New Habit" to create one!</p>';
+        return;
+    }
+    
+    // Group habits by frequency
+    const dailyHabits = habits.filter(h => h.frequency === 'daily');
+    const weeklyHabits = habits.filter(h => h.frequency === 'weekly');
+    
+    let html = '';
+    
+    if (dailyHabits.length > 0) {
+        html += '<div class="mb-6"><h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-3">Daily Habits</h2>';
+        html += dailyHabits.map(habit => renderHabitCard(habit)).join('');
+        html += '</div>';
+    }
+    
+    if (weeklyHabits.length > 0) {
+        html += '<div class="mb-6"><h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-3">Weekly Habits</h2>';
+        html += weeklyHabits.map(habit => renderHabitCard(habit)).join('');
+        html += '</div>';
+    }
+    
+    container.innerHTML = html;
+}
+
+function renderHabitCard(habit) {
+    const categoryBadge = getCategoryBadgeColor(habit.category);
+    const isActive = habit.is_active;
+    
+    return `
+        <div class="p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-750 transition ${!isActive ? 'opacity-50' : ''}">
+            <div class="flex items-start justify-between">
+                <div class="flex-1">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="font-medium text-gray-900 dark:text-white">${habit.title}</span>
+                        <span class="text-xs px-2 py-0.5 rounded-full ${categoryBadge}">${getCategoryName(habit.category)}</span>
+                        ${habit.frequency === 'weekly' && habit.target_days ? `<span class="text-xs text-gray-500 dark:text-gray-400">${habit.target_days}</span>` : ''}
+                        ${!isActive ? '<span class="text-xs px-2 py-0.5 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400">Inactive</span>' : ''}
+                    </div>
+                    ${habit.description ? `<p class="text-sm text-gray-600 dark:text-gray-400">${habit.description}</p>` : ''}
+                </div>
+                <div class="flex gap-2 ml-4">
+                    <button onclick="editHabit(${habit.id})" class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 text-sm px-3 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700">
+                        Edit
+                    </button>
+                    <button onclick="deleteHabit(${habit.id})" class="text-gray-400 hover:text-red-600 dark:hover:text-red-400 text-sm px-3 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700">
+                        Delete
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
 async function toggleHabit(habitId, completed) {
     try {
         await axios.post(`/api/habits/${habitId}/complete`, {
@@ -2197,7 +2267,15 @@ async function deleteHabit(habitId) {
     
     try {
         await axios.delete(`/api/habits/${habitId}`);
-        loadHabits(currentDate);
+        
+        // Reload appropriate list based on current page
+        const currentPage = [...document.querySelectorAll('.page')].find(p => !p.classList.contains('hidden'));
+        if (currentPage && currentPage.id === 'habits-page') {
+            loadAllHabits();
+        } else {
+            loadHabits(currentDate);
+        }
+        
         alert('Habit deleted successfully!');
     } catch (error) {
         console.error('Error deleting habit:', error);
@@ -2257,7 +2335,15 @@ async function createNewHabit() {
         });
         
         closeCreateHabitModal();
-        loadHabits(currentDate);
+        
+        // Reload appropriate list based on current page
+        const currentPage = [...document.querySelectorAll('.page')].find(p => !p.classList.contains('hidden'));
+        if (currentPage && currentPage.id === 'habits-page') {
+            loadAllHabits();
+        } else {
+            loadHabits(currentDate);
+        }
+        
         alert('Habit created successfully!');
     } catch (error) {
         console.error('Error creating habit:', error);
@@ -2335,7 +2421,14 @@ async function updateHabit(habitId) {
             createBtn.setAttribute('onclick', 'createNewHabit()');
         }
         
-        loadHabits(currentDate);
+        // Reload appropriate list based on current page
+        const currentPage = [...document.querySelectorAll('.page')].find(p => !p.classList.contains('hidden'));
+        if (currentPage && currentPage.id === 'habits-page') {
+            loadAllHabits();
+        } else {
+            loadHabits(currentDate);
+        }
+        
         alert('Habit updated successfully!');
     } catch (error) {
         console.error('Error updating habit:', error);
