@@ -1,591 +1,237 @@
-# Goal Planner - Your Path to Success
+# Stoic Planner
 
-## Project Overview
-A comprehensive goal planning and tracking application that helps you manage your long-term vision through structured daily, weekly, quarterly, and annual goals. **Every goal is organized by life categories** (Spiritual/Faith, Financial/Career, Health/Fitness, Family/Friends, Learning, Fun/Travel, Other) to ensure balanced progress across all important areas of your life.
+A personal goal-planning and daily productivity app built on Cloudflare Pages + D1. Structured around Stoic philosophy, it connects your long-term vision to your daily actions through a hierarchy of goals, daily habits, and a weekly review practice.
 
-The app includes daily affirmations, gratitude tracking, task management, daily wins reflection, and weekly reviews.
-
-**Live Application**: https://3000-it4k2jghikjq8k7pi5xo6-2e1b9533.sandbox.novita.ai
-
-## ✨ NEW: Weekly Planner - Week-at-a-Glance View
-
-**Full weekly planning system with drag-and-drop scheduling:**
-
-### Features:
-- **📅 7-Day Grid View**: See Monday through Sunday at a glance
-- **🎯 Drag-and-Drop Scheduling**: 
-  - Drag goals/tasks from the unscheduled pool to any day
-  - Move items between days by dragging
-  - Drag back to unscheduled area to remove from schedule
-- **📊 Visual Feedback**:
-  - Goals show progress bars
-  - Tasks show priority badges
-  - Category color-coding throughout
-  - Blue highlight on drop zones while dragging
-- **🗓️ Week Navigation**: Navigate between weeks with Previous/Next buttons
-- **💾 Persistent Storage**: All scheduling saved to database
-- **🔄 Real-time Updates**: Changes save immediately via API
-
-### How to Use:
-1. **Go to Weekly Planner** page (navigation menu)
-2. **View Your Week**: See current week's Monday-Sunday grid
-3. **Add Weekly Goals**: Click "+ Add Goal" to create goals for this week
-4. **Schedule Items**: Drag goals/tasks from "Unscheduled Items" to any day
-5. **Reschedule**: Drag items between days to reorganize your week
-6. **Unschedule**: Drag items back to "Unscheduled Items" to remove from schedule
-7. **Navigate**: Use Previous/Next Week buttons to plan future weeks
-
-### What You See:
-- **Left Sidebar**: Unscheduled weekly goals & tasks waiting to be scheduled
-- **Main Grid**: 7 columns (Mon-Sun) showing scheduled items with dates
-- **Each Item Shows**:
-  - Category badge (color-coded)
-  - Title
-  - Progress bar (for goals) or Priority (for tasks)
-  - Drag handle (⋮⋮) for moving
-
-
-
-## ⚙️ Settings Page
-- **Centralized Settings**: All app preferences in one place, accessible via gear icon (⚙️) in navigation
-- **Timezone Configuration**: 
-  - Select from 40+ timezones (US and worldwide)
-  - Live preview of current timezone
-  - Visual feedback when settings updated
-  - All calendar times automatically adjust
-- **Appearance Settings**:
-  - Dark mode toggle
-  - Theme preferences saved automatically
-- **About Information**: Version and update info
-
-## 🕐 Timezone Support
-- **User-Selectable Timezone**: Choose your timezone in Settings (⚙️ gear icon)
-- **User-Friendly Time Format**: Enter times in standard 12-hour format with AM/PM (e.g., "2:30 PM" instead of "14:30")
-- **Automatic Conversion**: Times stored in UTC, displayed in your selected timezone
-- **Calendar Integration**: Properly handles timezone information from Google Calendar, Microsoft Calendar, and iCal feeds
-- **Time Entry Format**: `MM/DD/YYYY h:MM AM/PM` - Example: `01/06/2026 2:30 PM`
-- **Dynamic Labels**: Time prompts show your timezone (e.g., [CT], [ET], [PT])
-
-## 📅 Auto-Sync Calendar Subscriptions
-- **Automatic Background Sync**: Calendar subscriptions auto-sync every 4 hours
-- **Runs on Page Load**: Checks and syncs if needed when you open the app
-- **Silent Operation**: Syncs in background without interrupting your workflow
-- **Manual Sync**: Use "Sync Now" button in Manage Subscriptions for immediate refresh
-- **Console Logging**: Check browser console for sync status and next sync time
-
-## 🎨 Design Philosophy
-- **Elegant & Subdued**: Minimalist design with carefully chosen neutral colors
-- **Dark Mode Support**: Full light/dark mode toggle with refined color palette
-- **No Distracting Icons**: Clean, text-focused interface for better concentration
-- **Professional Aesthetics**: Sophisticated gray tones instead of bright accent colors
-- **Responsive Layout**: Side-by-side sections on desktop for maximum above-the-fold visibility, stacked on mobile
-- **Scrollable Modals**: All modals adapt to screen size with scrolling for smaller screens (max-h-[90vh])
-
-## ✅ Currently Completed Features
-
-### 🌓 Dark Mode
-- **Light/Dark Toggle**: Seamless switching between light and dark themes
-- **Persistent State**: Dark mode preference saved across sessions
-- **Refined Colors**: Subdued gray palette instead of bright indigo accents
-- **All Components**: Full dark mode support for modals, inputs, buttons, and cards
-
-### 🎯 Goal Management System with Life Categories
-- **7 Life Categories**: Every goal belongs to one category:
-  - 🙏 **Spiritual/Faith**: Prayer, meditation, spiritual growth
-  - 💰 **Financial/Career**: Business, income, career advancement
-  - ❤️ **Health/Fitness**: Exercise, nutrition, mental health
-  - 👨‍👩‍👧 **Family/Friends**: Relationships, quality time, connections
-  - 📚 **Learning**: Education, skills, personal development
-  - ✈️ **Fun/Travel**: Adventures, travel, hobbies, entertainment
-  - ⭐ **Other**: Miscellaneous goals and personal projects
-  
-- **Hierarchical Goal Structure**: Long-term → Annual → Quarterly → Weekly → Daily goals (all categorized)
-- **Category-Based Organization**: Goals displayed grouped by category with color-coding
-- **Goal Management**:
-  - **Create goals** at any level with category selection
-  - **Edit goals** - Click "Edit" on any goal to modify details, progress, or status
-  - **Delete goals** - Remove goals with confirmation (at any level: long-term, annual, quarterly, weekly)
-  - **Drag-and-drop reordering** - Grab the ⋮⋮ handle to reorder goals within each category
-  - Works across all goal types: Long-term, Annual, Quarterly, Weekly
-- **Repeating Weekly Goals** 🔄:
-  - **Set as Repeating**: When creating/editing weekly goals, check "Repeat every week" to mark them as recurring
-  - **Visual Indicator**: Repeating goals show a 🔄 Repeating badge
-  - **Week Navigation**: Navigate between weeks with Previous/Next Week buttons
-    - View date range for each week (e.g., "Jan 8 - Jan 14, Week 2, 2026")
-    - Navigate to next week on Sunday to start planning ahead
-    - Review past weeks to see completed goals
-  - **Sunday Planning Workflow**:
-    - On Sunday, click "Next Week →" to view upcoming week
-    - Add goals for the week ahead
-    - System won't trigger reset until you return on Monday
-  - **Automatic Weekly Reset** (Happens Monday when viewing Weekly goals):
-    - Archives all goals from the previous week (status changed to 'archived')
-    - Creates fresh copies of repeating goals at 0% progress for the new week
-    - Prompts you to carry forward incomplete non-repeating goals
-  - **Smart Carry-Forward**: For incomplete non-repeating goals, the system:
-    - Shows you a list of all incomplete goals from last week with their current progress
-    - Lets you choose which ones to carry forward to this week
-    - Preserves the progress percentage when carrying forward
-    - Archives goals you don't carry forward (you can still view them in archived status)
-  - **One-Click Manual Copy**: Use the "🔄 Copy Repeating Goals" button to manually trigger the copy if needed
-  - **Once Per Week**: Reset happens automatically once per week (tracked via localStorage)
-  - **Perfect for Routines**: Ideal for recurring weekly objectives like "Meal prep Sunday", "Weekly team meeting", "Review finances", etc.
-- **Goal Relationships**: Link child goals to parent goals for clear progression tracking
-- **Progress Tracking**: Visual progress bars showing completion percentage for each goal
-- **Goal Status Management**: Track goals as active, completed, or archived
-- **Custom Order**: Goals display in your preferred order within each category
-
-### 📅 Daily Planner
-- **Optimized Desktop Layout**: On larger screens (desktop/laptop), sections are arranged side-by-side to maximize visible content above the fold:
-  - **Row 1**: Affirmations & Gratitude | Tasks
-  - **Row 2**: Schedule | Habits
-  - **Row 3**: Daily Reflection (Today's Wins & Tomorrow's Wins side-by-side)
-  - Full-width sections: Header, Stoic Quote
-- **Mobile-Friendly**: All sections stack vertically on smaller screens
-- **Daily Entry System**: One entry per day with automatic date selection
-- **Stoic Quote of the Day**: Curated collection of 14 authentic Stoic quotes from Marcus Aurelius, Seneca, and Epictetus
-  - **Daily Rotation**: Quote changes every day based on date (consistent throughout the day)
-  - **Proper Attribution**: Each quote includes correct author and detailed historical context
-  - **Meaningful Descriptions**: In-depth explanations of Stoic philosophy and practical wisdom
-- **3 Daily Affirmations**: Space to write personal affirmations to start the day positively
-- **3 Gratitude Entries**: Track what you're grateful for each day
-- **Enhanced Task Management**:
-  - **Two buttons**: "New Task" (create fresh) + "Add from List" (select existing)
-  - **Split by Priority**: High priority tasks shown separately from others
-  - **Task Creation Modal**: Professional form with all fields (category, priority, description, due date, goal link)
-  - **Task Selector Modal**: Checkbox-based selection grouped by category
-  - **Automatic Addition**: Newly created tasks automatically added to today
-- **Task Completion Tracking**: Check off tasks as you complete them with category badges
-- **Daily Schedule with Calendar Integration**: 
-  - View and manage your calendar events
-  - **Sync Date Range**: ✅ **Expanded (2026-01-11)**: Syncs 30 days in the past + 90 days in the future (was 7 days future only)
-    - Now pulls in existing/historical appointments, not just newly created ones
-    - Total 120-day window ensures comprehensive calendar coverage
-  - **Google Calendar Sync**: Import events from Google Calendar with persistent token storage
-    - ⚠️ **Important**: OAuth Playground tokens expire after 1 hour
-    - Clear step-by-step instructions provided in the sync dialog
-    - Automatic token validation and helpful error messages
-    - Option to use stored token or enter a new one
-  - **iCal/ICS Calendar Subscription**:
-    - Subscribe to any iCal calendar (Google, Outlook, Apple Calendar, etc.)
-    - NO OAuth tokens needed for subscription
-    - **Timezone Support**: ✅ **Enhanced (2026-01-11)**: User-selectable timezone for all calendar times
-      - Timezone selector in Calendar Management UI
-      - Supports all US timezones (ET, CT, MT, PT, AKT, HST)
-      - Supports major world cities (London, Paris, Tokyo, Sydney, etc.)
-      - Preference saved in localStorage
-      - Defaults to Central Time (CT) for existing users
-      - All times automatically adjust to selected timezone
-    - **Auto-Sync Every 4 Hours**: ✅ Added (2026-01-06): Automatically refreshes calendar subscriptions
-    - **Manage Subscriptions**: View, sync, and delete calendar subscriptions
-      - ✅ **Fixed (2026-01-06)**: Now correctly displays all calendars with events, even if subscription info is not saved
-      - Shows "✓ Has Events" badge for calendars with synced events
-      - Shows calendar name, URL (when available), and subscription date
-      - "Sync Now" button for saved subscriptions to re-fetch latest events
-      - "Clear Events" button to remove all events from a calendar source
-      - Console logging for debugging subscription management
-    - **Duplicate Prevention**: Unique constraint ensures no duplicate events (by external_event_id)
-    - **Source Tracking**: Shows calendar name for each event (e.g., "Outlook Calendar")
-  - **Add Events**: Create calendar events directly in the app (times in CST)
-  - **Edit Events**: Update event details (times displayed and edited in CST)
-  - **Delete Events**: Remove events with confirmation
-  - **User Timezone Selection**: ✅ **Added (2026-01-11)**: All calendar times respect user's selected timezone
-    - Timezone selector in "Manage Calendar Subscriptions" modal
-    - Event creation: Enter times in your selected timezone (with automatic conversion)
-    - Event editing: Existing times shown in your timezone for easy editing
-    - Display: All event times shown in your timezone (12-hour format with AM/PM)
-    - iCal parsing: Respects timezone information (TZID) from calendar feeds
-    - Dynamic timezone labels: Shows [CT], [ET], [PT], etc. in prompts
-  - **Auto Token Storage**: Access token saved in localStorage for convenience
-  - Schedule integration with real-time updates
-- **Daily Wins Reflection**: 
-  - Record 3 wins from today at end of day
-  - Plan 3 wins for tomorrow
-- **Quick Access to Goals**: Navigate to goals page from daily view
-- **Mobile Responsive**: Fully responsive design for mobile devices
-
-### ✅ Habit Tracker
-- **Daily Habits**: Track habits that repeat every day
-- **Weekly Habits**: Track habits for specific days of the week
-- **Check-off System**: Simple checkbox interface to mark habits complete
-- **Category Organization**: Habits organized by the same 7 life categories
-- **Habit Management**:
-  - **Create new habits** with name, description, category, and frequency
-  - **Edit habits** - Click "Edit" to modify any habit details
-  - **Delete habits** (with confirmation)
-  - **Drag-and-drop reordering** - Grab the ⋮⋮ handle to reorder habits
-  - View only habits scheduled for today
-- **Automatic Scheduling**: Weekly habits only show on their target days
-- **Sample Habits Included**:
-  - Daily: Morning prayer, Read 30 min, Exercise, Drink water, Track expenses, Family time, Evening gratitude, Plan tomorrow
-  - Weekly: Meal prep (Sunday), Review finances (Sunday), Family game night (Friday), Deep work (Mon/Wed/Fri)
-- **Persistence**: Completion history tracked in database
-- **Visual Feedback**: Completed habits show with green background and strikethrough
-- **Custom Order**: Habits display in your preferred order every day
-
-### 📊 Weekly Review System
-- **Week Selection**: Choose any week for review or planning
-- **Evaluation Form**:
-  - Overall weekly evaluation
-  - Achievement documentation
-  - Challenges faced
-  - Next week planning
-  - **Leadership & Business Reflection** (4 strategic questions):
-    - How many decisions still bottleneck through me?
-    - What processes will break if I step back for 30 days?
-    - Where am I spending time that generates motion but isn't compounding?
-    - How comfortable am I when the business hums quietly?
-- **Historical Reviews**: Access past weekly evaluations
-
-### 🔄 Task Management
-- **Create New Tasks**: Create tasks directly from daily page (not just from goal list)
-- **Two Creation Methods**:
-  - **"New Task" button**: Create standalone task with full form (title, description, category, priority, due date)
-  - **"Add from List" button**: Select existing tasks with checkbox modal
-- **Task Creation Modal**: Professional form with dropdowns for category and priority
-- **Category Badges**: Visual category indicators on every task (color-coded)
-- **Priority-Based Sections**: 
-  - **High Priority Tasks**: Dedicated section with fire icon
-  - **Other Tasks**: Medium and low priority tasks in separate section
-- **Priority Levels**: High, medium, low priority tasks
-- **Due Date Tracking**: Set and track task deadlines
-- **Task Status**: Pending, in progress, completed, cancelled
-- **Daily Task Selection**: Choose which tasks to tackle each day with checkbox modal
-- **Task Completion**: Mark tasks complete with timestamp
-- **Category Filtering**: Filter tasks by life category
-- **Link to Goals**: Optionally link tasks to specific goals
-- **Automatic Task Rollover** 🔄:
-  - **Smart Prompt**: When you open the app each day, automatically checks for incomplete tasks from yesterday
-  - **One-Click Rollover**: Click "🔄 Rollover" button to move all incomplete tasks from yesterday to today
-  - **Manual Rollover**: Works any time, not just for yesterday
-  - **No Duplicates**: Won't add tasks that already exist on the target date
-  - **Fresh Start**: Incomplete tasks carry forward, completed tasks stay archived
-  - **Automatic Prompt**: Opens once per day asking if you want to roll over yesterday's incomplete tasks
-- **Task Rescheduling** 📅:
-  - **Reschedule Button**: Click the 📅 icon on any task to move it to a different date
-  - **Date Picker**: Enter target date in YYYY-MM-DD format (e.g., 2026-01-10)
-  - **Future Planning**: Schedule tasks for any future date
-  - **Flexible Workflow**: Move tasks forward if you're not ready to tackle them today
-  - **One-Click Operation**: Reschedule with confirmation, task moves instantly
-
-### 💾 Data Persistence
-- **Cloudflare D1 Database**: SQLite-based persistent storage
-- **Automatic Daily Entries**: Entries created automatically when accessing a new date
-- **Data Relationships**: Properly linked goals, tasks, and daily entries
-
-### 🎨 User Interface
-- **Elegant Design**: Subdued, sophisticated color palette with refined aesthetics
-- **Dark Mode**: Full dark mode support with automatic persistence (toggle in nav bar)
-- **Clean Interface**: Removed decorative icons for a more professional, minimalist look
-- **Border-Based Cards**: Subtle borders instead of heavy shadows for elegance
-- **Refined Typography**: Balanced font sizes and weights for readability
-- **Modal-Based Forms**: Professional modals for creating tasks and goals
-- **Task Selector Modal**: Checkbox-based selection with category grouping
-- **Color-Coded Elements**: Subtle visual indicators for priority, status, and category
-- **Smooth Transitions**: Seamless dark/light mode switching
-- **Priority Sections**: Clean separation of high vs other priority tasks
-- **Category Grouping**: Goals and tasks organized by life category
-- **Responsive Design**: Fully optimized for mobile and desktop
-
-## 📋 API Endpoints Summary
-
-### Goals API
-- `GET /api/goals` - Get all goals (filter by type, category, parent_id)
-- `GET /api/goals/:id` - Get single goal
-- `POST /api/goals` - Create new goal (requires category)
-- `PUT /api/goals/:id` - Update goal (can update category)
-- `DELETE /api/goals/:id` - Delete goal
-- `GET /api/goals/:id/hierarchy` - Get child goals
-
-### Tasks API
-- `GET /api/tasks` - Get all tasks (filter by goal_id, due_date, status, category)
-- `POST /api/tasks` - Create new task (with category)
-- `PUT /api/tasks/:id` - Update task (can update category)
-- `DELETE /api/tasks/:id` - Delete task
-
-### Daily Entries API
-- `GET /api/daily/:date` - Get complete daily entry (affirmations, gratitude, wins, tasks, schedule)
-- `PUT /api/daily/:date` - Update daily entry (quote, affirmations, gratitude, wins)
-- `POST /api/daily/:date/tasks/:taskId` - Add task to daily selection
-- `DELETE /api/daily/:date/tasks/:taskId` - Remove task from daily selection
-- `PUT /api/daily/:date/tasks/:taskId/complete` - Mark daily task as completed
-
-### Weekly Evaluations API
-- `GET /api/weekly/:year/:week` - Get weekly evaluation
-- `PUT /api/weekly/:year/:week` - Create or update weekly evaluation
-
-### Schedule API
-- `GET /api/schedule` - Get schedule events (filter by start_date, end_date)
-- `POST /api/schedule` - Create schedule event
-- `POST /api/calendar/sync` - Sync events from Google Calendar (requires access token)
-- `GET /api/calendar/auth-url` - Get instructions for Google Calendar OAuth setup
-
-### Stoic Quote API
-- `GET /api/quote/daily` - Get daily stoic quote with author and meaning (fixed and working)
-
-## 🚧 Features Not Yet Implemented
-
-### Enhanced Calendar Features
-- **Full OAuth Flow**: Automatic Google Calendar OAuth authentication (foundation built, needs client ID setup)
-- **Two-way Sync**: Push events from app to Google Calendar
-- **Multiple Calendar Support**: Connect multiple Google calendars
-- **Outlook Calendar**: Microsoft Outlook/Office 365 integration
-- **iCal Import/Export**: Import/export calendar files
-- **Recurring Events**: Support for repeating calendar events
-
-### Advanced Task Features
-- **Task Reminders**: Push notifications for upcoming tasks
-- **Task Dependencies**: Link tasks that must be completed in order
-- **Recurring Tasks**: Daily, weekly, monthly recurring tasks
-- **Task Templates**: Pre-defined task lists for common goals
-
-### Analytics & Insights
-- **Progress Charts**: Visual charts showing goal progress over time
-- **Completion Statistics**: Track completion rates for tasks and goals
-- **Streak Tracking**: Track daily entry streaks
-- **Goal Achievement History**: Timeline of completed goals
-
-### Enhanced Daily Features
-- **Time Blocking**: Allocate time blocks for each task
-- **Pomodoro Timer**: Built-in productivity timer
-- **Focus Mode**: Distraction-free daily view
-- **Daily Journaling**: Free-form journal entry
-
-### Collaboration Features
-- **Goal Sharing**: Share goals with accountability partners
-- **Team Goals**: Collaborative goals for teams
-- **Comments**: Add notes and comments on goals/tasks
-
-### Mobile Features
-- **Mobile App**: Native iOS/Android apps
-- **Push Notifications**: Mobile notifications for tasks and reviews
-- **Offline Mode**: Work offline and sync later
-
-## 🎯 Recommended Next Steps
-
-### Priority 1 (Essential) - ✅ ALL COMPLETED!
-1. ~~Improve Task Selector UI~~ ✅ Checkbox modal with category grouping
-2. ~~Add Task Creation from Daily Page~~ ✅ "New Task" button with full form
-3. ~~Improve Goal/Task Forms~~ ✅ Proper modals with dropdowns
-4. ~~Persistent Google Calendar Token~~ ✅ localStorage storage with auto-reuse
-5. ~~Calendar Event Edit/Delete~~ ✅ Edit and delete buttons on all events
-6. ~~Elegant UI with Subdued Colors~~ ✅ Gray palette, no icons
-7. ~~Dark Mode~~ ✅ Full light/dark theme support
-
-### Priority 2 (Important)
-1. **Complete Google Calendar OAuth**: Set up client ID/secret in Google Cloud Console
-2. **Progress Auto-calculation**: Auto-calculate goal progress based on child goal completion
-3. **Task Templates**: Create pre-defined task templates for common goals
-4. **Task Dependencies**: Link tasks that must be completed in order
-
-### Priority 3 (Enhancement)
-1. **Add Analytics Dashboard**: Visual charts showing progress trends
-2. **Implement Search**: Search across goals, tasks, and daily entries
-3. **Export Functionality**: Export goals and progress reports to PDF/CSV
-
-## 📊 Data Models
-
-### Goals Table
-- Hierarchical structure supporting 5 levels (long-term, annual, quarterly, weekly, daily)
-- **Category field**: spiritual, financial, health, family, learning, or other (REQUIRED)
-- Parent-child relationships via `parent_id`
-- Progress tracking (0-100%)
-- Status: active, completed, archived
-- Time-based attributes: year, quarter, week_number
-
-### Tasks Table
-- Linked to goals via `goal_id`
-- **Category field**: matches parent goal category or can be independent
-- Priority: low, medium, high
-- Status: pending, in_progress, completed, cancelled
-- Due date tracking
-
-### Daily Entries Table
-- One entry per unique date
-- Stores stoic quote and meaning
-- Related tables: affirmations (3), gratitude (3), wins (6 - today/tomorrow)
-
-### Daily Task Selections
-- Links tasks to specific dates
-- Tracks completion status per day
-
-### Schedule Events
-- Calendar events with start/end times
-- Support for external calendar sources
-
-### Weekly Evaluations
-- One evaluation per year/week combination
-- Structured review format
-
-## 🛠️ Technology Stack
-
-- **Backend**: Hono (lightweight web framework)
-- **Database**: Cloudflare D1 (SQLite)
-- **Frontend**: Vanilla JavaScript + Tailwind CSS
-- **Icons**: FontAwesome
-- **HTTP Client**: Axios
-- **Deployment**: Cloudflare Pages
-
-## 📝 User Guide
-
-### Getting Started
-1. **Access the App**: Open the application URL in your browser
-2. **Navigate Pages**: Use the top navigation to switch between Daily, Goals, and Weekly Review
-
-### Daily Planning Workflow
-1. **Morning Routine**:
-   - Read the Stoic quote for inspiration
-   - Write 3 personal affirmations
-   - List 3 things you're grateful for
-   - Review your goals (click to Goals page)
-   - Select tasks to tackle today
-   - Review your schedule
-
-2. **During the Day**:
-   - Check off tasks as you complete them
-   - Review goals multiple times to stay focused
-
-3. **Evening Routine**:
-   - Record 3 wins from today
-   - Plan 3 wins for tomorrow
-   - Review what worked and what didn't
-
-### Goal Management
-1. **Create Long-term Goals**: Start with your big picture vision in each life category:
-   - Spiritual/Faith: What's your spiritual journey?
-   - Financial/Career: What's your career/business vision?
-   - Health/Fitness: What's your health ideal?
-   - Family/Friends: What relationships do you want to nurture?
-   - Learning: What do you want to master?
-   - Other: What else matters to you?
-
-2. **Break Down to Annual**: What can you achieve this year in each category?
-3. **Define Quarterly Milestones**: 3-month chunks for each category
-4. **Plan Weekly Objectives**: Weekly focus areas across categories
-5. **Track Progress**: Update progress percentages regularly
-6. **Balance Check**: Ensure you have goals in multiple categories for life balance
-
-### Weekly Review
-1. **End of Week**: Fill out the weekly evaluation form
-2. **Reflect**: What worked? What didn't?
-3. **Plan**: Set up next week's goals and tasks
-
-### Google Calendar Integration
-1. **Get Access Token**:
-   - Go to [Google OAuth Playground](https://developers.google.com/oauthplayground/)
-   - Click the gear icon (⚙️) in top right
-   - Optionally check "Use your own OAuth credentials" (or leave unchecked to use default)
-   - In Step 1: Scroll to "Google Calendar API v3"
-   - Check the box for `calendar.readonly`
-   - Click "Authorize APIs" and sign in with your Google account
-   - Click "Allow" to grant permissions
-   - In Step 2: Click "Exchange authorization code for tokens"
-   - Copy the "Access token" value (NOT the refresh token)
-
-2. **Sync Calendar**:
-   - Click "Sync Google" button on Daily page
-   - Paste your access token when prompted
-   - Events from the next 7 days will be imported
-   - **Token is automatically saved** in localStorage for future syncs
-   
-3. **Token Management**:
-   - ⚠️ **Important**: OAuth Playground tokens expire after 1 hour
-   - When expired, the app will show a clear error message with instructions
-   - Click "Cancel" when asked to use stored token, then enter a new one
-   - Token persists between sessions until expiration
-   - If you see "Invalid or expired access token", follow the steps above to get a new token
-
-4. **Troubleshooting**:
-   - Make sure you authorized the `calendar.readonly` scope
-   - Tokens from OAuth Playground are for testing only (1 hour expiration)
-   - For production use, set up OAuth credentials in Google Cloud Console
-
-## 🚀 Deployment
-
-### Current Status
-- **Platform**: Cloudflare Pages (Local Development)
-- **Status**: ✅ Active and Running
-- **Database**: D1 Local SQLite (for development)
-- **Last Updated**: December 31, 2025
-
-### Local Development
-```bash
-# Install dependencies
-npm install
-
-# Apply database migrations
-npm run db:migrate:local
-
-# Seed sample data
-npm run db:seed
-
-# Build the application
-npm run build
-
-# Start development server
-npm run dev:sandbox
-# OR use PM2
-pm2 start ecosystem.config.cjs
-
-# Access at http://localhost:3000
-```
-
-### Production Deployment
-```bash
-# Set up Cloudflare API token
-# (Guide user to Deploy tab to configure API key)
-
-# Create production D1 database
-npx wrangler d1 create webapp-production
-# Update wrangler.jsonc with database_id
-
-# Apply migrations to production
-npm run db:migrate:prod
-
-# Deploy to Cloudflare Pages
-npm run deploy:prod
-```
-
-## 📂 Project Structure
-
-```
-webapp/
-├── src/
-│   └── index.tsx              # Main Hono backend with all API routes
-├── public/
-│   └── static/
-│       └── app.js             # Frontend JavaScript application
-├── migrations/
-│   └── 0001_initial_schema.sql # Database schema
-├── seed.sql                   # Sample data for testing
-├── ecosystem.config.cjs       # PM2 configuration
-├── wrangler.jsonc            # Cloudflare configuration
-├── package.json              # Dependencies and scripts
-└── README.md                 # This file
-```
-
-## 🔐 Data Privacy
-
-- All data stored locally in D1 database
-- No third-party analytics or tracking
-- Calendar integration requires user authorization
-- All data remains under user control
-
-## 🐛 Known Issues
-
-1. ~~Task selector uses browser prompt~~ (FIXED ✅ - Now uses checkbox modal)
-2. ~~Goal creation uses browser prompts~~ (FIXED ✅ - Now uses proper form modal)
-3. Google Calendar OAuth needs client ID/secret setup in Google Cloud Console (instructions provided)
-4. No offline support yet
-5. Mobile navigation could be improved with hamburger menu
-6. ~~Stoic quote API showing undefined author~~ (FIXED ✅)
-7. ~~Tasks not split by priority~~ (FIXED ✅ - High priority separate section)
-8. ~~Can't create tasks from daily page~~ (FIXED ✅ - "New Task" button added)
-
-## 📄 License
-
-This project is for personal use. Modify and extend as needed for your goal tracking needs.
+![License](https://img.shields.io/badge/license-MIT-gold) ![Platform](https://img.shields.io/badge/platform-Cloudflare%20Pages-orange)
 
 ---
 
-**Start your journey to success today! Set your goals, track your progress, and celebrate your wins!** 🎯✨
+## Features
+
+### Daily Planner
+- Stoic quote of the day with author and philosophical context (rotates daily)
+- Daily affirmations and gratitude entries
+- Task management with priority-based sections (high priority surfaced separately)
+- Daily schedule with calendar integration
+- End-of-day wins reflection + tomorrow planning
+
+### Goal Management
+Goals are organized across five time horizons — long-term, annual, quarterly, weekly, and daily — and across seven life categories:
+
+| Category | Focus |
+|---|---|
+| Spiritual / Faith | Prayer, meditation, spiritual growth |
+| Financial / Career | Business, income, career advancement |
+| Health / Fitness | Exercise, nutrition, mental health |
+| Family / Friends | Relationships, quality time |
+| Learning | Education, skills, personal development |
+| Fun / Travel | Adventures, hobbies, entertainment |
+| Other | Miscellaneous personal projects |
+
+- Hierarchical goal structure with parent-child linking
+- Progress tracking (0–100%) with visual progress bars
+- Drag-and-drop reordering within categories
+- Repeating weekly goals with automatic Monday reset
+- Smart carry-forward prompt for incomplete non-repeating goals
+
+### Habit Tracker
+- Daily and weekly habits with a simple check-off interface
+- Category organization matching the 7 life categories
+- Automatic scheduling (weekly habits only appear on their target days)
+- Drag-and-drop reordering
+- Completion history persisted in D1
+
+### Weekly Review
+- Structured weekly evaluation form
+- Tracks achievements, challenges, and next-week planning
+- Four strategic leadership/business reflection prompts
+- Historical reviews accessible by week
+
+### Calendar Integration
+- **iCal/ICS subscriptions** — subscribe to any calendar URL (Google, Outlook, Apple) with no OAuth required; auto-syncs every 4 hours
+- **Google Calendar sync** — import events via access token (OAuth Playground for testing; full OAuth setup via Google Cloud Console for production)
+- **Microsoft/Outlook sync** — import events via access token
+- User-selectable timezone with automatic conversion for all calendar times
+- Duplicate prevention via `external_event_id` unique constraint
+- 120-day sync window (30 days past + 90 days future)
+
+### Task Management
+- Create tasks standalone or linked to goals
+- Priority levels: high, medium, low
+- Due date tracking and rescheduling
+- Daily selection modal — pick which tasks to tackle today
+- Automatic rollover prompt for incomplete tasks from the previous day
+
+---
+
+## Security
+
+- **`APP_TOKEN` authentication** — set the `APP_TOKEN` Worker secret to protect your deployment with Bearer token auth. All `/api/*` routes are gated. Leave unset for open local development.
+- **XSS protection** — all user-sourced data is HTML-escaped before DOM insertion
+- **SSRF protection** — URL scheme validated before any outbound iCal fetch
+- **No internal error details** exposed in API responses (errors logged server-side only)
+
+See [`.env.example`](.env.example) for all required secrets.
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Backend | [Hono](https://hono.dev/) — lightweight TypeScript web framework |
+| Database | [Cloudflare D1](https://developers.cloudflare.com/d1/) — SQLite at the edge |
+| Frontend | Vanilla JavaScript + Tailwind CSS (CDN) |
+| Deployment | Cloudflare Pages |
+| HTTP client | Axios |
+
+---
+
+## Getting Started
+
+### Prerequisites
+- [Node.js](https://nodejs.org/) 18+
+- [Wrangler CLI](https://developers.cloudflare.com/workers/wrangler/) (`npm install -g wrangler`)
+- A Cloudflare account (free tier works)
+
+### Local Development
+
+```bash
+# Clone the repo
+git clone https://github.com/New-Plains-LLC/stoic-goal-planner.git
+cd stoic-goal-planner
+
+# Install dependencies
+npm install
+
+# Apply database migrations locally
+npx wrangler d1 migrations apply webapp-production --local
+
+# Seed sample data
+npx wrangler d1 execute webapp-production --local --file=./seed.sql
+
+# Start the dev server (Vite + Miniflare)
+npm run dev
+```
+
+Open [http://localhost:5173](http://localhost:5173).
+
+### Environment / Secrets
+
+Copy `.env.example` to `.dev.vars` for local development:
+
+```bash
+cp .env.example .dev.vars
+```
+
+Edit `.dev.vars` with your values. This file is gitignored — never commit it.
+
+| Variable | Required | Description |
+|---|---|---|
+| `APP_TOKEN` | Optional | Bearer token to protect the app. Generate with `openssl rand -hex 32`. Leave blank to disable auth. |
+| `GOOGLE_CLIENT_ID` | Optional | For full Google Calendar OAuth (not needed for OAuth Playground testing) |
+| `GOOGLE_CLIENT_SECRET` | Optional | For full Google Calendar OAuth |
+| `ANTHROPIC_API_KEY` | Optional | For AI-powered stoic quote generation |
+
+---
+
+## Production Deployment
+
+```bash
+# Authenticate with Cloudflare
+npx wrangler login
+
+# Create the production D1 database
+npx wrangler d1 create webapp-production
+
+# Update wrangler.jsonc with the returned database_id
+
+# Apply migrations to production
+npx wrangler d1 migrations apply webapp-production --remote
+
+# Deploy to Cloudflare Pages
+npm run deploy
+```
+
+Set secrets in the Cloudflare dashboard under **Workers & Pages → your project → Settings → Environment Variables**, or via CLI:
+
+```bash
+npx wrangler secret put APP_TOKEN
+```
+
+---
+
+## Project Structure
+
+```
+stoic-goal-planner/
+├── src/
+│   └── index.tsx          # Hono server — all API routes + HTML template
+├── public/
+│   └── static/
+│       ├── app.js         # Vanilla JS frontend
+│       └── style.css      # Minimal style overrides
+├── migrations/            # D1 SQL migration files
+├── seed.sql               # Sample data
+├── wrangler.jsonc         # Cloudflare configuration
+├── .env.example           # Secret keys reference (safe to commit)
+└── package.json
+```
+
+---
+
+## API Reference
+
+### Goals
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/api/goals` | List goals (filter: `type`, `category`, `parent_id`) |
+| `GET` | `/api/goals/:id` | Get single goal |
+| `POST` | `/api/goals` | Create goal |
+| `PUT` | `/api/goals/:id` | Update goal |
+| `DELETE` | `/api/goals/:id` | Delete goal |
+
+### Tasks
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/api/tasks` | List tasks (filter: `goal_id`, `due_date`, `status`, `category`) |
+| `POST` | `/api/tasks` | Create task |
+| `PUT` | `/api/tasks/:id` | Update task |
+| `DELETE` | `/api/tasks/:id` | Delete task |
+
+### Daily Entries
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/api/daily/:date` | Full daily entry (affirmations, gratitude, tasks, schedule) |
+| `PUT` | `/api/daily/:date` | Update daily entry |
+| `POST` | `/api/daily/:date/tasks/:taskId` | Add task to daily selection |
+| `DELETE` | `/api/daily/:date/tasks/:taskId` | Remove task from daily selection |
+| `PUT` | `/api/daily/:date/tasks/:taskId/complete` | Mark daily task complete |
+
+### Calendar
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/api/schedule` | Get events (filter: `start_date`, `end_date`) |
+| `POST` | `/api/schedule` | Create event |
+| `POST` | `/api/calendar/sync` | Sync from Google Calendar |
+| `POST` | `/api/calendar/sync/microsoft` | Sync from Microsoft Calendar |
+| `POST` | `/api/calendar/sync/ical` | Sync from iCal URL |
+
+### Other
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/api/quote/daily` | Daily stoic quote with author and context |
+| `GET` | `/api/weekly/:year/:week` | Weekly evaluation |
+| `PUT` | `/api/weekly/:year/:week` | Create or update weekly evaluation |
+
+---
+
+## Contributing
+
+Pull requests are welcome. For significant changes, open an issue first to discuss what you'd like to change.
+
+---
+
+## License
+
+[MIT](LICENSE) — free to use, modify, and distribute.
