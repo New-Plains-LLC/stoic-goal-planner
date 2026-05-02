@@ -1,6 +1,80 @@
 // Global state
 let currentGoalType = 'long_term';
 
+// ========== AUTH ==========
+
+const APP_TOKEN_KEY = 'stoic_app_token';
+
+function getAppToken() {
+    return localStorage.getItem(APP_TOKEN_KEY) || '';
+}
+
+function setAppToken(token) {
+    localStorage.setItem(APP_TOKEN_KEY, token);
+    axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+}
+
+function initAuth() {
+    const token = getAppToken();
+    if (token) {
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    }
+    // Intercept 401s — prompt user to enter their access token
+    axios.interceptors.response.use(
+        res => res,
+        err => {
+            if (err.response?.status === 401) {
+                showTokenPrompt();
+            }
+            return Promise.reject(err);
+        }
+    );
+}
+
+function showTokenPrompt() {
+    const existing = document.getElementById('token-prompt-overlay');
+    if (existing) return;
+    const overlay = document.createElement('div');
+    overlay.id = 'token-prompt-overlay';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:99999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px)';
+    overlay.innerHTML = `
+        <div style="background:#1E1E2A;border:1px solid rgba(201,168,76,0.35);border-radius:12px;padding:2rem;max-width:420px;width:90%;font-family:'Crimson Pro',Georgia,serif">
+            <h2 style="font-family:'Cinzel',serif;color:#C9A84C;letter-spacing:0.1em;font-size:1rem;margin-bottom:1rem">ACCESS REQUIRED</h2>
+            <p style="color:rgba(245,235,210,0.7);margin-bottom:1.5rem;font-size:15px">Enter your APP_TOKEN to access the planner.</p>
+            <input id="token-input" type="password" placeholder="Paste token here..."
+                style="width:100%;background:#191924;border:1px solid rgba(201,168,76,0.2);border-radius:8px;padding:0.75rem 1rem;color:rgba(245,235,210,0.9);font-family:'Crimson Pro',Georgia,serif;font-size:15px;box-sizing:border-box;margin-bottom:1rem"
+                onkeydown="if(event.key==='Enter')submitToken()" />
+            <button onclick="submitToken()"
+                style="background:#1E1E2A;border:1px solid rgba(201,168,76,0.5);color:#C9A84C;font-family:'Cinzel',serif;letter-spacing:0.1em;font-size:0.7rem;text-transform:uppercase;padding:0.6rem 1.5rem;border-radius:8px;cursor:pointer;width:100%">
+                Unlock
+            </button>
+        </div>`;
+    document.body.appendChild(overlay);
+    setTimeout(() => document.getElementById('token-input')?.focus(), 50);
+}
+
+function submitToken() {
+    const input = document.getElementById('token-input');
+    const token = input?.value?.trim();
+    if (!token) return;
+    setAppToken(token);
+    const overlay = document.getElementById('token-prompt-overlay');
+    if (overlay) overlay.remove();
+    location.reload();
+}
+
+// ========== END AUTH ==========
+
+function escapeHtml(str) {
+    if (str == null) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
 // Timezone management
 let userTimezone = localStorage.getItem('user_timezone') || 'America/Chicago';
 
@@ -276,9 +350,12 @@ if (localStorage.getItem('darkMode') === 'true') {
 
 // Initialize app
 document.addEventListener('DOMContentLoaded', () => {
+    // Initialize auth before any API calls
+    initAuth();
+
     // Set today's date
     document.getElementById('daily-date').value = currentDate;
-    
+
     // Load today's data
     loadDailyData(currentDate);
     
@@ -369,8 +446,12 @@ async function loadDailyData(date) {
             await loadStoicQuote(date);
         } else {
             document.getElementById('stoic-quote').textContent = data.stoic_quote;
-            document.getElementById('stoic-author').textContent = '— Author';
-            document.getElementById('stoic-meaning').textContent = data.stoic_quote_meaning || '';
+            const meaning = data.stoic_quote_meaning || '';
+            const colonIdx = meaning.indexOf(': ');
+            const author = colonIdx !== -1 ? meaning.slice(0, colonIdx) : '';
+            const meaningText = colonIdx !== -1 ? meaning.slice(colonIdx + 2) : meaning;
+            document.getElementById('stoic-author').textContent = author ? `— ${author}` : '';
+            document.getElementById('stoic-meaning').textContent = meaningText;
         }
         
         // Load affirmations
@@ -534,23 +615,23 @@ function renderDailyTasks(tasks) {
     const renderTaskCard = (task) => `
         <div class="flex items-center justify-between p-4 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 ${task.completed ? 'bg-green-50 dark:bg-green-900/20' : ''}">
             <div class="flex items-center space-x-3">
-                <input type="checkbox" 
+                <input type="checkbox"
                        ${task.completed ? 'checked' : ''}
                        onchange="toggleTaskComplete(${task.id}, this.checked)"
                        class="w-5 h-5 text-indigo-600 rounded">
                 <div>
                     <div class="flex items-center space-x-2">
-                        <p class="font-semibold ${task.completed ? 'line-through text-gray-500 dark:text-gray-400' : 'text-gray-900 dark:text-white'}">${task.title}</p>
+                        <p class="font-semibold ${task.completed ? 'line-through text-gray-500 dark:text-gray-400' : 'text-gray-900 dark:text-white'}">${escapeHtml(task.title)}</p>
                         ${task.category ? `<span class="px-2 py-0.5 text-xs font-semibold rounded-full ${getCategoryBadgeColor(task.category)}">${getCategoryName(task.category)}</span>` : ''}
                     </div>
-                    ${task.description ? `<p class="text-sm text-gray-600 dark:text-gray-400">${task.description}</p>` : ''}
+                    ${task.description ? `<p class="text-sm text-gray-600 dark:text-gray-400">${escapeHtml(task.description)}</p>` : ''}
                 </div>
             </div>
             <div class="flex items-center space-x-2">
                 <span class="px-3 py-1 text-xs font-semibold rounded-full ${getPriorityColor(task.priority)}">
                     ${task.priority}
                 </span>
-                <button onclick="rescheduleTask(${task.id}, '${task.title}')" class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300" title="Reschedule to another day">
+                <button onclick="rescheduleTask(${task.id}, '${escapeHtml(task.title)}')" class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300" title="Reschedule to another day">
                     📅
                 </button>
                 <button onclick="removeDailyTask(${task.id})" class="text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300" title="Remove from today">
@@ -748,13 +829,13 @@ async function showTaskSelector() {
                                     <input type="checkbox" class="task-checkbox w-5 h-5 text-indigo-600 rounded mr-3" data-goal-id="${goal.id}" />
                                     <div class="flex-1">
                                         <div class="flex items-center space-x-2">
-                                            <p class="font-semibold text-gray-900 dark:text-white">${goal.title}</p>
+                                            <p class="font-semibold text-gray-900 dark:text-white">${escapeHtml(goal.title)}</p>
                                             <span class="px-2 py-0.5 text-xs font-medium rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300">
                                                 ${goal.progress}%
                                             </span>
                                             ${goal.is_repeating ? `<span class="px-2 py-0.5 text-xs font-medium rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300">🔄</span>` : ''}
                                         </div>
-                                        ${goal.description ? `<p class="text-sm text-gray-600 dark:text-gray-300 mt-1">${goal.description}</p>` : ''}
+                                        ${goal.description ? `<p class="text-sm text-gray-600 dark:text-gray-300 mt-1">${escapeHtml(goal.description)}</p>` : ''}
                                     </div>
                                 </label>
                             `).join('')}
@@ -869,11 +950,11 @@ function renderSchedule(events) {
             <div class="p-4 border-l-4 border-gray-400 dark:border-gray-500 bg-gray-50 dark:bg-gray-700 rounded-lg">
                 <div class="flex items-center justify-between">
                     <div class="flex-1">
-                        <p class="font-medium text-gray-900 dark:text-white">${event.title}</p>
+                        <p class="font-medium text-gray-900 dark:text-white">${escapeHtml(event.title)}</p>
                         <p class="text-sm text-gray-600 dark:text-gray-300 mt-1">${timeDisplay}</p>
-                        ${event.location ? `<p class="text-sm text-gray-500 dark:text-gray-400 mt-1">📍 ${event.location}</p>` : ''}
-                        ${event.description ? `<p class="text-sm text-gray-600 dark:text-gray-300 mt-1">${event.description}</p>` : ''}
-                        ${event.calendar_source && event.calendar_source !== 'manual' ? `<p class="text-xs text-gray-500 dark:text-gray-400 mt-1">📅 ${event.calendar_source}</p>` : ''}
+                        ${event.location ? `<p class="text-sm text-gray-500 dark:text-gray-400 mt-1">📍 ${escapeHtml(event.location)}</p>` : ''}
+                        ${event.description ? `<p class="text-sm text-gray-600 dark:text-gray-300 mt-1">${escapeHtml(event.description)}</p>` : ''}
+                        ${event.calendar_source && event.calendar_source !== 'manual' ? `<p class="text-xs text-gray-500 dark:text-gray-400 mt-1">📅 ${escapeHtml(event.calendar_source)}</p>` : ''}
                     </div>
                     <div class="flex gap-2 ml-4">
                         <button onclick="editScheduleEvent(${event.id})" class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white text-sm">
@@ -1048,8 +1129,8 @@ function renderGoals(goals) {
                                     <div class="flex-1">
                                         <div class="flex items-start justify-between mb-4">
                                             <div class="flex-1">
-                                                <h4 class="text-lg font-bold text-gray-800 dark:text-gray-100 mb-2">${goal.title}</h4>
-                                                ${goal.description ? `<p class="text-gray-600 dark:text-gray-400 mb-3 text-sm">${goal.description}</p>` : ''}
+                                                <h4 class="text-lg font-bold text-gray-800 dark:text-gray-100 mb-2">${escapeHtml(goal.title)}</h4>
+                                                ${goal.description ? `<p class="text-gray-600 dark:text-gray-400 mb-3 text-sm">${escapeHtml(goal.description)}</p>` : ''}
                                                 <div class="flex items-center space-x-4 text-xs text-gray-500 dark:text-gray-400">
                                                     ${goal.year ? `<span>📅 ${goal.year}</span>` : ''}
                                                     ${goal.quarter ? `<span>📊 Q${goal.quarter}</span>` : ''}
@@ -1835,17 +1916,17 @@ async function showManageSubscriptionsModal() {
             
             list.innerHTML = allSubs.map((sub, index) => {
                 // For read-only entries (from database only), we need to encode the name properly for onclick
-                const escapedName = sub.readOnly ? sub.name.replace(/'/g, "\\'") : '';
-                
+                const escapedName = sub.readOnly ? escapeHtml(sub.name) : '';
+
                 return `
                 <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-gray-50 dark:bg-gray-700">
                     <div class="flex items-start justify-between gap-4">
                         <div class="flex-1 min-w-0">
                             <h4 class="font-medium text-gray-900 dark:text-white mb-1">
-                                ${sub.name}
+                                ${escapeHtml(sub.name)}
                                 ${sub.inDatabase ? '<span class="ml-2 text-xs bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-2 py-1 rounded">✓ Has Events</span>' : '<span class="ml-2 text-xs bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300 px-2 py-1 rounded">No Events</span>'}
                             </h4>
-                            <p class="text-sm text-gray-600 dark:text-gray-400 break-all mb-2">${sub.url}</p>
+                            <p class="text-sm text-gray-600 dark:text-gray-400 break-all mb-2">${escapeHtml(sub.url)}</p>
                             ${sub.addedAt ? `<p class="text-xs text-gray-500 dark:text-gray-500">Subscribed: ${new Date(sub.addedAt).toLocaleDateString()}</p>` : ''}
                             ${sub.readOnly ? `<p class="text-xs text-blue-600 dark:text-blue-400 mt-1">ℹ️ This calendar has events in the database</p>` : ''}
                         </div>
@@ -1883,8 +1964,8 @@ async function showManageSubscriptionsModal() {
                 <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-gray-50 dark:bg-gray-700">
                     <div class="flex items-start justify-between gap-4">
                         <div class="flex-1 min-w-0">
-                            <h4 class="font-medium text-gray-900 dark:text-white mb-1">${sub.name}</h4>
-                            <p class="text-sm text-gray-600 dark:text-gray-400 break-all mb-2">${sub.url}</p>
+                            <h4 class="font-medium text-gray-900 dark:text-white mb-1">${escapeHtml(sub.name)}</h4>
+                            <p class="text-sm text-gray-600 dark:text-gray-400 break-all mb-2">${escapeHtml(sub.url)}</p>
                             <p class="text-xs text-gray-500 dark:text-gray-500">Added: ${new Date(sub.addedAt).toLocaleDateString()}</p>
                         </div>
                         <div class="flex gap-2 flex-shrink-0">
@@ -1979,8 +2060,8 @@ async function showCreateTaskModal() {
         const goals = response.data;
         
         const goalSelect = document.getElementById('new-task-goal');
-        goalSelect.innerHTML = '<option value="">No goal (standalone task)</option>' + 
-            goals.map(goal => `<option value="${goal.id}">${goal.title} (${goal.goal_type})</option>`).join('');
+        goalSelect.innerHTML = '<option value="">No goal (standalone task)</option>' +
+            goals.map(goal => `<option value="${goal.id}">${escapeHtml(goal.title)} (${goal.goal_type})</option>`).join('');
         
         // Set default due date to today
         document.getElementById('new-task-due-date').value = currentDate;
@@ -2159,19 +2240,19 @@ function renderHabits(habits) {
                 <button class="drag-handle cursor-move text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" title="Drag to reorder">
                     ⋮⋮
                 </button>
-                <input 
-                    type="checkbox" 
+                <input
+                    type="checkbox"
                     ${isCompleted ? 'checked' : ''}
                     onchange="toggleHabit(${habit.id}, this.checked)"
                     class="w-5 h-5 rounded border-gray-300 text-gray-800 focus:ring-gray-400 cursor-pointer"
                 />
                 <div class="flex-1">
                     <div class="flex items-center gap-2">
-                        <span class="font-medium text-gray-900 dark:text-gray-100 ${isCompleted ? 'line-through opacity-60' : ''}">${habit.title}</span>
+                        <span class="font-medium text-gray-900 dark:text-gray-100 ${isCompleted ? 'line-through opacity-60' : ''}">${escapeHtml(habit.title)}</span>
                         <span class="text-xs px-2 py-0.5 rounded-full ${categoryBadge}">${getCategoryName(habit.category)}</span>
-                        ${habit.frequency === 'weekly' ? '<span class="text-xs text-gray-500 dark:text-gray-400">' + habit.target_days + '</span>' : ''}
+                        ${habit.frequency === 'weekly' ? '<span class="text-xs text-gray-500 dark:text-gray-400">' + escapeHtml(habit.target_days) + '</span>' : ''}
                     </div>
-                    ${habit.description ? `<p class="text-sm text-gray-600 dark:text-gray-400 mt-1">${habit.description}</p>` : ''}
+                    ${habit.description ? `<p class="text-sm text-gray-600 dark:text-gray-400 mt-1">${escapeHtml(habit.description)}</p>` : ''}
                 </div>
                 <button onclick="editHabit(${habit.id})" class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 text-sm">
                     Edit
@@ -2225,12 +2306,12 @@ function renderHabitCard(habit) {
             <div class="flex items-start justify-between">
                 <div class="flex-1">
                     <div class="flex items-center gap-2 mb-2">
-                        <span class="font-medium text-gray-900 dark:text-white">${habit.title}</span>
+                        <span class="font-medium text-gray-900 dark:text-white">${escapeHtml(habit.title)}</span>
                         <span class="text-xs px-2 py-0.5 rounded-full ${categoryBadge}">${getCategoryName(habit.category)}</span>
-                        ${habit.frequency === 'weekly' && habit.target_days ? `<span class="text-xs text-gray-500 dark:text-gray-400">${habit.target_days}</span>` : ''}
+                        ${habit.frequency === 'weekly' && habit.target_days ? `<span class="text-xs text-gray-500 dark:text-gray-400">${escapeHtml(habit.target_days)}</span>` : ''}
                         ${!isActive ? '<span class="text-xs px-2 py-0.5 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400">Inactive</span>' : ''}
                     </div>
-                    ${habit.description ? `<p class="text-sm text-gray-600 dark:text-gray-400">${habit.description}</p>` : ''}
+                    ${habit.description ? `<p class="text-sm text-gray-600 dark:text-gray-400">${escapeHtml(habit.description)}</p>` : ''}
                 </div>
                 <div class="flex gap-2 ml-4">
                     <button onclick="editHabit(${habit.id})" class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 text-sm px-3 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700">
@@ -2909,7 +2990,7 @@ function renderDayItems(day, items) {
                             </span>
                             ${priority ? `<span class="text-xs px-2 py-0.5 rounded ${getPriorityColor(priority)}">${priority}</span>` : ''}
                         </div>
-                        <p class="text-sm font-medium text-gray-900 dark:text-white truncate">${title}</p>
+                        <p class="text-sm font-medium text-gray-900 dark:text-white truncate">${escapeHtml(title)}</p>
                         ${progress !== null ? `
                             <div class="mt-1 flex items-center gap-2">
                                 <div class="flex-1 bg-gray-200 dark:bg-gray-600 rounded-full h-1">
@@ -2955,7 +3036,7 @@ function renderUnscheduledItems() {
                         </span>
                         <span class="text-xs text-blue-600 dark:text-blue-400">Goal</span>
                     </div>
-                    <p class="text-sm font-medium text-gray-900 dark:text-white truncate">${goal.title}</p>
+                    <p class="text-sm font-medium text-gray-900 dark:text-white truncate">${escapeHtml(goal.title)}</p>
                     <div class="mt-1 flex items-center gap-2">
                         <div class="flex-1 bg-gray-200 dark:bg-gray-600 rounded-full h-1">
                             <div class="bg-blue-600 h-1 rounded-full" style="width: ${goal.progress}%"></div>
@@ -2966,7 +3047,7 @@ function renderUnscheduledItems() {
             </div>
         </div>
     `).join('');
-    
+
     const tasksHTML = tasks.map(task => `
         <div class="planner-item border border-gray-300 dark:border-gray-600 rounded-lg p-2 bg-white dark:bg-gray-700 cursor-move hover:shadow-md transition"
              draggable="true"
@@ -2982,7 +3063,7 @@ function renderUnscheduledItems() {
                         </span>
                         <span class="text-xs px-2 py-0.5 rounded ${getPriorityColor(task.priority)}">${task.priority}</span>
                     </div>
-                    <p class="text-sm font-medium text-gray-900 dark:text-white truncate">${task.title}</p>
+                    <p class="text-sm font-medium text-gray-900 dark:text-white truncate">${escapeHtml(task.title)}</p>
                 </div>
             </div>
         </div>

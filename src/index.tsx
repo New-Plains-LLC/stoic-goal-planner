@@ -4,12 +4,26 @@ import { serveStatic } from 'hono/cloudflare-workers'
 
 type Bindings = {
   DB: D1Database;
+  APP_TOKEN?: string;
 }
 
 const app = new Hono<{ Bindings: Bindings }>()
 
 // Enable CORS for API routes
 app.use('/api/*', cors())
+
+// Auth middleware — set APP_TOKEN as a Worker secret to protect all API routes.
+// When APP_TOKEN is not set (local dev), the middleware is a no-op.
+app.use('/api/*', async (c, next) => {
+  if (c.env.APP_TOKEN && c.req.method !== 'OPTIONS') {
+    const auth = c.req.header('Authorization')
+    const token = auth?.startsWith('Bearer ') ? auth.slice(7) : null
+    if (token !== c.env.APP_TOKEN) {
+      return c.json({ error: 'Unauthorized' }, 401)
+    }
+  }
+  await next()
+})
 
 // Serve static files
 app.use('/static/*', serveStatic({ root: './public' }))
@@ -164,10 +178,7 @@ app.delete('/api/goals/:id', async (c) => {
     return c.json({ success: true, message: 'Goal and all sub-goals deleted successfully' });
   } catch (error) {
     console.error('Error deleting goal:', error);
-    return c.json({ 
-      error: 'Failed to delete goal',
-      details: error.message 
-    }, 500);
+    return c.json({ error: 'Failed to delete goal' }, 500);
   }
 });
 
@@ -651,10 +662,7 @@ app.post('/api/daily/:date/rollover', async (c) => {
     
   } catch (error: any) {
     console.error('Error rolling over tasks:', error);
-    return c.json({ 
-      error: 'Failed to roll over tasks', 
-      details: error.message 
-    }, 500);
+    return c.json({ error: 'Failed to roll over tasks' }, 500);
   }
 });
 
@@ -795,10 +803,7 @@ app.post('/api/goals/copy-repeating/:year/:week', async (c) => {
     
   } catch (error: any) {
     console.error('Error copying repeating goals:', error);
-    return c.json({ 
-      error: 'Failed to copy repeating goals', 
-      details: error.message 
-    }, 500);
+    return c.json({ error: 'Failed to copy repeating goals' }, 500);
   }
 });
 
@@ -895,10 +900,7 @@ app.post('/api/goals/weekly-reset/:year/:week', async (c) => {
     
   } catch (error: any) {
     console.error('Error resetting weekly goals:', error);
-    return c.json({ 
-      error: 'Failed to reset weekly goals', 
-      details: error.message 
-    }, 500);
+    return c.json({ error: 'Failed to reset weekly goals' }, 500);
   }
 });
 
@@ -954,10 +956,7 @@ app.post('/api/goals/carry-forward/:year/:week', async (c) => {
     
   } catch (error: any) {
     console.error('Error carrying forward goals:', error);
-    return c.json({ 
-      error: 'Failed to carry forward goals', 
-      details: error.message 
-    }, 500);
+    return c.json({ error: 'Failed to carry forward goals' }, 500);
   }
 });
 
@@ -1018,7 +1017,7 @@ app.delete('/api/schedule/source/:source', async (c) => {
     return c.json({ success: true, message: `Deleted all events from ${source}` });
   } catch (error) {
     console.error('Error deleting calendar events:', error);
-    return c.json({ error: 'Failed to delete events', details: error.message }, 500);
+    return c.json({ error: 'Failed to delete events' }, 500);
   }
 });
 
@@ -1546,7 +1545,6 @@ app.get('/api/calendar/oauth/callback', async (c) => {
                 <i class="fas fa-check-circle text-6xl text-green-500 mb-4"></i>
                 <h1 class="text-2xl font-bold text-gray-800 mb-2">Calendar Connected!</h1>
                 <p class="text-gray-600 mb-6">Your Google Calendar has been connected successfully.</p>
-                <p class="text-sm text-gray-500 mb-4">Authorization code: <code class="bg-gray-100 px-2 py-1 rounded">${code.substring(0, 20)}...</code></p>
                 <button onclick="window.close()" class="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700">
                     Close Window
                 </button>
@@ -1664,8 +1662,8 @@ app.post('/api/calendar/sync', async (c) => {
     console.error('Error details:', error.stack || error);
     
     let errorMessage = 'Failed to sync calendar';
-    let details = error.message || 'Unknown error';
-    
+    let details = 'An unexpected error occurred';
+
     // Check if error is from Google API
     if (error.message && error.message.includes('401')) {
       errorMessage = 'Invalid or expired access token';
@@ -1681,10 +1679,9 @@ app.post('/api/calendar/sync', async (c) => {
       details = 'Please check your Google Calendar settings';
     }
     
-    return c.json({ 
-      error: errorMessage, 
+    return c.json({
+      error: errorMessage,
       details: details,
-      fullError: error.message
     }, 500);
   }
 });
@@ -1787,7 +1784,7 @@ app.post('/api/calendar/sync/microsoft', async (c) => {
     console.error('Error details:', error.stack || error);
     
     let errorMessage = 'Failed to sync Microsoft Calendar';
-    let details = error.message || 'Unknown error';
+    let details = 'An unexpected error occurred';
     
     // Check if error is from Microsoft API
     if (error.message && error.message.includes('401')) {
@@ -1798,10 +1795,9 @@ app.post('/api/calendar/sync/microsoft', async (c) => {
       details = 'You must authorize the Calendars.Read scope';
     }
     
-    return c.json({ 
-      error: errorMessage, 
+    return c.json({
+      error: errorMessage,
       details: details,
-      fullError: error.message
     }, 500);
   }
 });
@@ -1816,7 +1812,16 @@ app.post('/api/calendar/sync/ical', async (c) => {
   if (!icalUrl) {
     return c.json({ error: 'iCal URL required' }, 400);
   }
-  
+
+  try {
+    const parsedUrl = new URL(icalUrl);
+    if (!['https:', 'http:'].includes(parsedUrl.protocol)) {
+      return c.json({ error: 'Only http/https URLs are supported' }, 400);
+    }
+  } catch {
+    return c.json({ error: 'Invalid URL' }, 400);
+  }
+
   try {
     // Fetch the iCal data
     const icalResponse = await fetch(icalUrl);
@@ -1893,10 +1898,7 @@ app.post('/api/calendar/sync/ical', async (c) => {
     
   } catch (error) {
     console.error('iCal sync error:', error);
-    return c.json({ 
-      error: 'Failed to sync calendar subscription',
-      details: error.message 
-    }, 500);
+    return c.json({ error: 'Failed to sync calendar subscription' }, 500);
   }
 });
 
@@ -2027,7 +2029,10 @@ app.get('/', (c) => {
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Goal Planner - Your Path to Success</title>
+        <title>Stoic Planner — Live Deliberately</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&display=swap" rel="stylesheet">
         <script src="https://cdn.tailwindcss.com"></script>
         <script>
             tailwind.config = {
@@ -2036,16 +2041,16 @@ app.get('/', (c) => {
                     extend: {
                         colors: {
                             primary: {
-                                50: '#f5f7fa',
-                                100: '#ebeef3',
-                                200: '#d3dae5',
-                                300: '#adb9cd',
-                                400: '#8193b0',
-                                500: '#607396',
-                                600: '#4c5c7d',
-                                700: '#3f4c66',
-                                800: '#374156',
-                                900: '#303949',
+                                50:  '#fdf8ee',
+                                100: '#f5e6cc',
+                                200: '#e8cc94',
+                                300: '#d9ae5c',
+                                400: '#c9a84c',
+                                500: '#b8922e',
+                                600: '#9a7820',
+                                700: '#7a5e18',
+                                800: '#5c4612',
+                                900: '#3d2e0b',
                             }
                         }
                     }
@@ -2053,58 +2058,472 @@ app.get('/', (c) => {
             }
         </script>
         <style>
-            * {
-                transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+            /* ═══════════════════════════════════════════
+               THE CODEX — Design System
+               Dark Stoic · Cinzel + Crimson Pro · Amber
+            ═══════════════════════════════════════════ */
+
+            :root {
+                --bg-base:      #0F0F17;
+                --bg-surface:   #16161F;
+                --bg-elevated:  #1E1E2A;
+                --bg-hover:     #252532;
+                --bg-input:     #191924;
+                --border-faint: rgba(201,168,76,0.07);
+                --border-soft:  rgba(201,168,76,0.14);
+                --border-med:   rgba(201,168,76,0.28);
+                --border-bold:  rgba(201,168,76,0.55);
+                --gold:         #C9A84C;
+                --gold-bright:  #E6C96A;
+                --gold-dim:     rgba(201,168,76,0.35);
+                --gold-glow:    rgba(201,168,76,0.18);
+                --text-high:    rgba(245,235,210,1.00);
+                --text-mid:     rgba(245,235,210,0.70);
+                --text-low:     rgba(245,235,210,0.42);
+                --text-ghost:   rgba(245,235,210,0.22);
+                --font-display: 'Cinzel', 'Times New Roman', serif;
+                --font-body:    'Crimson Pro', Georgia, serif;
+                --shadow-card:  0 1px 0 var(--border-faint), 0 8px 40px rgba(0,0,0,0.55);
+                --shadow-lift:  0 0 0 1px var(--border-med), 0 16px 56px rgba(0,0,0,0.7);
+                --radius:       10px;
             }
-            
+
+            /* ── BASE ──────────────────────────────── */
+
+            html { scroll-behavior: smooth; }
+
             body {
-                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+                font-family: var(--font-body) !important;
+                font-size: 16px !important;
+                line-height: 1.65 !important;
+                background-color: var(--bg-base) !important;
+                color: var(--text-high) !important;
+                min-height: 100vh;
             }
-            
-            .card {
-                transition: all 0.2s ease;
+
+            /* Grain texture overlay */
+            body::after {
+                content: '';
+                position: fixed;
+                inset: 0;
+                background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+                opacity: 0.04;
+                pointer-events: none;
+                z-index: 9998;
             }
-            
-            .card:hover {
+
+            * {
+                transition: background-color 0.22s ease, color 0.22s ease,
+                            border-color 0.22s ease, box-shadow 0.22s ease,
+                            opacity 0.22s ease !important;
+            }
+
+            /* ── SCROLLBAR ─────────────────────────── */
+
+            ::-webkit-scrollbar { width: 5px; }
+            ::-webkit-scrollbar-track { background: var(--bg-base); }
+            ::-webkit-scrollbar-thumb { background: var(--border-med); border-radius: 3px; }
+            ::-webkit-scrollbar-thumb:hover { background: var(--gold-dim); }
+
+            /* ── TYPOGRAPHY ────────────────────────── */
+
+            h1, h2, h3, h4, h5, h6,
+            .text-2xl, .text-xl {
+                font-family: var(--font-display) !important;
+                color: var(--text-high) !important;
+                letter-spacing: 0.05em;
+                font-weight: 500;
+            }
+
+            p, span, label, li, td, th,
+            input, textarea, select, option {
+                font-family: var(--font-body) !important;
+            }
+
+            /* ── BACKGROUNDS ───────────────────────── */
+
+            body,
+            .bg-gray-50, .bg-gray-100 {
+                background-color: var(--bg-base) !important;
+            }
+
+            .bg-white, .dark .bg-gray-800,
+            .bg-gray-800 {
+                background-color: var(--bg-surface) !important;
+            }
+
+            .bg-gray-700, .dark .bg-gray-700,
+            .bg-gray-900, .dark .bg-gray-900 {
+                background-color: var(--bg-elevated) !important;
+            }
+
+            .hover\:bg-gray-100:hover,
+            .dark .hover\:bg-gray-700:hover,
+            .hover\:bg-gray-50:hover {
+                background-color: var(--bg-hover) !important;
+            }
+
+            /* ── BORDERS ───────────────────────────── */
+
+            .border-gray-200, .dark .border-gray-700,
+            .border-gray-300, .dark .border-gray-600,
+            .border-gray-600, .border-gray-700 {
+                border-color: var(--border-soft) !important;
+            }
+
+            /* ── TEXT COLORS ───────────────────────── */
+
+            .text-gray-900, .dark .text-white,
+            .text-white, .dark .text-gray-100 {
+                color: var(--text-high) !important;
+            }
+
+            .text-gray-700, .dark .text-gray-300,
+            .text-gray-600, .dark .text-gray-400 {
+                color: var(--text-mid) !important;
+            }
+
+            .text-gray-500, .dark .text-gray-500,
+            .text-gray-400, .dark .text-gray-600 {
+                color: var(--text-low) !important;
+            }
+
+            /* ── NAV ───────────────────────────────── */
+
+            nav {
+                background: rgba(12, 12, 18, 0.88) !important;
+                border-bottom: 1px solid var(--border-soft) !important;
+                backdrop-filter: blur(24px) saturate(1.4) !important;
+                -webkit-backdrop-filter: blur(24px) saturate(1.4) !important;
+                box-shadow: 0 1px 0 var(--border-faint), 0 6px 32px rgba(0,0,0,0.5) !important;
+            }
+
+            /* Brand mark */
+            nav .text-xl.font-semibold {
+                font-family: var(--font-display) !important;
+                color: var(--gold) !important;
+                letter-spacing: 0.18em !important;
+                font-size: 0.8rem !important;
+                font-weight: 600 !important;
+                text-transform: uppercase;
+            }
+
+            /* Nav links */
+            nav a.nav-link {
+                font-family: var(--font-display) !important;
+                font-size: 0.68rem !important;
+                letter-spacing: 0.14em !important;
+                text-transform: uppercase !important;
+                color: var(--text-low) !important;
+                font-weight: 400 !important;
+                padding-bottom: 2px;
+                border-bottom: 1px solid transparent;
+                transition: color 0.2s ease, border-color 0.2s ease !important;
+            }
+
+            nav a.nav-link:hover {
+                color: var(--gold) !important;
+                border-bottom-color: var(--gold-dim) !important;
+            }
+
+            nav button {
+                color: var(--text-low) !important;
+            }
+
+            nav button:hover {
+                background-color: var(--bg-elevated) !important;
+                color: var(--gold) !important;
+            }
+
+            /* ── CARDS ─────────────────────────────── */
+
+            .rounded-xl, .rounded-lg {
+                background-color: var(--bg-surface) !important;
+                border-color: var(--border-soft) !important;
+                box-shadow: var(--shadow-card) !important;
+            }
+
+            .card:hover, .rounded-xl:hover, .rounded-lg.card:hover {
+                border-color: var(--border-med) !important;
+                box-shadow: var(--shadow-lift) !important;
                 transform: translateY(-1px);
             }
-            
-            /* Remove all transform effects that might be jarring */
-            .nav-link {
-                transition: color 0.2s ease;
+
+            /* ── STOIC QUOTE — STAR OF THE SHOW ────── */
+
+            div:has(#stoic-quote) {
+                background: linear-gradient(
+                    160deg,
+                    #181520 0%,
+                    #1C1810 40%,
+                    #181520 100%
+                ) !important;
+                border-color: var(--border-med) !important;
+                position: relative;
+                overflow: hidden;
             }
-            
-            /* Smooth scroll */
-            html {
-                scroll-behavior: smooth;
+
+            /* Amber pulse — eternal flame */
+            div:has(#stoic-quote)::before {
+                content: '';
+                position: absolute;
+                top: -40%;
+                left: 50%;
+                transform: translateX(-50%);
+                width: 70%;
+                height: 180%;
+                background: radial-gradient(
+                    ellipse at center,
+                    rgba(201,168,76,0.10) 0%,
+                    rgba(201,168,76,0.04) 40%,
+                    transparent 70%
+                );
+                pointer-events: none;
+                animation: flame-pulse 5s ease-in-out infinite;
             }
-            
-            /* Custom scrollbar for dark mode */
-            ::-webkit-scrollbar {
-                width: 10px;
+
+            @keyframes flame-pulse {
+                0%, 100% { opacity: 0.7; transform: translateX(-50%) scale(1); }
+                50%       { opacity: 1;   transform: translateX(-50%) scale(1.1); }
             }
-            
-            ::-webkit-scrollbar-track {
-                background: transparent;
+
+            /* Gold quote bar */
+            div:has(#stoic-quote) .border-l-4 {
+                border-color: var(--gold) !important;
+                border-left-width: 2px !important;
+                padding-left: 1.25rem !important;
             }
-            
-            ::-webkit-scrollbar-thumb {
-                background: #cbd5e1;
-                border-radius: 5px;
+
+            #stoic-quote {
+                font-family: var(--font-display) !important;
+                font-size: 1.1rem !important;
+                font-weight: 400 !important;
+                font-style: italic !important;
+                color: var(--text-high) !important;
+                letter-spacing: 0.025em !important;
+                line-height: 1.8 !important;
             }
-            
-            .dark ::-webkit-scrollbar-thumb {
-                background: #475569;
+
+            #stoic-author {
+                font-family: var(--font-display) !important;
+                font-size: 0.68rem !important;
+                letter-spacing: 0.16em !important;
+                text-transform: uppercase !important;
+                color: var(--gold) !important;
+            }
+
+            #stoic-meaning {
+                font-size: 14px !important;
+                color: var(--text-mid) !important;
+                font-style: italic !important;
+            }
+
+            /* ── SECTION LABELS (uppercase trackers) ── */
+
+            .text-sm.uppercase, .uppercase.tracking-wide {
+                font-family: var(--font-display) !important;
+                font-size: 0.62rem !important;
+                letter-spacing: 0.2em !important;
+                color: var(--gold) !important;
+                opacity: 0.75;
+            }
+
+            /* ── INPUTS ────────────────────────────── */
+
+            input[type="text"],
+            input[type="date"],
+            input[type="time"],
+            input[type="number"],
+            input[type="email"],
+            textarea, select {
+                background-color: var(--bg-input) !important;
+                border-color: var(--border-soft) !important;
+                color: var(--text-high) !important;
+                font-family: var(--font-body) !important;
+                font-size: 15px !important;
+            }
+
+            input::placeholder, textarea::placeholder {
+                color: var(--text-ghost) !important;
+                font-style: italic;
+            }
+
+            input:focus, textarea:focus, select:focus {
+                border-color: var(--gold) !important;
+                box-shadow: 0 0 0 2px var(--gold-glow) !important;
+                outline: none !important;
+                ring: none !important;
+            }
+
+            select option {
+                background-color: var(--bg-elevated) !important;
+                color: var(--text-high) !important;
+            }
+
+            /* ── BUTTONS ───────────────────────────── */
+
+            /* Primary dark buttons */
+            button.bg-gray-800, button.bg-gray-700,
+            button.dark\:bg-gray-700, button.dark\:bg-gray-600 {
+                background-color: var(--bg-elevated) !important;
+                border: 1px solid var(--border-med) !important;
+                color: var(--gold) !important;
+                font-family: var(--font-display) !important;
+                font-size: 0.68rem !important;
+                letter-spacing: 0.1em !important;
+                text-transform: uppercase !important;
+            }
+
+            button.bg-gray-800:hover, button.bg-gray-700:hover {
+                background-color: var(--bg-hover) !important;
+                border-color: var(--gold) !important;
+                box-shadow: 0 0 16px var(--gold-glow) !important;
+            }
+
+            /* Blue accent buttons → gold outline */
+            button.bg-blue-600, button.bg-blue-700 {
+                background-color: var(--bg-elevated) !important;
+                border: 1px solid var(--border-soft) !important;
+                color: var(--text-mid) !important;
+                font-family: var(--font-display) !important;
+                font-size: 0.68rem !important;
+                letter-spacing: 0.08em !important;
+                text-transform: uppercase !important;
+            }
+
+            button.bg-blue-600:hover, button.bg-blue-700:hover {
+                border-color: var(--border-med) !important;
+                color: var(--gold) !important;
+                background-color: var(--bg-hover) !important;
+            }
+
+            /* Outline buttons */
+            button.border, a.border {
+                background-color: transparent !important;
+                border-color: var(--border-soft) !important;
+                color: var(--text-mid) !important;
+                font-family: var(--font-display) !important;
+                font-size: 0.68rem !important;
+                letter-spacing: 0.08em !important;
+                text-transform: uppercase !important;
+            }
+
+            button.border:hover, a.border:hover {
+                border-color: var(--border-med) !important;
+                color: var(--text-high) !important;
+                background-color: var(--bg-elevated) !important;
+            }
+
+            /* ── PROGRESS BARS ─────────────────────── */
+
+            .bg-blue-500, .bg-green-500, .bg-yellow-500 {
+                background-color: var(--gold) !important;
+            }
+
+            .bg-blue-200, .bg-green-200, .bg-yellow-200,
+            .dark .bg-blue-900, .dark .bg-green-900 {
+                background-color: var(--bg-elevated) !important;
+            }
+
+            /* ── PRIORITY / STATUS BADGES ──────────── */
+
+            .bg-red-100, .dark .bg-red-900\/30 {
+                background-color: rgba(180,55,40,0.14) !important;
+            }
+            .text-red-700, .dark .text-red-300 { color: #E07060 !important; }
+
+            .bg-yellow-100, .dark .bg-yellow-900\/30 {
+                background-color: rgba(201,168,76,0.12) !important;
+            }
+            .text-yellow-700, .dark .text-yellow-300 { color: var(--gold) !important; }
+
+            .bg-green-100, .dark .bg-green-900\/30 {
+                background-color: rgba(50,130,70,0.14) !important;
+            }
+            .text-green-700, .dark .text-green-300 { color: #68C090 !important; }
+
+            .bg-blue-100, .dark .bg-blue-900\/30 {
+                background-color: rgba(60,100,180,0.12) !important;
+            }
+            .text-blue-700, .dark .text-blue-300 { color: #7AABE0 !important; }
+
+            /* ── SECTION DIVIDERS ──────────────────── */
+
+            .border-b, .border-t {
+                border-color: var(--border-faint) !important;
+            }
+
+            /* ── CHECKBOXES ────────────────────────── */
+
+            input[type="checkbox"] { accent-color: var(--gold) !important; }
+
+            /* ── MODALS ────────────────────────────── */
+
+            .fixed.inset-0 {
+                backdrop-filter: blur(6px) !important;
+                -webkit-backdrop-filter: blur(6px) !important;
+            }
+
+            .bg-black.bg-opacity-50 {
+                background-color: rgba(0,0,0,0.7) !important;
+            }
+
+            /* ── DRAG & DROP ───────────────────────── */
+
+            .border-dashed {
+                border-color: var(--border-soft) !important;
+            }
+
+            /* ── WEEKLY PLANNER DAY COLS ───────────── */
+
+            .day-column {
+                background-color: var(--bg-surface) !important;
+                border: 1px solid var(--border-faint) !important;
+                border-radius: var(--radius) !important;
+            }
+
+            /* ── FOCUS RING ────────────────────────── */
+
+            .focus\:ring-2:focus, .focus\:ring-gray-400:focus {
+                --tw-ring-color: var(--gold-dim) !important;
+            }
+
+            /* ── STRIKETHROUGH (completed) ─────────── */
+
+            .line-through { color: var(--text-low) !important; }
+
+            /* ── HEADER ENTRY CARDS ────────────────── */
+
+            .bg-white.dark\:bg-gray-800.rounded-xl {
+                background-color: var(--bg-surface) !important;
+            }
+
+            /* ── DARK STRIPE BANDS ─────────────────── */
+
+            .bg-gray-50.dark\:bg-gray-900\/50 {
+                background-color: rgba(201,168,76,0.04) !important;
+                border-color: var(--border-faint) !important;
+            }
+
+            /* ── PAGE ENTRY ANIMATION ──────────────── */
+
+            .page:not(.hidden) {
+                animation: page-enter 0.3s ease forwards;
+            }
+
+            @keyframes page-enter {
+                from { opacity: 0; transform: translateY(6px); }
+                to   { opacity: 1; transform: translateY(0); }
             }
         </style>
     </head>
-    <body class="bg-gray-50 dark:bg-gray-900 min-h-screen text-gray-900 dark:text-gray-100">
+    <body class="dark bg-gray-900 min-h-screen text-gray-100">
         <!-- Navigation -->
         <nav class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-40">
             <div class="container mx-auto px-6 py-4">
                 <div class="flex items-center justify-between">
                     <div class="text-xl font-semibold text-gray-900 dark:text-white">
-                        Goal Planner
+                        ✦ Stoic Planner
                     </div>
                     <div class="flex items-center space-x-6">
                         <a href="#" onclick="showPage('daily')" class="nav-link text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white text-sm font-medium">
@@ -2123,11 +2542,7 @@ app.get('/', (c) => {
                             Habits
                         </a>
                         <button onclick="showPage('settings')" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 transition" title="Settings">
-                            ⚙️
-                        </button>
-                        <button onclick="toggleDarkMode()" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300">
-                            <span class="dark-mode-icon hidden dark:inline">☀️</span>
-                            <span class="light-mode-icon dark:hidden">🌙</span>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
                         </button>
                     </div>
                 </div>
@@ -2193,8 +2608,9 @@ app.get('/', (c) => {
                             <div class="flex justify-between items-center mb-6">
                                 <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Today's Tasks</h2>
                                 <div class="flex gap-2">
-                                    <button onclick="rolloverIncompleteTasks()" class="bg-blue-600 dark:bg-blue-700 text-white px-4 py-2 rounded-lg hover:bg-blue-700 dark:hover:bg-blue-800 transition text-sm font-medium" title="Move incomplete tasks from yesterday to today">
-                                        🔄 Rollover
+                                    <button onclick="rolloverIncompleteTasks()" class="bg-blue-600 dark:bg-blue-700 text-white px-4 py-2 rounded-lg hover:bg-blue-700 dark:hover:bg-blue-800 transition text-sm font-medium flex items-center gap-1.5" title="Move incomplete tasks from yesterday to today">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                                        Rollover
                                     </button>
                                     <button onclick="showCreateTaskModal()" class="bg-gray-800 dark:bg-gray-700 text-white px-4 py-2 rounded-lg hover:bg-gray-700 dark:hover:bg-gray-600 transition text-sm font-medium">
                                         New Task
@@ -2340,8 +2756,9 @@ app.get('/', (c) => {
                             <button onclick="showAddGoalModal()" class="flex-1 bg-gray-800 dark:bg-gray-700 text-white px-6 py-2.5 rounded-lg hover:bg-gray-700 dark:hover:bg-gray-600 transition font-medium">
                                 Add New Goal
                             </button>
-                            <button id="copy-repeating-btn" onclick="copyRepeatingGoals()" class="hidden bg-blue-600 dark:bg-blue-700 text-white px-6 py-2.5 rounded-lg hover:bg-blue-700 dark:hover:bg-blue-800 transition font-medium whitespace-nowrap">
-                                🔄 Copy Repeating Goals
+                            <button id="copy-repeating-btn" onclick="copyRepeatingGoals()" class="hidden bg-blue-600 dark:bg-blue-700 text-white px-6 py-2.5 rounded-lg hover:bg-blue-700 dark:hover:bg-blue-800 transition font-medium whitespace-nowrap flex items-center gap-2">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                                Copy Repeating Goals
                             </button>
                         </div>
 
@@ -2488,7 +2905,7 @@ app.get('/', (c) => {
                 <div class="max-w-4xl mx-auto mt-8">
                     <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 mb-6">
                         <div class="flex items-center gap-3 mb-6">
-                            <span class="text-3xl">⚙️</span>
+                            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
                             <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">Settings</h1>
                         </div>
                         
@@ -2496,7 +2913,8 @@ app.get('/', (c) => {
                         <div class="mb-8">
                             <div class="border-b border-gray-200 dark:border-gray-700 pb-4 mb-6">
                                 <h2 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                                    🌍 Timezone
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                                    Timezone
                                 </h2>
                                 <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
                                     Set your timezone for calendar events and scheduling
@@ -2546,7 +2964,7 @@ app.get('/', (c) => {
                                 
                                 <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
                                     <div class="flex items-start gap-3">
-                                        <span class="text-blue-600 dark:text-blue-400 text-xl">ℹ️</span>
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
                                         <div>
                                             <p class="text-sm font-medium text-gray-900 dark:text-white mb-1">Current Timezone</p>
                                             <p id="current-timezone-display" class="text-sm text-gray-600 dark:text-gray-400">
@@ -2562,7 +2980,8 @@ app.get('/', (c) => {
                         <div class="mb-8">
                             <div class="border-b border-gray-200 dark:border-gray-700 pb-4 mb-6">
                                 <h2 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                                    🎨 Appearance
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+                                    Appearance
                                 </h2>
                                 <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
                                     Customize the look and feel of your planner
@@ -2577,9 +2996,9 @@ app.get('/', (c) => {
                                             Switch between light and dark theme
                                         </p>
                                     </div>
-                                    <button onclick="toggleDarkMode()" class="px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition text-gray-900 dark:text-white font-medium text-sm">
-                                        <span class="dark-mode-icon hidden dark:inline">☀️ Light</span>
-                                        <span class="light-mode-icon dark:hidden">🌙 Dark</span>
+                                    <button onclick="toggleDarkMode()" class="px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition text-gray-900 dark:text-white font-medium text-sm flex items-center gap-2">
+                                        <span class="dark-mode-icon hidden dark:inline items-center gap-1.5" style="display:none"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg> Light</span>
+                                        <span class="light-mode-icon dark:hidden flex items-center gap-1.5"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg> Dark</span>
                                     </button>
                                 </div>
                             </div>
@@ -2589,7 +3008,8 @@ app.get('/', (c) => {
                         <div>
                             <div class="border-b border-gray-200 dark:border-gray-700 pb-4 mb-6">
                                 <h2 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                                    📋 About
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                                    About
                                 </h2>
                             </div>
                             
