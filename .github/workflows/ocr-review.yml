@@ -20,7 +20,7 @@ jobs:
         run: |
           ocr config set llm.url "https://api.z.ai/api/coding/paas/v4/"
           ocr config set llm.auth_token "$OCR_KEY"
-          ocr config set llm.model "glm-5.3"
+          ocr config set llm.model "glm-5.3-flash"
           ocr config set llm.use_anthropic false
           BASE=$(git merge-base origin/${{ github.base_ref }} ${{ github.sha }})
           ocr review --from "$BASE" --to "${{ github.sha }}" --format json --output /tmp/ocr.json || true
